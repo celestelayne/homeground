@@ -1,0 +1,22 @@
+{
+  "name": "homeground",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.12.3",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "format": "biome format .",
+    "format:fix": "biome format --write .",
+    "lint": "biome lint .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest run --passWithNoTests",
+    "build": "pnpm -r build"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.12",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
+  }
+}
