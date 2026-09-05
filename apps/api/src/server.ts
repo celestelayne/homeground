@@ -1,12 +1,10 @@
-import Fastify from "fastify";
+import { buildApp } from "./app.js";
 
-const server = Fastify({ logger: true });
-
-server.get("/health", async () => ({ status: "ok" }));
+const app = buildApp({ logger: true });
 
 const port = Number(process.env.PORT ?? 3000);
 
-server.listen({ port, host: "127.0.0.1" }).catch((error: unknown) => {
-  server.log.error(error);
+app.listen({ port, host: "127.0.0.1" }).catch((error: unknown) => {
+  app.log.error(error);
   process.exit(1);
 });

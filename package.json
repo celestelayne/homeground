@@ -11,7 +11,7 @@
     "format:fix": "biome format --write .",
     "lint": "biome lint .",
     "typecheck": "pnpm -r typecheck",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "build": "pnpm -r build"
   },
   "devDependencies": {
