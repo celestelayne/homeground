@@ -41,109 +41,78 @@ Only the current milestone below is specified.
 
 ## Current Milestone
 
-**M0 — Foundation**
+**M1 — Property Map Workspace**
 
 Status: in progress
 
-Every criterion is met locally. The pipeline has not yet run on a pull request, which requires a remote and branch protection.
-
 ---
 
-## M0 — Foundation
+## M1 — Property Map Workspace
 
 ### Goal
 
-Establish the repository, the web and API application boundaries, and a working build and check pipeline, so that later milestones have somewhere to be built.
+A user can save a property from a confirmed address, and manage it on a map and in a list.
 
 ### Acceptance Criteria
 
-M0 is complete when:
+M1 is complete when:
 
-* the repository is under version control
-* the monorepo structure is established
-* the web application boundary exists
-* the API application boundary exists
-* the mobile application has a defined place in the target structure
-* workspace configuration is established for TypeScript, formatting, linting, and tests
-* accessibility lint rules are enabled, so later UI milestones inherit them
-* `docs/` explains product, architecture, methodology, decisions, and milestones
-* the workspace installs and builds
-* every check in the pipeline below runs automatically on pull requests
-
-### Continuous Integration
-
-M0 establishes one pipeline. Every check runs on every pull request.
-
-```text
-branch
-   ↓
-pull request
-   ↓
-formatting
-lint
-TypeScript
-tests
-build
-   ↓
-merge
-```
-
-All five checks must pass before merge.
-
-M0 implements no domain behavior, so no tests exist yet. The test check must be configured to pass on an empty suite rather than fail on one.
-
-Requiring the checks to pass before merge is a repository branch protection setting, not a file in this repository.
-
-M0 does not include deployment.
-
-### Environments
-
-M0 establishes local and CI configuration only.
-
-Deployed environments and hosting topology are deferred. See Open Decisions.
+* a property can be added by entering an address
+* the address is geocoded and the resolved location is shown before saving
+* a property cannot be saved from unconfirmed geocoding output
+* saved properties appear in both the sidebar list and the map
+* selecting a property in either surface selects it in the other
+* a property's status can be changed among saved, shortlist, visit and rejected
+* notes can be edited
+* saved properties, statuses and notes survive a reload
+* an unavailable geocoder is distinguishable from an address with no matches
+* the invariants in `specs/property.md` are covered by tests
 
 ### Out of Scope
 
-M0 does not include:
+M1 does not include:
 
-* persistent application data
-* a database or database access layer
-* PostGIS
-* Mapbox integration
-* the evidence model, or any derived evidence
-* any methodology implementation
-* authentication or user accounts
-* deployment, deployed environments, and hosting
+* derived evidence of any kind — wildfire, healthcare, services, routing
+* user criteria and thresholds
+* comparison
+* AI interpretation
+* listing scraping or automatic enrichment
+* authentication and user accounts
+* deleting a property
+* editing a saved property's address or coordinates
+* placing a property by clicking the map, or entering coordinates directly
+* deployment, deployed environments and hosting
 * shared packages under `packages/`
-* data pipelines
-* monorepo orchestration tooling
-* the mobile application, which lives in its own repository
+* the mobile application
 
 ### Authorized Dependencies
 
-M0 authorizes:
+In addition to those carried from M0, M1 authorizes:
 
-* pnpm, and pnpm workspaces
-* TypeScript
-* React and Vite, in the web application
-* Node.js and Fastify, in the API application
-* Biome, for formatting and linting, including accessibility rules
-* Vitest, for the test check
-* GitHub Actions
+* Drizzle ORM and drizzle-kit, with PostgreSQL and the `pg` driver
+* TypeBox, with the Fastify TypeBox type provider
+* Mapbox GL JS, in the web application
+* IBM Plex Sans and IBM Plex Mono, self-hosted
+* Vitest in each application, with jsdom and Testing Library in the web application
+* Docker Compose, for local PostgreSQL
 
 Anything not listed requires a milestone that needs it.
 
 ### Governing Specs
 
-None. M0 implements no domain behavior.
+`specs/property.md`
+
+### Review Checkpoints
+
+M1 is built in ten steps, each reviewed before the next begins.
+
+The first browsable page appears at step 5. The application is usable at step 6, before any map code exists.
 
 ---
 
 ## Planned Milestones
 
 Named and sequenced. Not specified until current.
-
-**M1 — Property map workspace.** React/TypeScript web app, Mapbox map, address search and geocoding, address confirmation, saved properties, statuses, selected-property state, notes, persistence, and map/list synchronization.
 
 **M2 — Evidence model.** Assessment and Evidence contracts, provenance fields, Known/Estimated/Unknown/Stale states, method versioning, and evidence retrieval APIs.
 
@@ -165,15 +134,45 @@ Named and sequenced. Not specified until current.
 
 ---
 
+## Completed Milestones
+
+### M0 — Foundation
+
+Complete.
+
+Established the repository, the web and API application boundaries, and the build and check pipeline.
+
+Delivered: version control, the pnpm workspace over `apps/`, the web and API application boundaries, a documented place in the target structure for the mobile application, workspace configuration for TypeScript, formatting, linting and tests, accessibility lint rules, and documentation covering product, architecture, methodology, decisions and milestones.
+
+The pipeline established by M0 runs on every pull request and remains in force:
+
+```text
+branch
+   ↓
+pull request
+   ↓
+formatting
+lint
+TypeScript
+tests
+build
+   ↓
+merge
+```
+
+All five checks must pass before merge. Requiring that is a repository branch protection setting, not a file in this repository.
+
+---
+
 ## Open Decisions
 
 Unresolved decisions are recorded here rather than decided during implementation.
 
 Each is either resolved into an ADR or deferred to the milestone that requires it.
 
-**Blocking M0**
+**Blocking M1**
 
-None.
+* **Mapbox permanent geocoding** — Mapbox prices temporary and permanent geocoding differently, and storing a result permanently may require a different request mode. `specs/property.md` stores confirmed coordinates permanently. Must be resolved before the geocoding step ships.
 
 **Recorded without an ADR**
 
@@ -181,12 +180,13 @@ None.
 
 **Deferred, with owning milestone**
 
-* **Database access layer** — M1, the first milestone that persists application data. See `docs/architecture.md`.
-* **Hosting and deployed environments** — no owning milestone yet. Required by the first milestone that needs an environment beyond local development and CI.
+* **React Query** — M2. M1 has one collection and one screen, so nothing currently requires it. M2 introduces per-property evidence with a Stale state, and a rule that one failed source must not invalidate the rest of an assessment. That is per-query staleness and error isolation.
 * **Methodology version attachment** — M2, which introduces method versioning.
 * **Wildfire classification method** — M8, and explicitly gated on resolution in `docs/methodology.md` first.
 * **Mobile repository** — M9. The mobile application currently lives outside this repository. Whether it moves into the monorepo, and what that would require, is undecided.
+* **Hosting and deployed environments** — no owning milestone yet. Required by the first milestone that needs an environment beyond local development and CI.
 * **Evidence staleness** — no owning milestone. M2 introduces a Stale state, but no milestone yet owns detecting staleness or recomputing evidence.
+* **Correcting a mis-saved property** — no owning milestone. M1 has no delete and cannot edit coordinates, following `specs/property.md`. A property saved against the wrong location is permanent.
 
 ---
 

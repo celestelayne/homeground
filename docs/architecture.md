@@ -143,11 +143,9 @@ PostgreSQL
 PostGIS will be introduced when a milestone requires server-side spatial storage or querying.
 
 ### Database access layer
-Not yet decided.
+Drizzle ORM
 
-Choose the database access layer when the first milestone requires persistent application data.
-
-The choice must support PostgreSQL cleanly and must not make future PostGIS usage unnecessarily difficult.
+See ADR-009.
 
 ### Mapping / Geocoding / Routing
 Mapbox

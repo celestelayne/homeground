@@ -41,6 +41,17 @@ Property
 └── updatedAt
 ```
 
+Required values:
+
+- address
+- latitude
+- longitude
+- status
+
+All other values are optional and remain missing when not provided.
+
+`askingPrice` is an amount in EUR. HomeGround does not store a currency alongside it until a milestone requires more than one.
+
 ## Status
 
 A Property has exactly one status:
