@@ -1,0 +1,31 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3.874026, 43.610962]
+      },
+      "properties": {
+        "label": "12 Rue Foch 34000 Montpellier",
+        "score": 0.9773281818181818,
+        "housenumber": "12",
+        "id": "34172_2250_00012",
+        "name": "12 Rue Foch",
+        "postcode": "34000",
+        "citycode": "34172",
+        "x": 770579.39,
+        "y": 6279491.74,
+        "city": "Montpellier",
+        "context": "34, Hérault, Occitanie",
+        "type": "housenumber",
+        "importance": 0.75061,
+        "depcode": "34",
+        "street": "Rue Foch",
+        "_type": "address"
+      }
+    }
+  ],
+  "query": "12 rue Foch Montpellier"
+}

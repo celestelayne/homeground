@@ -85,13 +85,6 @@ export const PropertyListSchema = Type.Object({
   properties: Type.Array(PropertySchema),
 });
 
-export const ErrorSchema = Type.Object({
-  error: Type.Object({
-    code: Type.String(),
-    message: Type.String(),
-  }),
-});
-
 export type Property = Static<typeof PropertySchema>;
 export type PropertyStatus = Static<typeof PropertyStatusSchema>;
 export type CreatePropertyBody = Static<typeof CreatePropertyBodySchema>;

@@ -91,7 +91,7 @@ In addition to those carried from M0, M1 authorizes:
 
 * Drizzle ORM and drizzle-kit, with PostgreSQL and the `pg` driver
 * TypeBox, with the Fastify TypeBox type provider
-* Mapbox GL JS, in the web application
+* a map rendering library and tile source, chosen at the map step
 * IBM Plex Sans and IBM Plex Mono, self-hosted
 * Vitest in each application, with jsdom and Testing Library in the web application
 
@@ -171,7 +171,7 @@ Each is either resolved into an ADR or deferred to the milestone that requires i
 
 **Blocking M1**
 
-* **Mapbox permanent geocoding** — Mapbox prices temporary and permanent geocoding differently, and storing a result permanently may require a different request mode. `specs/property.md` stores confirmed coordinates permanently. Must be resolved before the geocoding step ships.
+None.
 
 **Recorded without an ADR**
 

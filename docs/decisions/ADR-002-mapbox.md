@@ -17,3 +17,10 @@ Mapbox is the default provider for mapping, geocoding, and routing.
 Mapbox-specific behavior should not become part of core HomeGround domain models.
 
 This decision does not require every Mapbox capability to be implemented in M0.
+## Amendment
+
+ADR-010 moves geocoding to IGN.
+
+Mapbox remains the decision for routing and travel-time calculation, which `docs/methodology.md` specifies.
+
+The map rendering library and tile source are not yet decided. That choice belongs to the milestone that renders a map.

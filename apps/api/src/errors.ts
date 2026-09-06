@@ -1,4 +1,13 @@
+import { Type } from "@sinclair/typebox";
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+
+/** The one error shape every route returns. */
+export const ErrorSchema = Type.Object({
+  error: Type.Object({
+    code: Type.String(),
+    message: Type.String(),
+  }),
+});
 
 /**
  * Error codes are language-neutral identifiers the client translates, per the
