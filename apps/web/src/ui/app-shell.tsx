@@ -20,8 +20,13 @@ export function AppShell({ sidebar, map, panel }: AppShellProps) {
         >
           {sidebar}
         </aside>
-        {/* Never let the panels squeeze the map below half the viewport. */}
-        <main className="min-w-1/2 flex-1 bg-paper">{map}</main>
+        {/*
+          min-w-0 rather than a percentage floor. The design asks that the map
+          never fall below half the viewport, but 264px of sidebar and 404px of
+          panel leave it 47.8% at 1280px, so a hard floor overflows the shell
+          and clips the panel instead.
+        */}
+        <main className="min-w-0 flex-1 bg-paper">{map}</main>
         {panel ? (
           <aside className="w-panel flex-none overflow-y-auto border-l border-line-2 bg-surface">
             {panel}
