@@ -17,6 +17,7 @@ This specification defines the Property model and the minimum behavior required 
 A Property contains:
 
 - identity
+- name
 - address
 - geographic coordinates
 - location tier
@@ -31,6 +32,7 @@ Conceptually:
 ```text
 Property
 ├── id
+├── name
 ├── address
 ├── latitude
 ├── longitude
@@ -45,13 +47,20 @@ Property
 
 Required values:
 
-- address
+- name
 - latitude
 - longitude
 - locationTier
 - status
 
 All other values are optional and remain missing when not provided.
+
+`address` is optional. Many properties have no postal address, and a user
+locating one by placing a point on the map may have nothing to put there.
+
+`name` is what the user calls the property. It is required because it is the
+one value the user always has, and because it is what identifies a property in
+a list. Two properties in the same commune are told apart by their names.
 
 `askingPrice` is an amount in EUR. HomeGround does not store a currency alongside it until a milestone requires more than one.
 
@@ -123,7 +132,8 @@ Do not add fields such as:
 
 Those belong to evidence capabilities defined separately.
 
-Notes are user-created context, not HomeGround-derived evidence.
+Notes are user-created context, not HomeGround-derived evidence. So is the
+name: HomeGround never writes or changes it.
 
 Location tier describes the coordinates HomeGround was given. It is not derived evidence, and it is not a judgment about the property.
 
@@ -138,10 +148,11 @@ M1 must support:
 5. saving the Property
 6. displaying saved Properties
 7. changing Property status
-8. editing notes
+8. editing notes and the name
 
 ## Invariants
 
+- every saved Property has a name
 - every saved Property has confirmed coordinates
 - every saved Property has a declared location tier
 - location tier is declared by the user, never inferred by HomeGround

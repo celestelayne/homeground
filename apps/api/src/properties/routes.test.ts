@@ -12,12 +12,14 @@ const SPECIFIED_FIELDS = [
   "listingUrl",
   "locationTier",
   "longitude",
+  "name",
   "notes",
   "status",
   "updatedAt",
 ];
 
 const validProperty = {
+  name: "Maison near Lodève",
   address: "12 Rue Foch, Montpellier",
   latitude: 43.6108,
   longitude: 3.8767,
@@ -86,11 +88,50 @@ describe("coordinates are required and must be real", () => {
     expect((await create({ ...validProperty, longitude: -181 })).statusCode).toBe(400);
   });
 
-  it("rejects a property with no address", async () => {
+  it("accepts a property with no address at all", async () => {
     const { address: _omitted, ...withoutAddress } = validProperty;
 
-    expect((await create(withoutAddress)).statusCode).toBe(400);
-    expect((await create({ ...validProperty, address: "" })).statusCode).toBe(400);
+    // Many rural properties have no postal address.
+    const response = await create(withoutAddress);
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json().address).toBeNull();
+  });
+});
+
+describe("name", () => {
+  it("refuses a property with no name", async () => {
+    const { name: _omitted, ...withoutName } = validProperty;
+
+    // The name is what tells two properties in one commune apart.
+    expect((await create(withoutName)).statusCode).toBe(400);
+    expect((await create({ ...validProperty, name: "" })).statusCode).toBe(400);
+  });
+
+  it("can be renamed after saving", async () => {
+    const id = (await create()).json().id;
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: `/api/properties/${id}`,
+      payload: { name: "Mas above the village" },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().name).toBe("Mas above the village");
+    expect(response.json().id).toBe(id);
+  });
+
+  it("tells two properties in the same commune apart", async () => {
+    await create({ ...validProperty, name: "Mas above the village", address: "Montouliers" });
+    await create({ ...validProperty, name: "House on the square", address: "Montouliers" });
+
+    const listed = (await app.inject({ method: "GET", url: "/api/properties" })).json();
+
+    expect(listed.properties.map((p: { name: string }) => p.name).sort()).toEqual([
+      "House on the square",
+      "Mas above the village",
+    ]);
   });
 });
 

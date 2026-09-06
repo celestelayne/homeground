@@ -37,7 +37,11 @@ export const properties = pgTable(
   "properties",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    address: text("address").notNull(),
+    // What the user calls this property. Required: it is the one value they
+    // always have, and it is what tells two properties in one commune apart.
+    name: text("name").notNull(),
+    // Optional: many rural properties have no postal address at all.
+    address: text("address"),
     latitude: doublePrecision("latitude").notNull(),
     longitude: doublePrecision("longitude").notNull(),
     locationTier: locationTier("location_tier").notNull(),
