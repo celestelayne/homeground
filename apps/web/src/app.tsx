@@ -1,6 +1,7 @@
 import "./styles/global.css";
 import { useState } from "react";
 import { PropertyDetailPanel } from "./properties/property-detail-panel.js";
+import { PropertyMap } from "./properties/property-map.js";
 import { PropertySidebar } from "./properties/property-sidebar.js";
 import { useProperties } from "./properties/use-properties.js";
 import { AppShell } from "./ui/app-shell.js";
@@ -24,6 +25,7 @@ export function App() {
           />
         )
       }
+      map={<PropertyMap properties={properties} selectedId={selectedId} onSelect={setSelectedId} />}
       panel={
         selected ? (
           <PropertyDetailPanel

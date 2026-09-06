@@ -4,6 +4,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./app";
 import type { Property } from "./api/types";
 
+/**
+ * MapLibre requires WebGL and cannot render in jsdom. Confining it to one
+ * module (ADR-011) means one mock covers every test that renders the app.
+ * The map's own behaviour is verified in the browser instead.
+ */
+vi.mock("./properties/property-map", () => ({
+  PropertyMap: () => null,
+}));
+
 function property(overrides: Partial<Property> = {}): Property {
   return {
     id: crypto.randomUUID(),
