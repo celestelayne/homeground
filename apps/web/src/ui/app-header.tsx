@@ -1,4 +1,9 @@
-export function AppHeader() {
+interface AppHeaderProps {
+  onAddProperty: () => void;
+  addingProperty: boolean;
+}
+
+export function AppHeader({ onAddProperty, addingProperty }: AppHeaderProps) {
   return (
     <header className="flex h-header flex-none items-center gap-[14px] border-b border-line-2 bg-surface px-[14px]">
       {/* Fixed to the sidebar width so the wordmark aligns with the column below. */}
@@ -9,6 +14,15 @@ export function AppHeader() {
           OCC · PACA
         </span>
       </div>
+
+      <button
+        type="button"
+        onClick={onAddProperty}
+        aria-pressed={addingProperty}
+        className="rounded-sharp bg-ink px-[9px] py-[6px] text-caption text-surface"
+      >
+        + Add property
+      </button>
     </header>
   );
 }

@@ -1,4 +1,4 @@
-import type { Property, UpdateProperty } from "./types.js";
+import type { CreateProperty, GeocodeCandidate, Property, UpdateProperty } from "./types.js";
 
 /** Same origin in development, via the Vite proxy. */
 const BASE = "/api";
@@ -42,6 +42,23 @@ export async function listProperties(): Promise<Property[]> {
   const { properties } = await request<{ properties: Property[] }>("/properties");
 
   return properties;
+}
+
+export async function createProperty(body: CreateProperty): Promise<Property> {
+  return request<Property>("/properties", { method: "POST", body: JSON.stringify(body) });
+}
+
+/**
+ * An empty list means the geocoder answered and found nothing. A thrown
+ * `geocoder_unavailable` means it could not answer at all. The two are
+ * different facts and docs/methodology.md forbids collapsing them.
+ */
+export async function geocode(query: string): Promise<GeocodeCandidate[]> {
+  const { candidates } = await request<{ candidates: GeocodeCandidate[] }>(
+    `/geocode?q=${encodeURIComponent(query)}`,
+  );
+
+  return candidates;
 }
 
 export async function updateProperty(id: string, patch: UpdateProperty): Promise<Property> {

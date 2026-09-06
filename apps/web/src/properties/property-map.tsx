@@ -1,4 +1,4 @@
-import { Map as MapLibreMap, Marker, NavigationControl } from "maplibre-gl";
+import { Map as MapLibreMap, type MapMouseEvent, Marker, NavigationControl } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./map-marker.css";
 import { useEffect, useRef } from "react";
@@ -15,6 +15,9 @@ interface PropertyMapProps {
   properties: Property[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  /** True while the user is choosing a point for a new property. */
+  placing?: boolean;
+  onPlace?: (point: { latitude: number; longitude: number }) => void;
 }
 
 /**
@@ -22,13 +25,21 @@ interface PropertyMapProps {
  * that MapLibre needs WebGL and cannot render in jsdom, so component tests
  * mock this one file.
  */
-export function PropertyMap({ properties, selectedId, onSelect }: PropertyMapProps) {
+export function PropertyMap({
+  properties,
+  selectedId,
+  onSelect,
+  placing = false,
+  onPlace,
+}: PropertyMapProps) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreMap | null>(null);
   const markers = useRef(new globalThis.Map<string, Marker>());
   // Held in a ref so rebuilding markers does not depend on the callback.
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+  const onPlaceRef = useRef(onPlace);
+  onPlaceRef.current = onPlace;
 
   useEffect(() => {
     if (!container.current) {
@@ -98,6 +109,42 @@ export function PropertyMap({ properties, selectedId, onSelect }: PropertyMapPro
       }
     }
   }, [properties]);
+
+  // Placing a property shows aerial imagery and turns the next click into a
+  // coordinate. A road map cannot tell you which building is the one.
+  useEffect(() => {
+    const instance = map.current;
+
+    if (!instance) {
+      return;
+    }
+
+    const apply = () => {
+      instance.setLayoutProperty("aerial-layer", "visibility", placing ? "visible" : "none");
+    };
+
+    if (instance.isStyleLoaded()) {
+      apply();
+    } else {
+      instance.once("style.load", apply);
+    }
+
+    instance.getCanvas().style.cursor = placing ? "crosshair" : "";
+
+    if (!placing) {
+      return;
+    }
+
+    const onClick = (event: MapMouseEvent) => {
+      onPlaceRef.current?.({ latitude: event.lngLat.lat, longitude: event.lngLat.lng });
+    };
+
+    instance.on("click", onClick);
+
+    return () => {
+      instance.off("click", onClick);
+    };
+  }, [placing]);
 
   // Selection drives emphasis and the camera. One value, two writers.
   useEffect(() => {
