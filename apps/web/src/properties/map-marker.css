@@ -1,42 +1,55 @@
 /*
  * Marker geometry, from the design handoff. Status is shape, never colour.
  * These are plain classes because MapLibre owns the elements.
+ *
+ * .hg-marker is the anchor MapLibre positions; it never carries a transform of
+ * its own. .hg-marker-shape carries everything visual.
  */
 .hg-marker {
+  display: grid;
+  place-items: center;
   width: 17px;
   height: 17px;
   padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.hg-marker-shape {
+  width: 17px;
+  height: 17px;
   border: 2px solid #ffffff;
   background: var(--color-ink);
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
-  cursor: pointer;
   transition:
-    width 0.2s,
-    height 0.2s,
+    scale 0.2s,
     opacity 0.2s;
 }
 
-.hg-marker:hover {
+.hg-marker:hover .hg-marker-shape,
+.hg-marker:focus-visible .hg-marker-shape {
   scale: 1.12;
 }
 
-.hg-marker[data-status="saved"] {
+.hg-marker[data-status="saved"] .hg-marker-shape {
   border-radius: 50%;
   border-color: var(--color-marker-saved);
   background: #ffffff;
 }
 
-.hg-marker[data-status="shortlist"] {
+.hg-marker[data-status="shortlist"] .hg-marker-shape {
   border-radius: 4px;
   background: var(--color-ink);
 }
 
-.hg-marker[data-status="visit"] {
+.hg-marker[data-status="visit"] .hg-marker-shape {
+  /* Rotating the child leaves the anchor square, so every marker centres alike. */
   rotate: 45deg;
   background: var(--color-ink-2);
 }
 
-.hg-marker[data-status="rejected"] {
+.hg-marker[data-status="rejected"] .hg-marker-shape {
   border-radius: 50%;
   border-style: dashed;
   border-color: var(--color-marker-rejected);
@@ -45,14 +58,13 @@
 }
 
 /* Selecting one property dims the others rather than hiding them. */
-.hg-marker[data-dimmed="true"] {
+.hg-marker[data-dimmed="true"] .hg-marker-shape {
   opacity: 0.4;
 }
 
-.hg-marker[data-selected="true"] {
-  width: 25px;
-  height: 25px;
+.hg-marker[data-selected="true"] .hg-marker-shape {
+  scale: 1.45;
   box-shadow:
     0 1px 3px rgb(0 0 0 / 0.3),
-    0 0 0 5px rgb(27 26 23 / 0.13);
+    0 0 0 4px rgb(27 26 23 / 0.13);
 }
