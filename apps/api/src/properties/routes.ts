@@ -1,9 +1,9 @@
 import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
 import type { Db } from "../db/client.js";
+import { ErrorSchema } from "../errors.js";
 import { createProperty, listProperties, updateProperty } from "./repository.js";
 import {
   CreatePropertyBodySchema,
-  ErrorSchema,
   PropertyListSchema,
   PropertyParamsSchema,
   PropertySchema,
