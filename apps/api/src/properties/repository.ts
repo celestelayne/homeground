@@ -1,0 +1,80 @@
+import { desc, eq } from "drizzle-orm";
+import type { Db } from "../db/client.js";
+import { properties } from "../db/schema.js";
+import type { CreatePropertyBody, Property, UpdatePropertyBody } from "./schema.js";
+
+type PropertyRow = typeof properties.$inferSelect;
+
+/**
+ * The stored row and the wire representation differ: PostgreSQL numeric
+ * arrives as a string, and timestamps as Date objects. Converting in one
+ * place keeps that difference out of every handler.
+ */
+function toWire(row: PropertyRow): Property {
+  return {
+    id: row.id,
+    address: row.address,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    askingPrice: row.askingPrice === null ? null : Number(row.askingPrice),
+    listingUrl: row.listingUrl,
+    status: row.status,
+    notes: row.notes,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+export async function listProperties(db: Db): Promise<Property[]> {
+  const rows = await db.select().from(properties).orderBy(desc(properties.createdAt));
+
+  return rows.map(toWire);
+}
+
+export async function createProperty(db: Db, body: CreatePropertyBody): Promise<Property> {
+  const [row] = await db
+    .insert(properties)
+    .values({
+      address: body.address,
+      latitude: body.latitude,
+      longitude: body.longitude,
+      // numeric columns are written as strings.
+      askingPrice: body.askingPrice == null ? null : String(body.askingPrice),
+      listingUrl: body.listingUrl ?? null,
+      notes: body.notes ?? null,
+      // Omitted entirely when absent, so the column default applies.
+      ...(body.status === undefined ? {} : { status: body.status }),
+    })
+    .returning();
+
+  if (!row) {
+    throw new Error("Insert returned no row");
+  }
+
+  return toWire(row);
+}
+
+export async function updateProperty(
+  db: Db,
+  id: string,
+  patch: UpdatePropertyBody,
+): Promise<Property | null> {
+  // An absent key leaves the value unchanged; an explicit null clears it.
+  const changes: Partial<Pick<PropertyRow, "status" | "notes">> = {};
+
+  if (patch.status !== undefined) {
+    changes.status = patch.status;
+  }
+
+  if (patch.notes !== undefined) {
+    changes.notes = patch.notes;
+  }
+
+  const [row] = await db
+    .update(properties)
+    .set({ ...changes, updatedAt: new Date() })
+    .where(eq(properties.id, id))
+    .returning();
+
+  return row ? toWire(row) : null;
+}
