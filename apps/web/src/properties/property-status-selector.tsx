@@ -30,7 +30,7 @@ export function PropertyStatusSelector({ value, onChange, disabled }: PropertySt
                 : "border-line-2 text-ink-2 hover:bg-row-hover",
             ].join(" ")}
           >
-            <StatusMark status={status} size={9} />
+            <StatusMark status={status} size={9} inverted={isActive} />
             {STATUS_LABEL[status]}
           </button>
         );
