@@ -1,6 +1,6 @@
 import { getTableColumns } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { properties, propertyStatus } from "./schema.js";
+import { locationTier, properties, propertyStatus } from "./schema.js";
 
 /** The fields specs/property.md defines. Nothing else belongs on Property. */
 const SPECIFIED_FIELDS = [
@@ -10,6 +10,7 @@ const SPECIFIED_FIELDS = [
   "id",
   "latitude",
   "listingUrl",
+  "locationTier",
   "longitude",
   "notes",
   "status",
@@ -28,6 +29,16 @@ describe("properties table", () => {
 
   it("defaults new properties to saved", () => {
     expect(getTableColumns(properties).status.default).toBe("saved");
+  });
+
+  it("offers exactly the three specified location tiers", () => {
+    expect(locationTier.enumValues).toEqual(["exact", "zone", "commune"]);
+  });
+
+  it("gives location tier no default, so one must always be declared", () => {
+    // specs/property.md: there is no default tier.
+    expect(getTableColumns(properties).locationTier.default).toBeUndefined();
+    expect(getTableColumns(properties).locationTier.notNull).toBe(true);
   });
 
   it("requires coordinates", () => {

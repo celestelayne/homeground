@@ -16,6 +16,7 @@ function toWire(row: PropertyRow): Property {
     address: row.address,
     latitude: row.latitude,
     longitude: row.longitude,
+    locationTier: row.locationTier,
     askingPrice: row.askingPrice === null ? null : Number(row.askingPrice),
     listingUrl: row.listingUrl,
     status: row.status,
@@ -38,6 +39,7 @@ export async function createProperty(db: Db, body: CreatePropertyBody): Promise<
       address: body.address,
       latitude: body.latitude,
       longitude: body.longitude,
+      locationTier: body.locationTier,
       // numeric columns are written as strings.
       askingPrice: body.askingPrice == null ? null : String(body.askingPrice),
       listingUrl: body.listingUrl ?? null,

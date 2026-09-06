@@ -57,8 +57,10 @@ A user can save a property from a confirmed address, and manage it on a map and 
 
 M1 is complete when:
 
-* a property can be added by entering an address
-* the address is geocoded and the resolved location is shown before saving
+* a property can be added by entering an address or place name
+* geocoding positions the map, and a specific address point can be confirmed directly
+* a property's location can be placed on the map when it has no usable address
+* the user declares the location tier, and a property cannot be saved without one
 * a property cannot be saved from unconfirmed geocoding output
 * saved properties appear in both the sidebar list and the map
 * selecting a property in either surface selects it in the other
@@ -77,10 +79,11 @@ M1 does not include:
 * comparison
 * AI interpretation
 * listing scraping or automatic enrichment
+* cadastral parcel lookup
 * authentication and user accounts
 * deleting a property
 * editing a saved property's address or coordinates
-* placing a property by clicking the map, or entering coordinates directly
+* raising a location tier after saving, which the specification allows but no M1 behaviour requires
 * deployment, deployed environments and hosting
 * shared packages under `packages/`
 * the mobile application

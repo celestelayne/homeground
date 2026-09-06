@@ -11,6 +11,7 @@ describe("toCandidates", () => {
       label: "12 Rue Foch 34000 Montpellier",
       latitude: 43.610962,
       longitude: 3.874026,
+      precision: "exact",
     });
   });
 
@@ -20,6 +21,35 @@ describe("toCandidates", () => {
     // Reversing these puts a Montpellier address off the coast of Somalia.
     expect(candidate?.latitude).toBeGreaterThan(40);
     expect(candidate?.longitude).toBeLessThan(10);
+  });
+
+  it("reports the best tier each result type can support", () => {
+    const feature = (type: string) => ({
+      properties: { label: "x", type },
+      geometry: { coordinates: [3.87, 43.61] },
+    });
+
+    const precisionFor = (type: string) =>
+      toCandidates({ features: [feature(type)] })[0]?.precision;
+
+    expect(precisionFor("housenumber")).toBe("exact");
+    expect(precisionFor("street")).toBe("zone");
+    expect(precisionFor("locality")).toBe("zone");
+    expect(precisionFor("municipality")).toBe("commune");
+  });
+
+  it("falls to the least precise tier for a type it does not recognise", () => {
+    // Never overstate how well a property is located.
+    const unknownType = {
+      features: [
+        {
+          properties: { label: "x", type: "something_new" },
+          geometry: { coordinates: [3.87, 43.61] },
+        },
+      ],
+    };
+
+    expect(toCandidates(unknownType)[0]?.precision).toBe("commune");
   });
 
   it("returns an empty list when the geocoder found nothing", () => {

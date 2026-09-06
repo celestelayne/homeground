@@ -23,6 +23,13 @@ export const propertyStatus = pgEnum("property_status", [
 ]);
 
 /**
+ * How precisely the stored coordinates identify the property. Declared by the
+ * user, never inferred. There is deliberately no default: a Property cannot be
+ * saved without an explicit tier. See specs/property.md.
+ */
+export const locationTier = pgEnum("location_tier", ["exact", "zone", "commune"]);
+
+/**
  * Exactly the fields specs/property.md defines. Derived evidence never becomes
  * a column here — see ADR-003.
  */
@@ -33,6 +40,7 @@ export const properties = pgTable(
     address: text("address").notNull(),
     latitude: doublePrecision("latitude").notNull(),
     longitude: doublePrecision("longitude").notNull(),
+    locationTier: locationTier("location_tier").notNull(),
     askingPrice: numeric("asking_price", { precision: 12, scale: 2 }),
     listingUrl: text("listing_url"),
     status: propertyStatus("status").notNull().default("saved"),

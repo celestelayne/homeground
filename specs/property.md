@@ -19,6 +19,7 @@ A Property contains:
 - identity
 - address
 - geographic coordinates
+- location tier
 - asking price
 - listing URL
 - status
@@ -33,6 +34,7 @@ Property
 ├── address
 ├── latitude
 ├── longitude
+├── locationTier
 ├── askingPrice
 ├── listingUrl
 ├── status
@@ -46,6 +48,7 @@ Required values:
 - address
 - latitude
 - longitude
+- locationTier
 - status
 
 All other values are optional and remain missing when not provided.
@@ -67,19 +70,45 @@ Changing status does not create a new Property.
 
 Rejected Properties are not deleted.
 
+## Location Tier
+
+Locating a property from a listing is an estimate.
+
+Listings withhold precise locations, and many properties have no postal address. HomeGround records how good the estimate is rather than presenting every coordinate as equally precise.
+
+A Property has exactly one location tier:
+
+- `exact` — the coordinates identify the property itself
+- `zone` — the coordinates identify a hamlet, lieu-dit, or street the property is on
+- `commune` — the coordinates identify only the commune
+
+The tier is declared by the user. It is not derived from how the coordinates were obtained.
+
+The same action can produce either tier. A point placed after recognising the property in listing photographs is `exact`. A point placed because the property is somewhere on a hillside is `zone`. Nothing in the coordinates themselves distinguishes the two.
+
+There is no default tier. A Property cannot be saved without one.
+
+A user may raise a tier as they learn more, such as after visiting or obtaining a cadastral reference.
+
+HomeGround must never raise a tier on the user's behalf.
+
+Evidence derived from a Property describes the coordinates it was given. Evidence derived at `commune` tier describes the commune, not the property.
+
 ## Location
 
-A saved Property must have a confirmed geographic location.
+A saved Property must have confirmed coordinates and a declared location tier.
 
-The M1 flow is:
+Coordinates may come from:
 
-address input
-→ geocode
-→ show resolved location
-→ user confirms location
-→ save Property
+- an address that geocodes to a specific address point
+- a point the user places on the map
+- coordinates the user enters directly
+
+Entering an address positions the map. It does not by itself establish where the property is, except where the geocoder returns a specific address point.
 
 Do not save a Property from unconfirmed geocoding output.
+
+Do not infer the location tier from the way the coordinates were produced.
 
 ## Boundaries
 
@@ -96,21 +125,27 @@ Those belong to evidence capabilities defined separately.
 
 Notes are user-created context, not HomeGround-derived evidence.
 
+Location tier describes the coordinates HomeGround was given. It is not derived evidence, and it is not a judgment about the property.
+
 ## M1 Required Behavior
 
 M1 must support:
 
-1. entering an address
-2. geocoding it
-3. confirming the resolved location
-4. saving the Property
-5. displaying saved Properties
-6. changing Property status
-7. editing notes
+1. entering an address or place name
+2. geocoding it to position the map
+3. establishing the property's location, by confirming a geocoded address point or by placing a point on the map
+4. declaring the location tier
+5. saving the Property
+6. displaying saved Properties
+7. changing Property status
+8. editing notes
 
 ## Invariants
 
 - every saved Property has confirmed coordinates
+- every saved Property has a declared location tier
+- location tier is declared by the user, never inferred by HomeGround
+- HomeGround never raises a location tier
 - Property identity is stable
 - Property has exactly one valid status
 - new Properties default to `saved`
@@ -130,3 +165,4 @@ M1 does not define:
 - AI interpretation
 - listing scraping
 - automatic enrichment
+- cadastral parcel lookup

@@ -8,6 +8,13 @@
       "when": 1788619226250,
       "tag": "0000_lowly_major_mapleleaf",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788703854197,
+      "tag": "0001_military_newton_destine",
+      "breakpoints": true
     }
   ]
 }
