@@ -9,6 +9,26 @@ jobs:
   checks:
     name: Checks
     runs-on: ubuntu-latest
+
+    # Matches the PostgreSQL major version run locally via Postgres.app.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: homeground
+          POSTGRES_PASSWORD: homeground
+          POSTGRES_DB: homeground
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U homeground -d homeground"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://homeground:homeground@localhost:5432/homeground
+
     steps:
       - uses: actions/checkout@v4
 
@@ -29,6 +49,9 @@ jobs:
 
       - name: TypeScript
         run: pnpm run typecheck
+
+      - name: Migrate
+        run: pnpm --filter @homeground/api db:migrate
 
       - name: Tests
         run: pnpm run test

@@ -94,7 +94,6 @@ In addition to those carried from M0, M1 authorizes:
 * Mapbox GL JS, in the web application
 * IBM Plex Sans and IBM Plex Mono, self-hosted
 * Vitest in each application, with jsdom and Testing Library in the web application
-* Docker Compose, for local PostgreSQL
 
 Anything not listed requires a milestone that needs it.
 
