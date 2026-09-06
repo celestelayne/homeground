@@ -1,3 +1,4 @@
+import type { LocationTier } from "../properties/schema.js";
 import type { GeocodeCandidate } from "./schema.js";
 
 /**
@@ -22,6 +23,22 @@ export class GeocoderUnavailableError extends Error {
 }
 
 export type FetchLike = typeof globalThis.fetch;
+
+/**
+ * What each IGN result type can support. An unrecognised type falls to the
+ * least precise tier, so a change at the source can never silently overstate
+ * how well a property is located.
+ */
+const PRECISION_BY_TYPE: Record<string, LocationTier> = {
+  housenumber: "exact",
+  street: "zone",
+  locality: "zone",
+  municipality: "commune",
+};
+
+function precisionOf(type: unknown): LocationTier {
+  return (typeof type === "string" && PRECISION_BY_TYPE[type]) || "commune";
+}
 
 /** The network call. Every failure mode becomes GeocoderUnavailableError. */
 export async function fetchGeocode(
@@ -81,7 +98,7 @@ export function toCandidates(payload: unknown): GeocodeCandidate[] {
 
 function toCandidate(feature: unknown): GeocodeCandidate | null {
   const typed = feature as {
-    properties?: { label?: unknown; id?: unknown };
+    properties?: { label?: unknown; id?: unknown; type?: unknown };
     geometry?: { coordinates?: unknown };
   } | null;
 
@@ -115,5 +132,5 @@ function toCandidate(feature: unknown): GeocodeCandidate | null {
   const id =
     typeof typed?.properties?.id === "string" ? typed.properties.id : `${longitude},${latitude}`;
 
-  return { id, label, latitude, longitude };
+  return { id, label, latitude, longitude, precision: precisionOf(typed?.properties?.type) };
 }

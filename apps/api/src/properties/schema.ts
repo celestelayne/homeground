@@ -8,6 +8,16 @@ export const PropertyStatusSchema = Type.Union([
   Type.Literal("rejected"),
 ]);
 
+/**
+ * How precisely the coordinates identify the property. Declared by the user,
+ * never inferred by HomeGround, and with no default — see specs/property.md.
+ */
+export const LocationTierSchema = Type.Union([
+  Type.Literal("exact"),
+  Type.Literal("zone"),
+  Type.Literal("commune"),
+]);
+
 const Latitude = Type.Number({ minimum: -90, maximum: 90 });
 const Longitude = Type.Number({ minimum: -180, maximum: 180 });
 
@@ -36,6 +46,7 @@ export const PropertySchema = Type.Object({
   address: Type.String(),
   latitude: Latitude,
   longitude: Longitude,
+  locationTier: LocationTierSchema,
   askingPrice: NullableNumberValue,
   listingUrl: NullableStringValue,
   status: PropertyStatusSchema,
@@ -54,6 +65,7 @@ export const CreatePropertyBodySchema = Type.Object(
     address: Type.String({ minLength: 1 }),
     latitude: Latitude,
     longitude: Longitude,
+    locationTier: LocationTierSchema,
     askingPrice: Type.Optional(NullableNumberInput),
     listingUrl: Type.Optional(NullableStringInput),
     notes: Type.Optional(NullableStringInput),
@@ -86,6 +98,7 @@ export const PropertyListSchema = Type.Object({
 });
 
 export type Property = Static<typeof PropertySchema>;
+export type LocationTier = Static<typeof LocationTierSchema>;
 export type PropertyStatus = Static<typeof PropertyStatusSchema>;
 export type CreatePropertyBody = Static<typeof CreatePropertyBodySchema>;
 export type UpdatePropertyBody = Static<typeof UpdatePropertyBodySchema>;

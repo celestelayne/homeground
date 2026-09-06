@@ -10,6 +10,7 @@ const SPECIFIED_FIELDS = [
   "id",
   "latitude",
   "listingUrl",
+  "locationTier",
   "longitude",
   "notes",
   "status",
@@ -20,6 +21,7 @@ const validProperty = {
   address: "12 Rue Foch, Montpellier",
   latitude: 43.6108,
   longitude: 3.8767,
+  locationTier: "exact",
 };
 
 let app: FastifyInstance;
@@ -89,6 +91,38 @@ describe("coordinates are required and must be real", () => {
 
     expect((await create(withoutAddress)).statusCode).toBe(400);
     expect((await create({ ...validProperty, address: "" })).statusCode).toBe(400);
+  });
+});
+
+describe("location tier", () => {
+  it("stores the tier the user declared", async () => {
+    const response = await create({ ...validProperty, locationTier: "commune" });
+
+    expect(response.json().locationTier).toBe("commune");
+  });
+
+  it("refuses a property with no declared tier", async () => {
+    const { locationTier: _omitted, ...withoutTier } = validProperty;
+
+    // specs/property.md: there is no default tier.
+    expect((await create(withoutTier)).statusCode).toBe(400);
+  });
+
+  it("accepts only the three specified tiers", async () => {
+    expect((await create({ ...validProperty, locationTier: "roughly" })).statusCode).toBe(400);
+  });
+
+  it("does not allow the tier to be changed after saving", async () => {
+    const id = (await create()).json().id;
+
+    // M1 declares the tier at save. Raising it is a later milestone.
+    const response = await app.inject({
+      method: "PATCH",
+      url: `/api/properties/${id}`,
+      payload: { locationTier: "zone" },
+    });
+
+    expect(response.statusCode).toBe(400);
   });
 });
 
