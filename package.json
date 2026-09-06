@@ -12,7 +12,9 @@
     "lint": "biome lint .",
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run",
-    "build": "pnpm -r build"
+    "build": "pnpm -r build",
+    "dev": "pnpm --recursive --parallel run dev",
+    "check": "pnpm run format && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.12",

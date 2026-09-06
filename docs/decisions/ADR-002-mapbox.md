@@ -23,4 +23,4 @@ ADR-010 moves geocoding to IGN.
 
 Mapbox remains the decision for routing and travel-time calculation, which `docs/methodology.md` specifies.
 
-The map rendering library and tile source are not yet decided. That choice belongs to the milestone that renders a map.
+ADR-011 records the map rendering library and tile source.

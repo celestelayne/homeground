@@ -94,7 +94,7 @@ In addition to those carried from M0, M1 authorizes:
 
 * Drizzle ORM and drizzle-kit, with PostgreSQL and the `pg` driver
 * TypeBox, with the Fastify TypeBox type provider
-* a map rendering library and tile source, chosen at the map step
+* MapLibre GL JS, with tiles served by IGN
 * IBM Plex Sans and IBM Plex Mono, self-hosted
 * Vitest in each application, with jsdom and Testing Library in the web application
 
