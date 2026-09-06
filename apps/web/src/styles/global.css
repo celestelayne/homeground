@@ -1,0 +1,86 @@
+@import "tailwindcss";
+@import "@fontsource-variable/ibm-plex-sans";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
+/*
+ * Design tokens transcribed from the HomeGround design handoff. Declaring them
+ * here makes each one both a CSS variable and a Tailwind utility.
+ */
+@theme {
+  --color-paper: #f7f5f1;
+  --color-surface: #ffffff;
+  --color-surface-2: #fbfaf7;
+
+  --color-ink: #1b1a17;
+  --color-ink-2: #56534c;
+  --color-ink-3: #8b877e;
+
+  --color-line: #e4e0d8;
+  --color-line-2: #cfcac0;
+
+  --color-row-hover: #f5f3ef;
+  --color-row-selected: #f1efea;
+
+  /* Reserved for evidence, which arrives in later milestones. Colour never
+     carries property status — status is carried by marker shape. */
+  --color-fire: #b0713a;
+  --color-fire-2: #8e5726;
+  --color-health: #3d6c8c;
+  --color-pass: #3e7a5e;
+  --color-fail: #8e4a2b;
+
+  --color-marker-saved: #4a4844;
+  --color-marker-rejected: #a5a199;
+  --color-marker-muted: #c3beb4;
+
+  --font-sans: "IBM Plex Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* The handoff's type scale, named as it names them. */
+  --text-hero: 42px;
+  --text-panel-title: 19px;
+  --text-section: 17px;
+  --text-subhead: 15px;
+  --text-emphasis: 13.5px;
+  --text-row: 13px;
+  --text-body: 12.5px;
+  --text-caption: 12px;
+  --text-meta: 11.5px;
+  --text-label: 10.5px;
+
+  /* Structural dimensions of the three-part shell. */
+  --spacing-header: 52px;
+  --spacing-sidebar: 264px;
+  --spacing-panel: 404px;
+
+  --radius-sharp: 2px;
+  --radius-card: 3px;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-row);
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 1px;
+  }
+}
+
+@utility numeric {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
