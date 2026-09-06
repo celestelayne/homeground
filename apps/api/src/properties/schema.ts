@@ -43,7 +43,8 @@ const NullableNumberInput = Type.Union([Type.Number(), Type.Null()]);
  */
 export const PropertySchema = Type.Object({
   id: Type.String({ format: "uuid" }),
-  address: Type.String(),
+  name: Type.String(),
+  address: NullableStringValue,
   latitude: Latitude,
   longitude: Longitude,
   locationTier: LocationTierSchema,
@@ -62,7 +63,8 @@ export const PropertySchema = Type.Object({
  */
 export const CreatePropertyBodySchema = Type.Object(
   {
-    address: Type.String({ minLength: 1 }),
+    name: Type.String({ minLength: 1 }),
+    address: Type.Optional(NullableStringInput),
     latitude: Latitude,
     longitude: Longitude,
     locationTier: LocationTierSchema,
@@ -83,6 +85,7 @@ export const CreatePropertyBodySchema = Type.Object(
  */
 export const UpdatePropertyBodySchema = Type.Object(
   {
+    name: Type.Optional(Type.String({ minLength: 1 })),
     status: Type.Optional(PropertyStatusSchema),
     notes: Type.Optional(NullableStringInput),
   },

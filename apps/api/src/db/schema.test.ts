@@ -12,6 +12,7 @@ const SPECIFIED_FIELDS = [
   "listingUrl",
   "locationTier",
   "longitude",
+  "name",
   "notes",
   "status",
   "updatedAt",

@@ -13,6 +13,7 @@ type PropertyRow = typeof properties.$inferSelect;
 function toWire(row: PropertyRow): Property {
   return {
     id: row.id,
+    name: row.name,
     address: row.address,
     latitude: row.latitude,
     longitude: row.longitude,
@@ -36,7 +37,8 @@ export async function createProperty(db: Db, body: CreatePropertyBody): Promise<
   const [row] = await db
     .insert(properties)
     .values({
-      address: body.address,
+      name: body.name,
+      address: body.address ?? null,
       latitude: body.latitude,
       longitude: body.longitude,
       locationTier: body.locationTier,
@@ -62,7 +64,11 @@ export async function updateProperty(
   patch: UpdatePropertyBody,
 ): Promise<Property | null> {
   // An absent key leaves the value unchanged; an explicit null clears it.
-  const changes: Partial<Pick<PropertyRow, "status" | "notes">> = {};
+  const changes: Partial<Pick<PropertyRow, "name" | "status" | "notes">> = {};
+
+  if (patch.name !== undefined) {
+    changes.name = patch.name;
+  }
 
   if (patch.status !== undefined) {
     changes.status = patch.status;
