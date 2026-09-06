@@ -1,7 +1,6 @@
+import "./styles/global.css";
+import { AppShell } from "./ui/app-shell.js";
+
 export function App() {
-  return (
-    <main>
-      <h1>HomeGround</h1>
-    </main>
-  );
+  return <AppShell />;
 }
