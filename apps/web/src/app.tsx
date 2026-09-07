@@ -2,7 +2,7 @@ import "./styles/global.css";
 import { useState } from "react";
 import { AddPropertyPanel } from "./properties/add-property-panel.js";
 import { PropertyDetailPanel } from "./properties/property-detail-panel.js";
-import { PropertyMap } from "./properties/property-map.js";
+import { PropertyMap, REGION_VIEW } from "./properties/property-map.js";
 import { PropertySidebar } from "./properties/property-sidebar.js";
 import { useProperties } from "./properties/use-properties.js";
 import { AppHeader } from "./ui/app-header.js";
@@ -18,11 +18,31 @@ export function App() {
   const [adding, setAdding] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [placedPoint, setPlacedPoint] = useState<Point | null>(null);
+  const [initialQuery, setInitialQuery] = useState("");
+  // Where a lookup landed. Not a selection and not a property — just somewhere
+  // the map has been pointed.
+  const [focus, setFocus] = useState<Point | null>(null);
 
   function closeAdd() {
     setAdding(false);
     setPlacing(false);
     setPlacedPoint(null);
+    setInitialQuery("");
+  }
+
+  function startAdding(query: string) {
+    setInitialQuery(query);
+    setAdding(true);
+    setSelectedId(null);
+  }
+
+  // The logo goes home. There is no router, so home is the state the
+  // application opens in: the region, nothing selected, nothing half-written.
+  // A fresh object every time, so clicking it twice works twice.
+  function goHome() {
+    closeAdd();
+    setSelectedId(null);
+    setFocus({ ...REGION_VIEW });
   }
 
   // Nothing saved yet: the sidebar has nothing to list, and the overlay
@@ -35,10 +55,8 @@ export function App() {
         <AppHeader
           showAddProperty={!firstUse}
           addingProperty={adding}
-          onAddProperty={() => {
-            setAdding(true);
-            setSelectedId(null);
-          }}
+          onAddProperty={() => startAdding("")}
+          onGoHome={goHome}
         />
       }
       sidebar={
@@ -59,7 +77,9 @@ export function App() {
       }
       map={
         <>
-          {firstUse ? <FirstUseOverlay onAddProperty={() => setAdding(true)} /> : null}
+          {firstUse ? (
+            <FirstUseOverlay onLookup={startAdding} onPlaceOnMap={() => startAdding("")} />
+          ) : null}
           <PropertyMap
             properties={properties}
             selectedId={selectedId}
@@ -69,6 +89,7 @@ export function App() {
             }}
             placing={placing}
             onPlace={setPlacedPoint}
+            focus={focus}
           />
         </>
       }
@@ -78,7 +99,9 @@ export function App() {
         adding ? (
           <AddPropertyPanel
             placedPoint={placedPoint}
+            initialQuery={initialQuery}
             onPlacingChange={setPlacing}
+            onLocated={setFocus}
             onClose={closeAdd}
             onSaved={async (id) => {
               closeAdd();
