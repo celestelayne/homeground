@@ -24,6 +24,25 @@ export interface Property {
   updatedAt: string;
 }
 
+export interface GeocodeCandidate {
+  id: string;
+  label: string;
+  latitude: number;
+  longitude: number;
+  /** The best tier this result could support. A suggestion, not a decision. */
+  precision: LocationTier;
+}
+
+export interface CreateProperty {
+  name: string;
+  latitude: number;
+  longitude: number;
+  locationTier: LocationTier;
+  address?: string | null;
+  askingPrice?: number | null;
+  listingUrl?: string | null;
+}
+
 export interface UpdateProperty {
   name?: string;
   status?: PropertyStatus;

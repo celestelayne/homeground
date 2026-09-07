@@ -1,18 +1,25 @@
 /*
  * Marker geometry, from the design handoff. Status is shape, never colour.
- * These are plain classes because MapLibre owns the elements.
  *
- * .hg-marker is the anchor MapLibre positions; it never carries a transform of
- * its own. .hg-marker-shape carries everything visual.
+ * The calm basemap is a filter over Leaflet's tile pane only. Markers live in
+ * their own pane, so they keep their full contrast — which is why this can be
+ * a CSS filter here rather than a paint property.
  */
+.leaflet-tile-pane {
+  filter: grayscale(0.88) contrast(0.92) brightness(1.06) sepia(0.16) saturate(0.85);
+}
+
+/* Aerial imagery is shown to be read, not to be calm. */
+.leaflet-container.hg-placing .leaflet-tile-pane {
+  filter: none;
+}
+
 .hg-marker {
   display: grid;
   place-items: center;
-  width: 17px;
-  height: 17px;
-  padding: 0;
-  border: 0;
   background: none;
+  border: 0;
+  padding: 0;
   cursor: pointer;
 }
 
@@ -44,7 +51,6 @@
 }
 
 .hg-marker[data-status="visit"] .hg-marker-shape {
-  /* Rotating the child leaves the anchor square, so every marker centres alike. */
   rotate: 45deg;
   background: var(--color-ink-2);
 }
@@ -67,4 +73,8 @@
   box-shadow:
     0 1px 3px rgb(0 0 0 / 0.3),
     0 0 0 4px rgb(27 26 23 / 0.13);
+}
+
+.leaflet-container.hg-placing {
+  cursor: crosshair;
 }

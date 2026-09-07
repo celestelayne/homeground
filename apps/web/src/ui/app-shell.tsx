@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import { AppHeader } from "./app-header.js";
 
 interface AppShellProps {
+  header: ReactNode;
   sidebar?: ReactNode;
   map?: ReactNode;
   /** Rendered only when something needs it, per the design. */
@@ -9,10 +9,10 @@ interface AppShellProps {
 }
 
 /** Three-part desktop layout. The page never scrolls; each column does. */
-export function AppShell({ sidebar, map, panel }: AppShellProps) {
+export function AppShell({ header, sidebar, map, panel }: AppShellProps) {
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden">
-      <AppHeader />
+      {header}
       <div className="flex min-h-0 flex-1">
         <aside
           className="flex w-sidebar flex-none flex-col overflow-y-auto border-r border-line-2 bg-surface"
