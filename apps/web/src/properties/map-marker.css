@@ -1,19 +1,10 @@
 /*
  * Marker geometry, from the design handoff. Status is shape, never colour.
  *
- * The calm basemap is a filter over Leaflet's tile pane only. Markers live in
- * their own pane, so they keep their full contrast — which is why this can be
- * a CSS filter here rather than a paint property.
+ * Any calming filter belongs to the basemap that needs one, so it is set on the
+ * tile pane in property-map.tsx rather than declared here. Markers live in
+ * their own pane and keep their full contrast either way.
  */
-.leaflet-tile-pane {
-  filter: grayscale(0.88) contrast(0.92) brightness(1.06) sepia(0.16) saturate(0.85);
-}
-
-/* Aerial imagery is shown to be read, not to be calm. */
-.leaflet-container.hg-placing .leaflet-tile-pane {
-  filter: none;
-}
-
 .hg-marker {
   display: grid;
   place-items: center;

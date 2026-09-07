@@ -1,14 +1,30 @@
 import "leaflet/dist/leaflet.css";
 import "./map-marker.css";
 import * as L from "leaflet";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Property } from "../api/types.js";
-import { AERIAL_TILES, BASE_TILES, MAX_ZOOM, TILE_ATTRIBUTION } from "./map-tiles.js";
+import { BaseMapPicker } from "./base-map-picker.js";
+import {
+  AERIAL_ATTRIBUTION,
+  AERIAL_TILES,
+  type BaseMap,
+  DEFAULT_BASE_MAP,
+  MAX_ZOOM,
+} from "./map-tiles.js";
 
 /** Roughly the Hérault and the Gard, before anything is selected. */
 const REGION_CENTRE: [number, number] = [43.7, 3.6];
 const REGION_ZOOM = 8;
+
+/** The view the map opens on, and the one the logo returns to. */
+export const REGION_VIEW = {
+  latitude: REGION_CENTRE[0],
+  longitude: REGION_CENTRE[1],
+  zoom: REGION_ZOOM,
+};
 const SELECTED_ZOOM = 12;
+/** Closer than a selection: a lookup is usually followed by placing a point. */
+const LOOKUP_ZOOM = 14;
 
 interface PropertyMapProps {
   properties: Property[];
@@ -17,6 +33,11 @@ interface PropertyMapProps {
   /** True while the user is choosing a point for a new property. */
   placing?: boolean;
   onPlace?: (point: { latitude: number; longitude: number }) => void;
+  /**
+   * Somewhere to look, from a lookup rather than from a saved property. Set a
+   * new object to move the map; the same object twice does nothing.
+   */
+  focus?: { latitude: number; longitude: number; zoom?: number } | null;
 }
 
 /**
@@ -29,8 +50,12 @@ export function PropertyMap({
   onSelect,
   placing = false,
   onPlace,
+  focus = null,
 }: PropertyMapProps) {
   const container = useRef<HTMLDivElement>(null);
+  // TEMPORARY: for comparing basemaps.
+  const [basemap, setBasemap] = useState<BaseMap>(DEFAULT_BASE_MAP);
+  const base = useRef<L.TileLayer | null>(null);
   const map = useRef<L.Map | null>(null);
   const aerial = useRef<L.TileLayer | null>(null);
   const markers = useRef(new Map<string, L.Marker>());
@@ -53,11 +78,11 @@ export function PropertyMap({
       attributionControl: true,
     });
 
-    L.tileLayer(BASE_TILES, { maxZoom: MAX_ZOOM, attribution: TILE_ATTRIBUTION }).addTo(instance);
+    base.current = baseLayer(DEFAULT_BASE_MAP).addTo(instance);
 
     aerial.current = L.tileLayer(AERIAL_TILES, {
       maxZoom: MAX_ZOOM,
-      attribution: TILE_ATTRIBUTION,
+      attribution: AERIAL_ATTRIBUTION,
     });
 
     map.current = instance;
@@ -70,11 +95,36 @@ export function PropertyMap({
     return () => {
       resize.disconnect();
       instance.remove();
+      base.current = null;
       map.current = null;
       aerial.current = null;
       markers.current.clear();
     };
   }, []);
+
+  // TEMPORARY: swapping basemaps for comparison.
+  useEffect(() => {
+    const instance = map.current;
+
+    if (!instance) {
+      return;
+    }
+
+    base.current?.remove();
+    base.current = baseLayer(basemap).addTo(instance);
+    base.current.bringToBack();
+  }, [basemap]);
+
+  // The calm filter is a property of the basemap, but it lifts while aerial
+  // imagery is shown: that is there to be read, not to be calm. Set inline, so
+  // it cannot be expressed as a stylesheet rule the inline value would beat.
+  useEffect(() => {
+    const pane = map.current?.getPane("tilePane");
+
+    if (pane) {
+      pane.style.filter = placing ? "" : (basemap.filter ?? "");
+    }
+  }, [basemap, placing]);
 
   // Markers follow the collection.
   useEffect(() => {
@@ -136,6 +186,16 @@ export function PropertyMap({
     }
   }, [selectedId, properties]);
 
+  // A lookup moves the map without selecting or creating anything. The two
+  // writers of the camera never compete: selection is null while adding.
+  useEffect(() => {
+    if (focus && map.current) {
+      map.current.flyTo([focus.latitude, focus.longitude], focus.zoom ?? LOOKUP_ZOOM, {
+        duration: 0.9,
+      });
+    }
+  }, [focus]);
+
   // Placing shows aerial imagery and turns the next click into a coordinate.
   useEffect(() => {
     const instance = map.current;
@@ -164,7 +224,23 @@ export function PropertyMap({
     };
   }, [placing]);
 
-  return <div ref={container} className="h-full w-full" />;
+  return (
+    <>
+      <div ref={container} className="h-full w-full" />
+      <BaseMapPicker value={basemap} onChange={setBasemap} />
+    </>
+  );
+}
+
+function baseLayer(basemap: BaseMap): L.TileLayer {
+  return L.tileLayer(basemap.url, {
+    maxZoom: MAX_ZOOM,
+    attribution: basemap.attribution,
+    // Providers that serve 512px tiles need both, or every label renders twice
+    // the size it should at half the detail.
+    ...(basemap.tileSize ? { tileSize: basemap.tileSize } : {}),
+    ...(basemap.zoomOffset ? { zoomOffset: basemap.zoomOffset } : {}),
+  });
 }
 
 function markerIcon(property: Property): L.DivIcon {

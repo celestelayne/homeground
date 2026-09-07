@@ -92,6 +92,14 @@ specs       implementation contracts for what is being built
 
 ## External services
 
-Geocoding and map tiles come from IGN's Géoplateforme, which needs no API key.
-HomeGround currently requires no credentials of any kind — see
-`docs/decisions/ADR-010-ign-geocoding.md` and `ADR-011-leaflet.md`.
+Geocoding comes from IGN's Géoplateforme and needs no API key — see
+`docs/decisions/ADR-010-ign-geocoding.md`.
+
+Base map tiles come from Mapbox, and need `VITE_MAPBOX_TOKEN` in `.env` — see
+the amendment to `docs/decisions/ADR-011-leaflet.md`. Without a token the map
+falls back to IGN and still works, so the repository runs with no credentials
+at all.
+
+While the Mapbox style is still being chosen, the map carries a temporary
+picker offering several. It lists only the providers whose key is present, so a
+missing key shortens the picker rather than rendering a blank map.
