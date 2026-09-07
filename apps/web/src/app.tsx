@@ -1,6 +1,7 @@
 import "./styles/global.css";
 import { useEffect, useState } from "react";
 import { AreaSidebar } from "./areas/area-sidebar.js";
+import { SourcesPanel } from "./sources/sources-panel.js";
 import { useAreaLookup } from "./areas/use-area-lookup.js";
 import { AddPropertyPanel } from "./properties/add-property-panel.js";
 import { PropertyDetailPanel } from "./properties/property-detail-panel.js";
@@ -28,6 +29,7 @@ export function App() {
   // is the thing a user comes to do, so it is what they are shown first,
   // whether or not anything has been saved.
   const [showLanding, setShowLanding] = useState(true);
+  const [showSources, setShowSources] = useState(false);
   const { lookup, search, choose, clear } = useAreaLookup();
 
   function closeAdd() {
@@ -92,7 +94,13 @@ export function App() {
 
   return (
     <AppShell
-      header={<AppHeader onGoHome={goHome} onSearch={(query) => void lookUpArea(query)} />}
+      header={
+        <AppHeader
+          onGoHome={goHome}
+          onSearch={(query) => void lookUpArea(query)}
+          onShowSources={() => setShowSources(true)}
+        />
+      }
       // The landing hero has no sidebar: nothing has been looked up, so there
       // is nothing for it to say. A lookup then takes it over — the commune is
       // the subject, and the property list steps aside while it is.
@@ -113,6 +121,7 @@ export function App() {
       }
       map={
         <>
+          {showSources ? <SourcesPanel onClose={() => setShowSources(false)} /> : null}
           {landing ? (
             <FirstUseOverlay
               onLookup={(query) => void lookUpArea(query)}
