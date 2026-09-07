@@ -1,4 +1,4 @@
-import { count, eq } from "drizzle-orm";
+import { count, eq, like } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { areaBoundaries, areas, evidence, facilities, sources } from "../db/schema.js";
 import type { FetchLike } from "../geocoding/ign.js";
@@ -178,9 +178,33 @@ function administrativeEvidence(code: string, commune: ReturnType<typeof toCommu
  * assessment. docs/methodology.md, and it is why this is caught here rather
  * than allowed to fail the whole lookup.
  */
+const CENSUS_METRICS = [
+  "dwellings.main",
+  "dwellings.secondHome",
+  "dwellings.vacant",
+  "dwellings.secondHomeShare",
+];
+
 async function censusEvidence(code: string, fetchImpl?: FetchLike) {
   try {
     const figures = toCensusFigures(await fetchCensus(code, fetchImpl));
+
+    if (figures.length === 0) {
+      // The census answered and had nothing for this commune. Recording no
+      // rows would leave the metrics indistinguishable from ones nobody asked
+      // about; recording zeros would invent a commune with no housing.
+      return CENSUS_METRICS.map((metric) => ({
+        areaCode: code,
+        metric,
+        value: null,
+        unit: null,
+        state: "unknown" as const,
+        sourceId: "insee-census",
+        observedAt: null,
+        method: CENSUS_METHOD,
+        methodVersion: CENSUS_METHOD_VERSION,
+      }));
+    }
 
     return figures.map((figure) => ({
       areaCode: code,
@@ -224,10 +248,19 @@ const FINESS_METHOD_VERSION = 1;
  * really a statement about HomeGround, so the count is Unknown instead.
  */
 async function facilityEvidence(db: Db, code: string) {
-  const [{ total } = { total: 0 }] = await db.select({ total: count() }).from(facilities);
-  const ingested = total > 0;
+  // Zero facilities is a finding only where the directory reaches. The
+  // geolocated extract carries no overseas establishments at all, so counting
+  // none in Mayotte says nothing about Mayotte — it says the source stopped at
+  // the Channel. Asking whether it holds anything in this commune's département
+  // decides that from the data rather than from a hardcoded list of territories.
+  const department = code.startsWith("97") ? code.slice(0, 3) : code.slice(0, 2);
+  const [{ total } = { total: 0 }] = await db
+    .select({ total: count() })
+    .from(facilities)
+    .where(like(facilities.areaCode, `${department}%`));
+  const covered = total > 0;
 
-  const here = ingested
+  const here = covered
     ? await db
         .select({ kind: facilities.kind, found: count() })
         .from(facilities)
@@ -246,9 +279,9 @@ async function facilityEvidence(db: Db, code: string) {
   ).map(([metric, kind, unit]) => ({
     areaCode: code,
     metric,
-    value: ingested ? counted(kind) : null,
-    unit: ingested ? unit : null,
-    state: ingested ? ("known" as const) : ("unknown" as const),
+    value: covered ? counted(kind) : null,
+    unit: covered ? unit : null,
+    state: covered ? ("known" as const) : ("unknown" as const),
     sourceId: "finess",
     observedAt: null,
     method: FINESS_METHOD,

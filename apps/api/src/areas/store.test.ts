@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { areaBoundaries, areas, evidence, sources } from "../db/schema.js";
+import { areaBoundaries, areas, evidence, facilities, sources } from "../db/schema.js";
 import { getTestDb } from "../test/database.js";
 import commune from "./__fixtures__/geo-api-commune.json" with { type: "json" };
 import census from "./__fixtures__/melodi-dwellings.json" with { type: "json" };
@@ -9,7 +9,7 @@ import { SOURCES } from "../sources/registry.js";
 const { db } = getTestDb();
 
 /** Counts what each upstream service was actually asked for. */
-function recordingFetch(options: { censusFails?: boolean } = {}) {
+function recordingFetch(options: { censusFails?: boolean; code?: string } = {}) {
   const calls: string[] = [];
 
   const fetchImpl = (async (input: unknown) => {
@@ -22,7 +22,12 @@ function recordingFetch(options: { censusFails?: boolean } = {}) {
         : new Response(JSON.stringify(census), { status: 200 });
     }
 
-    return new Response(JSON.stringify(commune), { status: 200 });
+    // The fixture is Fabrezan; a test asking for another commune needs the
+    // reply to agree, or the area row and its evidence disagree on the code.
+    return new Response(
+      JSON.stringify(options.code ? { ...commune, code: options.code } : commune),
+      { status: 200 },
+    );
   }) as unknown as typeof globalThis.fetch;
 
   return { fetchImpl, calls };
@@ -31,6 +36,7 @@ function recordingFetch(options: { censusFails?: boolean } = {}) {
 const CODE = "11132";
 
 beforeEach(async () => {
+  await db.delete(facilities);
   await db.delete(evidence);
   await db.delete(areaBoundaries);
   await db.delete(areas);
@@ -39,6 +45,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  await db.delete(facilities);
   await db.delete(evidence);
   await db.delete(areaBoundaries);
   await db.delete(areas);
@@ -151,5 +158,64 @@ describe("the source registry", () => {
     for (const source of SOURCES) {
       expect(source.limitations.length).toBeGreaterThanOrEqual(1);
     }
+  });
+});
+
+describe("a commune the sources know nothing about", () => {
+  it("marks census figures unknown when the census answers with nothing", async () => {
+    // A commune with no census data is not a commune with no housing, and
+    // recording no rows at all would be indistinguishable from never asking.
+    const empty = (async (input: unknown) => {
+      const url = String(input);
+
+      return url.includes("melodi")
+        ? new Response(JSON.stringify({ observations: [] }), { status: 200 })
+        : new Response(JSON.stringify(commune), { status: 200 });
+    }) as unknown as typeof globalThis.fetch;
+
+    const area = await getArea(db, CODE, empty);
+    const census = area.evidence.filter((f) => f.sourceId === "insee-census");
+
+    expect(census).toHaveLength(4);
+    for (const fact of census) {
+      expect(fact.state).toBe("unknown");
+      expect(fact.value).toBeNull();
+    }
+  });
+
+  it("will not call a facility count zero where the directory does not reach", async () => {
+    // The geolocated FINESS extract holds nothing overseas, so counting none
+    // in Mayotte says nothing about Mayotte.
+    const { fetchImpl } = recordingFetch({ code: "97617" });
+    const area = await getArea(db, "97617", fetchImpl);
+    const health = area.evidence.filter((f) => f.sourceId === "finess");
+
+    expect(health).toHaveLength(2);
+    for (const fact of health) {
+      expect(fact.state).toBe("unknown");
+      expect(fact.value).toBeNull();
+    }
+  });
+
+  it("still calls zero zero where the directory does reach", async () => {
+    await db.insert(facilities).values({
+      id: "test-1",
+      areaCode: "11999",
+      kind: "pharmacy",
+      name: "Somewhere else in the Aude",
+      latitude: 43.1,
+      longitude: 2.7,
+      precision: "exact",
+      sourceId: "finess",
+    });
+
+    const { fetchImpl } = recordingFetch();
+    const area = await getArea(db, CODE, fetchImpl);
+    const pharmacies = area.evidence.find((f) => f.metric === "health.pharmacies");
+
+    // FINESS holds facilities in this département, so none in this commune is
+    // a finding rather than a gap.
+    expect(pharmacies?.state).toBe("known");
+    expect(pharmacies?.value).toBe(0);
   });
 });

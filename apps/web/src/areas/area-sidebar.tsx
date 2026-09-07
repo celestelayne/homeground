@@ -5,11 +5,19 @@ import type { AreaLookup, CommuneChoice } from "./use-area-lookup.js";
 interface AreaSidebarProps {
   lookup: AreaLookup;
   onChoose: (choice: CommuneChoice) => void;
+  /** Take the outline off the map, or put it back. The research stays either way. */
+  onToggleBoundary?: (() => void) | undefined;
+  boundaryShown?: boolean;
 }
 
 const number = new Intl.NumberFormat("en-GB");
 
-export function AreaSidebar({ lookup, onChoose }: AreaSidebarProps) {
+export function AreaSidebar({
+  lookup,
+  onChoose,
+  onToggleBoundary,
+  boundaryShown = false,
+}: AreaSidebarProps) {
   switch (lookup.kind) {
     case "idle":
       return null;
@@ -54,11 +62,25 @@ export function AreaSidebar({ lookup, onChoose }: AreaSidebarProps) {
       );
 
     case "loaded":
-      return <AreaDetail area={lookup.area} />;
+      return (
+        <AreaDetail
+          area={lookup.area}
+          onToggleBoundary={onToggleBoundary}
+          boundaryShown={boundaryShown}
+        />
+      );
   }
 }
 
-function AreaDetail({ area }: { area: Area }) {
+function AreaDetail({
+  area,
+  onToggleBoundary,
+  boundaryShown,
+}: {
+  area: Area;
+  onToggleBoundary?: (() => void) | undefined;
+  boundaryShown?: boolean;
+}) {
   const postcode = area.postcodes[0];
 
   return (
@@ -72,6 +94,18 @@ function AreaDetail({ area }: { area: Area }) {
         <p className="m-0 mt-2 text-caption leading-[1.5] text-ink-2">
           Results describe {area.name} and its surrounding area, not this specific house.
         </p>
+
+        {onToggleBoundary ? (
+          <button
+            type="button"
+            onClick={onToggleBoundary}
+            aria-pressed={boundaryShown}
+            className="mt-3 flex items-center gap-[6px] rounded-sharp border border-line-2 px-[7px] py-[3px] text-caption text-ink-3 hover:bg-row-hover hover:text-ink"
+          >
+            <span aria-hidden="true">{boundaryShown ? "✕" : "▢"}</span>
+            {boundaryShown ? "Hide the commune outline" : "Show the commune outline"}
+          </button>
+        ) : null}
       </div>
 
       <dl className="m-0 flex flex-col gap-3 px-4 py-4">

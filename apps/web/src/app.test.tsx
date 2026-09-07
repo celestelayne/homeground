@@ -106,6 +106,16 @@ beforeEach(() => {
               methodVersion: 1,
             },
             {
+              metric: "health.pharmacies",
+              value: null,
+              unit: null,
+              state: "unknown",
+              sourceId: "finess",
+              observedAt: null,
+              method: "finess-facility-count",
+              methodVersion: 1,
+            },
+            {
               metric: "dwellings.secondHomeShare",
               value: 25.36,
               unit: "%",
@@ -355,6 +365,46 @@ describe("before anything is saved", () => {
     // point and M3 compares against it. A brief answers the question once.
     expect(await screen.findByText(/23\.5%/)).toBeInTheDocument();
     expect(screen.queryByText(/25\.4%/)).not.toBeInTheDocument();
+  });
+
+  it("says Unknown where a source had nothing, rather than nothing at all", async () => {
+    stored = [];
+
+    render(<App />);
+    const user = userEvent.setup();
+
+    const hero = within(await screen.findByRole("form", { name: "Look up a place" }));
+    await user.type(hero.getByRole("textbox"), "Fabrezan");
+    await user.click(hero.getByRole("button", { name: "Look up" }));
+
+    // A metric the source could not answer is named and marked, not omitted.
+    // Omitting it would be indistinguishable from never having asked.
+    expect(await screen.findByText("Pharmacies")).toBeInTheDocument();
+    expect(screen.getByText("Unknown")).toBeInTheDocument();
+  });
+
+  it("hides the commune outline without abandoning the research", async () => {
+    stored = [];
+
+    render(<App />);
+    const user = userEvent.setup();
+
+    const hero = within(await screen.findByRole("form", { name: "Look up a place" }));
+    await user.type(hero.getByRole("textbox"), "Fabrezan");
+    await user.click(hero.getByRole("button", { name: "Look up" }));
+
+    await user.click(await screen.findByRole("button", { name: /Hide the commune outline/ }));
+
+    // The brief stays, and the outline can come back without searching again.
+    expect(screen.getByRole("heading", { name: /Fabrezan/ })).toBeInTheDocument();
+    const back = screen.getByRole("button", { name: /Show the commune outline/ });
+    expect(back).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(back);
+    expect(screen.getByRole("button", { name: /Hide the commune outline/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 
   it("says the results are area-level, not about a house", async () => {

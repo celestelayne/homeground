@@ -73,11 +73,12 @@ export const SOURCES: SourceDefinition[] = [
       "and pharmacies are, with coordinates.",
     url: "https://www.data.gouv.fr/datasets/finess-extraction-du-fichier-des-etablissements",
     cadence: "Continuous, republished as establishments open and close",
-    coverage: "France",
+    coverage: "Metropolitan France. The geolocated extract carries no overseas establishments",
     licence: "Licence Ouverte 2.0",
     limitations: [
       "It registers establishments, so a practitioner working alone may not appear as one.",
       "Around one facility in twenty-five is placed at its commune rather than at its address, and is shown as an area rather than a point.",
+      "Outside metropolitan France it holds nothing, so a count there is unknown rather than zero.",
     ],
     metrics: ["health.pharmacies", "health.hospitals"],
   },
