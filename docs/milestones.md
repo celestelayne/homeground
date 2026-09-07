@@ -352,6 +352,11 @@ Each is either resolved into an ADR or deferred to the milestone that requires i
   labelled until a source is chosen. The intercommunality name is the nearest
   sourced substitute. M3 may make the question moot: a commune measured against
   similar communes, and against its own past, describes itself.
+* **How an area brief presents many figures** — M3. Three census editions of
+  four dwelling metrics plus the administrative figures is fifteen rows, which
+  pushes population below the fold. Honest but not readable. M3 adds comparison
+  and will restructure the panel regardless, so the shape is decided there
+  rather than twice.
 * **Which Mapbox base map style** — Streets, Light or Outdoors. ADR-011's amendment settles the provider and leaves the style open. A temporary picker in the map exists to answer it by looking; it is removed once the answer is chosen.
 
 **Deferred, with owning milestone**

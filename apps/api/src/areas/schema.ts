@@ -28,6 +28,26 @@ const BoundarySchema = Type.Union([
   Type.Null(),
 ]);
 
+/** One measured or retrieved fact, with everything needed to trust it. */
+export const EvidenceSchema = Type.Object({
+  metric: Type.String(),
+  /** Null exactly when the state carries absence. */
+  value: Nullable(Type.Number()),
+  unit: Type.Union([Type.String(), Type.Null()]),
+  state: Type.Union([
+    Type.Literal("known"),
+    Type.Literal("estimated"),
+    Type.Literal("unknown"),
+    Type.Literal("unavailable"),
+    Type.Literal("stale"),
+  ]),
+  sourceId: Type.String(),
+  /** When the source observed it. Not when HomeGround fetched it. */
+  observedAt: Type.Union([Type.String(), Type.Null()]),
+  method: Type.String(),
+  methodVersion: Type.Number(),
+});
+
 /**
  * A French commune, as HomeGround can currently source it.
  *
@@ -41,12 +61,6 @@ export const AreaSchema = Type.Object({
   name: Type.String(),
   /** A commune can carry several, and several communes can share one. */
   postcodes: Type.Array(Type.String()),
-  /** Absent stays absent. A commune with no figure is not a commune of zero. */
-  population: Nullable(Type.Number()),
-  /** Square kilometres. The source publishes hectares. */
-  areaSqKm: Nullable(Type.Number()),
-  /** Residents per square kilometre, when both inputs are known. */
-  densityPerSqKm: Nullable(Type.Number()),
   department: Type.Object({ code: Type.String(), name: Type.String() }),
   region: Type.Object({ code: Type.String(), name: Type.String() }),
   /**
@@ -64,6 +78,13 @@ export const AreaSchema = Type.Object({
   }),
   /** Null when the source gave no usable geometry. The rest still stands. */
   boundary: BoundarySchema,
+  /**
+   * What HomeGround has measured or retrieved about this commune, each piece
+   * carrying where it came from. Figures are no longer fields on the commune:
+   * a measurement without its provenance is an assertion. See
+   * specs/evidence.md.
+   */
+  evidence: Type.Array(EvidenceSchema),
 });
 
 export const AreaParamsSchema = Type.Object(
@@ -72,4 +93,5 @@ export const AreaParamsSchema = Type.Object(
 );
 
 export type Area = Static<typeof AreaSchema>;
+export type Evidence = Static<typeof EvidenceSchema>;
 export type Boundary = Static<typeof BoundarySchema>;

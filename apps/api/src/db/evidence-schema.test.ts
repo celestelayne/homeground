@@ -60,6 +60,13 @@ async function rejectedBy(write: Promise<unknown>): Promise<string> {
 }
 
 beforeEach(async () => {
+  // The application registers its real sources on boot, and tests share one
+  // database, so start from an empty registry rather than from whatever the
+  // last file left behind.
+  await db.delete(evidence);
+  await db.delete(areaBoundaries);
+  await db.delete(areas);
+  await db.delete(sources);
   await db.insert(sources).values(source);
   await db.insert(areas).values(area);
 });
