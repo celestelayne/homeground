@@ -1,4 +1,4 @@
-import type { CreateProperty, GeocodeCandidate, Property, UpdateProperty } from "./types.js";
+import type { Area, CreateProperty, GeocodeCandidate, Property, UpdateProperty } from "./types.js";
 
 /** Same origin in development, via the Vite proxy. */
 const BASE = "/api";
@@ -59,6 +59,15 @@ export async function geocode(query: string): Promise<GeocodeCandidate[]> {
   );
 
   return candidates;
+}
+
+/**
+ * A commune by INSEE code. Throws `area_not_found` when no commune has that
+ * code, and `area_lookup_unavailable` when the service could not answer. The
+ * two are different facts and the interface renders them differently.
+ */
+export async function getArea(code: string): Promise<Area> {
+  return request<Area>(`/areas/${encodeURIComponent(code)}`);
 }
 
 export async function updateProperty(id: string, patch: UpdateProperty): Promise<Property> {

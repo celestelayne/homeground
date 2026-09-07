@@ -11,6 +11,16 @@ export const GeocodeCandidateSchema = Type.Object({
    * not a decision: specs/property.md requires the user to declare the tier.
    */
   precision: LocationTierSchema,
+  /**
+   * INSEE code of the commune this result falls in — "11132" for Fabrezan.
+   *
+   * This is the identity of a French commune. A postcode is not: 11200 covers
+   * five communes, and commune names repeat across the country. It is also the
+   * join key for INSEE, DVF and the commune boundary service.
+   *
+   * Null when the source did not give one. Never inferred from the label.
+   */
+  communeCode: Type.Union([Type.String(), Type.Null()]),
 });
 
 export const GeocodeQuerySchema = Type.Object(

@@ -32,35 +32,72 @@ function property(overrides: Partial<Property> = {}): Property {
   };
 }
 
+/**
+ * The root route is the landing hero, so the saved list sits behind it. Every
+ * test that works with the list dismisses the hero first, the way a user would.
+ */
+async function renderWithList() {
+  render(<App />);
+  const user = userEvent.setup();
+  await user.click(await screen.findByRole("button", { name: "Close and return to the map" }));
+
+  return user;
+}
+
 let stored: Property[] = [];
 const patches: Array<{ id: string; body: unknown }> = [];
 /** Every query the app actually sent to the geocoder, in order. */
 let geocoded: string[] = [];
+/** Every INSEE code the app actually asked the areas endpoint for. */
+let areasFetched: string[] = [];
 
 beforeEach(() => {
   stored = [];
   patches.length = 0;
   geocoded = [];
+  areasFetched = [];
 
   vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
+    if (url.startsWith("/api/areas/")) {
+      const code = url.split("/").pop() as string;
+      areasFetched.push(code);
+
+      return new Response(
+        JSON.stringify({
+          code,
+          name: "Fabrezan",
+          postcodes: ["11200"],
+          population: 1306,
+          areaSqKm: 28.87,
+          densityPerSqKm: 45.2,
+          department: { code: "11", name: "Aude" },
+          region: { code: "76", name: "Occitanie" },
+          intercommunality: { code: "200035863", name: "CC Corbières et Minervois" },
+          centre: { latitude: 43.1282, longitude: 2.7139 },
+        }),
+        { status: 200 },
+      );
+    }
+
     if (url.startsWith("/api/geocode")) {
       const query = new URL(url, "http://test").searchParams.get("q") ?? "";
       geocoded.push(query);
 
-      return new Response(
-        JSON.stringify({
-          candidates: [
-            {
-              id: "candidate-1",
-              label: query,
-              latitude: 43.351,
-              longitude: 2.889,
-              precision: "commune",
-            },
-          ],
-        }),
-        { status: 200 },
-      );
+      const candidate = (label: string, communeCode: string) => ({
+        id: `candidate-${communeCode}`,
+        label,
+        latitude: 43.351,
+        longitude: 2.889,
+        precision: "commune",
+        communeCode,
+      });
+
+      // A postcode names several communes; a commune name usually names one.
+      const candidates = /^\d{5}$/.test(query)
+        ? [candidate("Lézignan-Corbières", "11203"), candidate("Fabrezan", "11132")]
+        : [candidate(query, "11132")];
+
+      return new Response(JSON.stringify({ candidates }), { status: 200 });
     }
 
     if (init?.method === "PATCH") {
@@ -87,7 +124,7 @@ describe("the saved properties list", () => {
       property({ name: "To visit one", status: "visit" }),
     ];
 
-    render(<App />);
+    await renderWithList();
 
     const shortlist = await screen.findByRole("heading", { name: /Shortlist/ });
     expect(within(shortlist).getByText("2")).toBeInTheDocument();
@@ -97,9 +134,9 @@ describe("the saved properties list", () => {
   it("keeps rejected properties in the list rather than removing them", async () => {
     stored = [property({ name: "Ruin near Le Caylar", status: "rejected" })];
 
-    render(<App />);
+    await renderWithList();
 
-    expect(await screen.findByRole("button", { name: /Ruin near Le Caylar/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Ruin near Le Caylar/ })).toBeInTheDocument();
   });
 
   it("can hide and show rejected properties", async () => {
@@ -108,10 +145,9 @@ describe("the saved properties list", () => {
       property({ name: "Ruin near Le Caylar", status: "rejected" }),
     ];
 
-    render(<App />);
-    const user = userEvent.setup();
+    const user = await renderWithList();
 
-    await user.click(await screen.findByRole("button", { name: "Hide rejected properties" }));
+    await user.click(screen.getByRole("button", { name: "Hide rejected properties" }));
     expect(screen.queryByRole("button", { name: /Ruin near Le Caylar/ })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Kept/ })).toBeInTheDocument();
 
@@ -122,9 +158,9 @@ describe("the saved properties list", () => {
   it("shows no price for a property that has none", async () => {
     stored = [property({ name: "No price", askingPrice: null })];
 
-    render(<App />);
+    await renderWithList();
 
-    const row = await screen.findByRole("button", { name: /No price/ });
+    const row = screen.getByRole("button", { name: /No price/ });
     expect(row.textContent).toBe("No price");
   });
 });
@@ -133,10 +169,9 @@ describe("selecting a property", () => {
   it("opens the detail panel", async () => {
     stored = [property({ name: "Mas above the village" })];
 
-    render(<App />);
-    const user = userEvent.setup();
+    const user = await renderWithList();
 
-    await user.click(await screen.findByRole("button", { name: /Mas above the village/ }));
+    await user.click(screen.getByRole("button", { name: /Mas above the village/ }));
 
     expect(
       screen.getByRole("heading", { name: "Mas above the village", level: 2 }),
@@ -147,10 +182,9 @@ describe("selecting a property", () => {
   it("says how precisely the property is located", async () => {
     stored = [property({ locationTier: "commune" })];
 
-    render(<App />);
-    const user = userEvent.setup();
+    const user = await renderWithList();
 
-    await user.click(await screen.findByRole("button", { name: /Mas above/ }));
+    await user.click(screen.getByRole("button", { name: /Mas above/ }));
 
     // The estimate stays visible rather than being dressed up as precision.
     expect(screen.getByText("Located to the commune only")).toBeInTheDocument();
@@ -159,10 +193,9 @@ describe("selecting a property", () => {
   it("closes the panel again", async () => {
     stored = [property()];
 
-    render(<App />);
-    const user = userEvent.setup();
+    const user = await renderWithList();
 
-    await user.click(await screen.findByRole("button", { name: /Mas above/ }));
+    await user.click(screen.getByRole("button", { name: /Mas above/ }));
     await user.click(screen.getByRole("button", { name: "Close property" }));
 
     expect(screen.queryByRole("button", { name: "Close property" })).not.toBeInTheDocument();
@@ -173,10 +206,9 @@ describe("changing a property", () => {
   it("saves a new status", async () => {
     stored = [property({ status: "saved" })];
 
-    render(<App />);
-    const user = userEvent.setup();
+    const user = await renderWithList();
 
-    await user.click(await screen.findByRole("button", { name: /Mas above/ }));
+    await user.click(screen.getByRole("button", { name: /Mas above/ }));
     await user.click(screen.getByRole("button", { name: /Shortlist/ }));
 
     await waitFor(() => expect(patches).toHaveLength(1));
@@ -186,10 +218,9 @@ describe("changing a property", () => {
   it("saves notes when the field loses focus", async () => {
     stored = [property()];
 
-    render(<App />);
-    const user = userEvent.setup();
+    const user = await renderWithList();
 
-    await user.click(await screen.findByRole("button", { name: /Mas above/ }));
+    await user.click(screen.getByRole("button", { name: /Mas above/ }));
     const notes = screen.getByRole("textbox", { name: /Your notes/ });
 
     await user.type(notes, "Loved this village");
@@ -206,10 +237,9 @@ describe("changing a property", () => {
   it("does not save notes that did not change", async () => {
     stored = [property({ notes: "Unchanged" })];
 
-    render(<App />);
-    const user = userEvent.setup();
+    const user = await renderWithList();
 
-    await user.click(await screen.findByRole("button", { name: /Mas above/ }));
+    await user.click(screen.getByRole("button", { name: /Mas above/ }));
     await user.click(screen.getByRole("textbox", { name: /Your notes/ }));
     await user.tab();
 
@@ -239,23 +269,74 @@ describe("before anything is saved", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("carries a looked-up place into the add panel, and runs the lookup there", async () => {
+  it("looks a commune up from the hero, and the sidebar describes it", async () => {
     stored = [];
 
     render(<App />);
     const user = userEvent.setup();
 
-    await user.type(
-      await screen.findByRole("textbox", { name: "Address, village or place name" }),
-      "Montouliers",
-    );
-    await user.click(screen.getByRole("button", { name: "Look up" }));
+    const hero = within(await screen.findByRole("form", { name: "Look up a place" }));
+    await user.type(hero.getByRole("textbox"), "Fabrezan");
+    await user.click(hero.getByRole("button", { name: "Look up" }));
 
-    expect(screen.getByRole("heading", { name: "Add property" })).toBeInTheDocument();
-    // The query arrives already searched: asking twice for the same lookup is
-    // the thing the overlay's field exists to avoid.
-    expect(await screen.findByRole("button", { name: /Montouliers/ })).toBeInTheDocument();
-    expect(geocoded).toEqual(["Montouliers"]);
+    // Geocoded to a commune, then that commune's facts fetched by INSEE code.
+    expect(geocoded).toEqual(["Fabrezan"]);
+    await waitFor(() => expect(areasFetched).toEqual(["11132"]));
+
+    expect(await screen.findByRole("heading", { name: /Fabrezan/ })).toBeInTheDocument();
+    expect(screen.getByText(/1,306 residents/)).toBeInTheDocument();
+  });
+
+  it("says the results are area-level, not about a house", async () => {
+    stored = [];
+
+    render(<App />);
+    const user = userEvent.setup();
+
+    const hero = within(await screen.findByRole("form", { name: "Look up a place" }));
+    await user.type(hero.getByRole("textbox"), "Fabrezan");
+    await user.click(hero.getByRole("button", { name: "Look up" }));
+
+    // The caveat is not optional decoration. Commune-derived results describe
+    // the commune, per specs/property.md.
+    expect(await screen.findByText(/not this specific house/)).toBeInTheDocument();
+  });
+
+  it("steps the hero aside once something has been looked up", async () => {
+    stored = [];
+
+    render(<App />);
+    const user = userEvent.setup();
+
+    const hero = within(await screen.findByRole("form", { name: "Look up a place" }));
+    await user.type(hero.getByRole("textbox"), "Fabrezan");
+    await user.click(hero.getByRole("button", { name: "Look up" }));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "Find somewhere worth living." }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  it("will not choose between communes when a postcode names several", async () => {
+    stored = [];
+
+    render(<App />);
+    const user = userEvent.setup();
+
+    const hero = within(await screen.findByRole("form", { name: "Look up a place" }));
+    await user.type(hero.getByRole("textbox"), "11200");
+    await user.click(hero.getByRole("button", { name: "Look up" }));
+
+    // 11200 covers five real communes. Picking the top one would silently
+    // research somewhere the user did not ask about.
+    expect(await screen.findByText(/matches 2 communes/)).toBeInTheDocument();
+    expect(areasFetched).toEqual([]);
+
+    await user.click(screen.getByRole("button", { name: /Fabrezan/ }));
+
+    await waitFor(() => expect(areasFetched).toEqual(["11132"]));
   });
 
   it("will not look up a query too short to mean anything", async () => {
@@ -264,21 +345,18 @@ describe("before anything is saved", () => {
     render(<App />);
     const user = userEvent.setup();
 
-    await user.type(
-      await screen.findByRole("textbox", { name: "Address, village or place name" }),
-      "Mo",
-    );
+    const hero = within(await screen.findByRole("form", { name: "Look up a place" }));
+    await user.type(hero.getByRole("textbox"), "Mo");
 
-    expect(screen.getByRole("button", { name: "Look up" })).toBeDisabled();
+    expect(hero.getByRole("button", { name: "Look up" })).toBeDisabled();
   });
 
   it("opens the add panel without a lookup, for a place with no address", async () => {
     stored = [];
 
-    render(<App />);
-    const user = userEvent.setup();
+    const user = await renderWithList();
 
-    await user.click(await screen.findByRole("button", { name: "place the point yourself" }));
+    await user.click(screen.getByRole("button", { name: "place the point yourself" }));
 
     expect(screen.getByRole("heading", { name: "Add property" })).toBeInTheDocument();
     expect(geocoded).toEqual([]);
@@ -287,10 +365,9 @@ describe("before anything is saved", () => {
   it("goes home from the logo, closing what was open", async () => {
     stored = [property({ name: "Mas above the village" })];
 
-    render(<App />);
-    const user = userEvent.setup();
+    const user = await renderWithList();
 
-    await user.click(await screen.findByRole("button", { name: /Mas above the village/ }));
+    await user.click(screen.getByRole("button", { name: /Mas above the village/ }));
     expect(screen.getByRole("heading", { name: "Mas above the village" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "HomeGround" }));
@@ -303,10 +380,10 @@ describe("before anything is saved", () => {
   it("goes home from the logo while adding, abandoning the draft", async () => {
     stored = [property()];
 
-    render(<App />);
-    const user = userEvent.setup();
+    const user = await renderWithList();
 
-    await user.click(await screen.findByRole("button", { name: "+ Add property" }));
+    await user.click(screen.getByRole("button", { name: "HomeGround" }));
+    await user.click(screen.getByRole("button", { name: "place the point yourself" }));
     expect(screen.getByRole("heading", { name: "Add property" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "HomeGround" }));
@@ -314,15 +391,55 @@ describe("before anything is saved", () => {
     expect(screen.queryByRole("heading", { name: "Add property" })).not.toBeInTheDocument();
   });
 
-  it("steps aside once a property exists", async () => {
+  it("shows the landing hero on the root route, even with properties saved", async () => {
+    // Looking a commune up is what a user arrives wanting to do, so it is what
+    // they are shown — whether or not anything has been saved.
     stored = [property()];
 
     render(<App />);
-    await screen.findByRole("button", { name: /Mas above the village/ });
 
+    expect(
+      await screen.findByRole("heading", { name: "Find somewhere worth living." }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Address, village or place name" })).toBeVisible();
+    // The list is behind it, not gone.
+    expect(screen.queryByRole("button", { name: /Mas above the village/ })).not.toBeInTheDocument();
+  });
+
+  it("reveals the saved list once the hero is dismissed", async () => {
+    stored = [property()];
+
+    const user = await renderWithList();
+
+    expect(screen.getByRole("button", { name: /Mas above the village/ })).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Find somewhere worth living." }),
     ).not.toBeInTheDocument();
+
+    // And the logo brings it back.
+    await user.click(screen.getByRole("button", { name: "HomeGround" }));
+
+    expect(
+      screen.getByRole("heading", { name: "Find somewhere worth living." }),
+    ).toBeInTheDocument();
+  });
+
+  it("offers no way out when there is nothing behind it", async () => {
+    stored = [];
+
+    render(<App />);
+    await screen.findByRole("heading", { name: "Find somewhere worth living." });
+
+    expect(
+      screen.queryByRole("button", { name: "Close and return to the map" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the saved list reachable behind it", async () => {
+    stored = [property()];
+
+    await renderWithList();
+
     expect(screen.getByRole("complementary", { name: "Saved properties" })).toBeInTheDocument();
   });
 });

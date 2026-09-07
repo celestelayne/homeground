@@ -98,7 +98,7 @@ export function toCandidates(payload: unknown): GeocodeCandidate[] {
 
 function toCandidate(feature: unknown): GeocodeCandidate | null {
   const typed = feature as {
-    properties?: { label?: unknown; id?: unknown; type?: unknown };
+    properties?: { label?: unknown; id?: unknown; type?: unknown; citycode?: unknown };
     geometry?: { coordinates?: unknown };
   } | null;
 
@@ -132,5 +132,17 @@ function toCandidate(feature: unknown): GeocodeCandidate | null {
   const id =
     typeof typed?.properties?.id === "string" ? typed.properties.id : `${longitude},${latitude}`;
 
-  return { id, label, latitude, longitude, precision: precisionOf(typed?.properties?.type) };
+  // IGN calls it citycode; it is the INSEE code. Absent stays absent — an
+  // INSEE code guessed from a label would key evidence to the wrong commune.
+  const citycode = typed?.properties?.citycode;
+  const communeCode = typeof citycode === "string" && citycode.length > 0 ? citycode : null;
+
+  return {
+    id,
+    label,
+    latitude,
+    longitude,
+    precision: precisionOf(typed?.properties?.type),
+    communeCode,
+  };
 }
