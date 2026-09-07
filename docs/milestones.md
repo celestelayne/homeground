@@ -41,11 +41,90 @@ Only the current milestone below is specified.
 
 ## Current Milestone
 
-None. M1 is complete.
+### M2 — Evidence model, proven on commune facts
 
-Promoting M2 means specifying it: goal, acceptance criteria, out-of-scope
-list and authorized dependencies. Until that is written, no milestone is
-current and nothing is authorized to be built.
+#### Goal
+
+A commune carries sourced, versioned evidence with an explicit state, and the
+interface shows both the figure and what produced it.
+
+The contract and the first evidence ship together. An evidence model with no
+evidence is a layer, and this document forbids layer milestones.
+
+#### Acceptance Criteria
+
+M2 is complete when:
+
+* evidence for a commune is served from HomeGround's own store rather than
+  fetched from a third party on each request
+* every piece of evidence carries its value, its unit, its source, the date the
+  source observed it, and the version of the method that produced it
+* a figure a source does not provide is Unknown, and Unknown is distinguishable
+  in the API and on screen from zero and from a field that was never requested
+* one source failing leaves the evidence from the other source intact and
+  marks only its own as unavailable
+* every figure on screen can be traced to its source without leaving the page
+* a Sources and methodology panel lists every source in use, each with its
+  update cadence, its coverage, and at least one stated limitation
+* the panel is generated from the same registry the evidence references, so a
+  source cannot appear in one and not the other — a source with no evidence
+  behind it, or evidence citing a source the panel omits, fails a test
+* a source cannot be registered without a stated limitation
+* the panel says plainly that HomeGround assembles public evidence, does not
+  judge a property, and does not say whether anywhere is safe
+* a commune with no data renders as Unknown throughout, never as a commune of
+  zero people with no shops
+* evidence is retrievable by INSEE code alone
+* the same commune requested twice does not hit the upstream service twice
+* the invariants in `specs/evidence.md` are covered by tests
+
+#### Out of Scope
+
+M2 does not include:
+
+* comparison against other communes, or any statement that a figure is high or
+  low — that is M3, and until it exists a count is reported, never judged
+* wildfire, recorded prices, routing, and personal criteria
+* evidence attached to a Property rather than an Area
+* detecting staleness, or recomputing evidence when a source updates
+* a written description of a commune's character
+* listing sources HomeGround does not yet use. The panel describes what is
+  actually wired up, so EFFIS, Géorisques, FINESS and départemental fire
+  records appear when the milestones that use them land, not before
+* PostGIS, and storing boundaries as geometry
+* automatic or scheduled ingestion
+* authentication, deployment and hosting
+
+#### Authorized Dependencies
+
+In addition to those carried from M0 and M1:
+
+* FINESS, the national directory of health establishments, in its geolocated
+  form — hospitals and pharmacies with coordinates
+* INSEE census population, age structure and dwelling-occupancy data
+* both ingested rather than proxied
+* `proj4`, to convert FINESS coordinates from Lambert-93 (EPSG:2154) to
+  WGS84. Established by the step 1 spike: FINESS publishes projected
+  coordinates, and there is no way to place an establishment on the map
+  without converting them. PostGIS would also do it, but PostGIS is M5 and
+  reaching for it here would pull a database extension forward to avoid a
+  small library.
+
+Explicitly **not** authorized:
+
+* **React Query.** The requirement it was deferred against — one failed source
+  must not invalidate the rest of an assessment — turns out to be answerable in
+  the evidence contract, where each piece carries its own state, rather than in
+  the client's fetching library. Revisit when a genuine per-query staleness
+  requirement appears.
+* **PostGIS** — M5 introduces it.
+* **A scheduler** — ingestion is a command run by hand until a milestone needs
+  it to be automatic.
+
+#### Governing Specs
+
+`specs/evidence.md`, written as the first step of this milestone.
+`specs/property.md` is unchanged and Property gains no evidence here.
 
 ---
 
@@ -53,23 +132,108 @@ current and nothing is authorized to be built.
 
 Named and sequenced. Not specified until current.
 
-**M2 — Evidence model.** Assessment and Evidence contracts, provenance fields, Known/Estimated/Unknown/Stale states, method versioning, and evidence retrieval APIs.
+The sequence was reordered once M1 was complete, when the commune rather than
+the property became the subject of research. The reasoning is recorded under
+*Why this order* below, because the previous order is still the one a reader
+may remember.
 
-**M3 — Everyday services and routing.** One end-to-end metric first: nearest supermarket driving time. Normalize the source, identify candidates, route, persist evidence, and render it in the property panel.
+**M2 — Evidence model, proven on commune facts.** Assessment and Evidence
+contracts, provenance fields, Known/Estimated/Unknown/Stale states, method
+versioning, and evidence retrieval APIs — together with the first evidence that
+exercises them: where the hospitals and pharmacies are, from FINESS, and census
+population, age structure, second-home and vacancy shares.
 
-**M4 — Healthcare.** Everyday healthcare, emergency department, and major hospital travel-time evidence, using explicit FINESS category mappings and the same evidence and routing architecture.
+The two are deliberately different shapes. Census figures are attributed to a
+commune; FINESS establishments are located things carrying their own
+coordinates. A contract that holds both will hold what comes after. Counts
+across all communes are M3's business, not M2's.
 
-**M5 — Historical wildfire evidence.** Introduce PostGIS if not already required. Ingest authoritative fire geometries and calculate measurable historical evidence such as distance to the nearest recorded burned area.
+**M3 — Comparison against similar communes.** A count is not a finding. Two
+pharmacies means nothing until it is two where most communes of that size have
+none, and the national distribution needed to say so is already inside the same
+sources. Includes change over time: what a commune had ten years ago and no
+longer has, using INSEE's Base Permanente des Équipements for counts
+across all communes.
 
-**M6 — Personal criteria.** Evaluate measured evidence against user-defined thresholds. Preserve Unknown through evaluation and never treat missing data as zero or passing.
+**M4 — Designated exposure.** What a commune is officially recorded as exposed
+to, from Géorisques: flood, ground movement, seismic, radon, dam rupture, and
+forest fire. Commune-keyed and keyless, so it needs no geometry and no routing.
+This is a designation HomeGround reports, not a classification it derives, so
+it does not touch the rule reserved for M10. It is also the first milestone at
+which a buyer learns that Fabrezan is designated for forest fire, differential
+settlement and three kinds of flooding — facts a French buyer's notaire
+surfaces and a foreign buyer does not know to ask for.
 
-**M7 — Compare.** Present the same versioned metrics side by side for selected properties. Comparison is presentation and consistency checking, not a new scoring engine.
+**M5 — Historical wildfire evidence.** Introduces PostGIS. Ingest authoritative
+fire geometries and calculate measurable historical evidence — distance to the
+nearest recorded burned area, hectares burned within the commune, most recent
+recorded year. Measurement only; classification is M10.
 
-**M8 — Wildfire exposure methodology.** Only after the classification method and authoritative inputs are explicitly resolved in `docs/methodology.md`. Implementation must not invent Low/Moderate/Elevated formulas.
+**M6 — Recorded sale prices.** France publishes every recorded sale since 2010
+under an open licence, keyed on the commune. Gated on the comparability
+decision in `docs/methodology.md` being resolved first. Fabrezan's 2023 house
+sales span €508 to €9,310 per square metre, so an unsegmented median would be a
+confident-looking number that means nothing.
 
-**M9 — Mobile quick check.** Reuse the HomeGround API and evidence contracts for the iOS and Android address-check flow: enter or speak, confirm, check, understand source and coverage.
+**M7 — Reachable services.** Travel-time evidence for services that are sparse
+and far enough that the answer is a property of the commune rather than of a
+house: emergency department and major hospital, using explicit FINESS category
+mappings. Introduces routing. Everyday services stay presence rather than
+minutes until a property has an exact location, because a difference of a few
+minutes to a supermarket is a fact about a house, not a village.
 
-**M10 — AI intent and orchestration.** Natural-language or voice intent over an allow-listed capability registry. AI selects trusted operations and explains returned evidence. It does not create evidence.
+**M8 — Personal criteria.** Evaluate measured evidence against user-defined
+thresholds. Preserve Unknown through evaluation and never treat missing data as
+zero or passing.
+
+**M9 — Compare.** Present the same versioned metrics side by side for selected
+communes. Comparison is presentation and consistency checking, not a new
+scoring engine.
+
+**M10 — Wildfire exposure methodology.** Only after the classification method and
+authoritative inputs are explicitly resolved in `docs/methodology.md`.
+Implementation must not invent Low/Moderate/Elevated formulas.
+
+**M11 — Listing partnerships and property location.** Import properties with
+disclosed locations from listing providers. This is what ends the reliance on a
+user placing a point by hand, and the first milestone at which property-level
+travel time for everyday services is honest rather than a commune centroid
+wearing a house's name.
+
+**M12 — Mobile quick check.** Reuse the HomeGround API and evidence contracts
+for the iOS and Android address-check flow: enter or speak, confirm, check,
+understand source and coverage.
+
+**M13 — AI intent and orchestration.** Natural-language or voice intent over an
+allow-listed capability registry. AI selects trusted operations and explains
+returned evidence. It does not create evidence.
+
+---
+
+## Why This Order
+
+The original sequence assumed the property was the subject and opened with
+routing. Three things changed that.
+
+**A listing usually withholds the address.** It gives a commune, and that is
+enough to answer the question a buyer asks first — would I even want to look
+here? Property-level location arrives with listing partnerships, at M11.
+
+**At commune tier, most travel times are not honest.** There is no house to
+route from, and `specs/property.md` already says evidence derived at commune
+tier describes the commune. Routing therefore survives only for services sparse
+enough that the answer barely varies across a commune. Everything else becomes
+presence, which needs no routing at all.
+
+**The cheapest evidence is also the most available.** BPE, the census and
+recorded sales are all keyed on the INSEE code, all keyless, and all carry a
+time series. They need no routing provider, no candidate matching and no
+per-property computation. Wildfire history is a boundary intersection rather
+than a route, which is why it now precedes routing rather than following it.
+
+One consequence is deliberate: PostGIS arrives at M5 rather than being deferred
+further, and pays for the boundary storage and caching that the area lookup
+already needs. See the amendment to `ADR-005`.
 
 ---
 
@@ -186,24 +350,33 @@ Each is either resolved into an ADR or deferred to the milestone that requires i
   An area brief wants a sentence of orientation, and no service HomeGround uses
   publishes one. ADR-004 forbids writing it, so the slot stays empty and
   labelled until a source is chosen. The intercommunality name is the nearest
-  sourced substitute.
+  sourced substitute. M3 may make the question moot: a commune measured against
+  similar communes, and against its own past, describes itself.
 * **Which Mapbox base map style** — Streets, Light or Outdoors. ADR-011's amendment settles the provider and leaves the style open. A temporary picker in the map exists to answer it by looking; it is removed once the answer is chosen.
 
 **Deferred, with owning milestone**
 
-* **React Query** — M2. M1 has one collection and one screen, so nothing currently requires it. M2 introduces per-property evidence with a Stale state, and a rule that one failed source must not invalidate the rest of an assessment. That is per-query staleness and error isolation.
+* **React Query** — resolved, and declined. It was deferred against a named
+  requirement: one failed source must not invalidate the rest of an assessment.
+  M2 meets that requirement in the evidence contract, where each piece carries
+  its own state, rather than in the client's fetching library. A methodology
+  rule does not belong in a cache. Revisit only if a genuine per-query
+  staleness requirement appears.
 * **Methodology version attachment** — M2, which introduces method versioning.
-* **Wildfire classification method** — M8, and explicitly gated on resolution in `docs/methodology.md` first.
-* **Mobile repository** — M9. The mobile application currently lives outside this repository. Whether it moves into the monorepo, and what that would require, is undecided.
-* **Caching commune facts and boundaries** — owned by the milestone that
-  introduces the area brief, alongside PostGIS. geo.api.gouv.fr rate-limits in
-  ordinary use, and the data effectively never changes.
+* **Wildfire classification method** — M10, and explicitly gated on resolution in `docs/methodology.md` first.
+* **Mobile repository** — M12. The mobile application currently lives outside this repository. Whether it moves into the monorepo, and what that would require, is undecided.
+* **Caching commune facts and boundaries** — M2, which is the first milestone
+  to hold commune data rather than fetch it per request. geo.api.gouv.fr
+  rate-limits in ordinary use, and the data effectively never changes.
 * **Hosting and deployed environments** — no owning milestone yet. Required by the first milestone that needs an environment beyond local development and CI.
 * **Evidence staleness** — no owning milestone. M2 introduces a Stale state, but no milestone yet owns detecting staleness or recomputing evidence.
 * **Correcting a mis-saved property** — no owning milestone. M1 has no delete and cannot edit coordinates, following `specs/property.md`. A property saved against the wrong location is permanent.
 * **Raising a location tier after saving** — no owning milestone. `specs/property.md` allows a user to raise a tier as they learn more; M1 declares it at save and never revisits it.
-* **Recorded property sales** — no owning milestone. France publishes every recorded sale since 2010 under an open licence, geolocated to the parcel. It is a price source, but also an index keyed on what listings publish — commune, type, built surface, land surface — so a property that has changed hands can be matched to its parcel and reach `exact` tier without anyone guessing from photographs. Comparability is a methodology decision and must be resolved before implementation, as `docs/methodology.md` requires.
-* **Settlement context** — no owning milestone. Classifying a property as core, fringe or isolated. INSEE's commune density grid is the likely authoritative input, but it classifies communes rather than properties, and how a property's position modifies its commune's class is an unresolved methodology decision.
+* **Recorded property sales** — M6. France publishes every recorded sale since 2010 under an open licence, geolocated to the parcel. It is a price source, but also an index keyed on what listings publish — commune, type, built surface, land surface — so a property that has changed hands can be matched to its parcel and reach `exact` tier without anyone guessing from photographs. Comparability is a methodology decision and must be resolved before implementation, as `docs/methodology.md` requires.
+* **Settlement context** — M3. INSEE's commune density grid classifies
+  communes, which is now the subject, so the mismatch that blocked this is gone
+  for area-level use. How a property's position modifies its commune's class
+  remains unresolved and returns with M10.
 
 ---
 
