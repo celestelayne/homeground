@@ -100,6 +100,7 @@ function AreaDetail({ area }: { area: Area }) {
 const SOURCE_NAMES: Record<string, string> = {
   "geo-api-gouv": "Découpage administratif",
   "insee-census": "INSEE census",
+  finess: "FINESS",
 };
 
 /**
@@ -108,12 +109,35 @@ const SOURCE_NAMES: Record<string, string> = {
  * Rounding happens here and only here. The stored value keeps the decimals the
  * source published, because rounding before deriving a share changes the share.
  */
+/**
+ * The most recent observation of each metric.
+ *
+ * The census publishes three editions and HomeGround holds all of them —
+ * a commune's direction of travel is the point, and M3 compares against it.
+ * But a brief that answers "what is this place like" does not answer it three
+ * times over, so the panel shows the latest and the earlier editions stay in
+ * the evidence behind it.
+ */
+function latestPerMetric(evidence: Evidence[]): Evidence[] {
+  const latest = new Map<string, Evidence>();
+
+  for (const fact of evidence) {
+    const held = latest.get(fact.metric);
+
+    if (!held || (fact.observedAt ?? "") > (held.observedAt ?? "")) {
+      latest.set(fact.metric, fact);
+    }
+  }
+
+  return [...latest.values()];
+}
+
 function Measurements({ evidence }: { evidence: Evidence[] }) {
   if (evidence.length === 0) {
     return null;
   }
 
-  const ordered = [...evidence].sort((a, b) =>
+  const ordered = [...latestPerMetric(evidence)].sort((a, b) =>
     (b.observedAt ?? "").localeCompare(a.observedAt ?? ""),
   );
 
@@ -142,6 +166,19 @@ function Measurements({ evidence }: { evidence: Evidence[] }) {
   );
 }
 
+/**
+ * How far to round for display. The stored value keeps every decimal the
+ * source published; rounding here is the only place it happens.
+ *
+ * A count of dwellings is a whole number to a reader. A commune of 28.87 km²
+ * is not 29 — at this size the rounding is a tenth of the village.
+ */
+const DECIMALS: Record<string, number> = {
+  "%": 1,
+  "km²": 2,
+  "residents per km²": 1,
+};
+
 function Reading({ fact }: { fact: Evidence }) {
   if (fact.state === "unavailable") {
     // Could not ask. Different from asking and being told nothing.
@@ -152,7 +189,7 @@ function Reading({ fact }: { fact: Evidence }) {
     return <Unknown />;
   }
 
-  const decimals = fact.unit === "%" ? 1 : 0;
+  const decimals = DECIMALS[fact.unit ?? ""] ?? 0;
 
   return (
     <>

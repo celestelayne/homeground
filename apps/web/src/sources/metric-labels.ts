@@ -12,6 +12,8 @@ export const METRIC_LABELS: Record<string, string> = {
   "dwellings.secondHome": "Second homes",
   "dwellings.vacant": "Empty homes",
   "dwellings.secondHomeShare": "Second homes, share of all",
+  "health.pharmacies": "Pharmacies",
+  "health.hospitals": "Hospitals",
 };
 
 export function labelFor(metric: string): string {

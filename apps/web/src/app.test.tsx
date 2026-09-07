@@ -107,6 +107,16 @@ beforeEach(() => {
             },
             {
               metric: "dwellings.secondHomeShare",
+              value: 25.36,
+              unit: "%",
+              state: "estimated",
+              sourceId: "insee-census",
+              observedAt: "2012-01-01T00:00:00.000Z",
+              method: "second-home-share-of-all-dwellings",
+              methodVersion: 1,
+            },
+            {
+              metric: "dwellings.secondHomeShare",
               value: 23.52,
               unit: "%",
               state: "estimated",
@@ -331,6 +341,22 @@ describe("before anything is saved", () => {
     expect(screen.getAllByText(/INSEE census|Découpage administratif/).length).toBeGreaterThan(0);
   });
 
+  it("shows the latest census edition, not every one it holds", async () => {
+    stored = [];
+
+    render(<App />);
+    const user = userEvent.setup();
+
+    const hero = within(await screen.findByRole("form", { name: "Look up a place" }));
+    await user.type(hero.getByRole("textbox"), "Fabrezan");
+    await user.click(hero.getByRole("button", { name: "Look up" }));
+
+    // Three editions are held, because a commune's direction of travel is the
+    // point and M3 compares against it. A brief answers the question once.
+    expect(await screen.findByText(/23\.5%/)).toBeInTheDocument();
+    expect(screen.queryByText(/25\.4%/)).not.toBeInTheDocument();
+  });
+
   it("says the results are area-level, not about a house", async () => {
     stored = [];
 
@@ -381,6 +407,23 @@ describe("before anything is saved", () => {
     await user.click(screen.getByRole("button", { name: /Fabrezan/ }));
 
     await waitFor(() => expect(areasFetched).toEqual(["11132"]));
+  });
+
+  it("clears the header field once the lookup has been made", async () => {
+    stored = [];
+
+    render(<App />);
+    const user = userEvent.setup();
+
+    // The hero carries its own Look up button, so scope to the header's form.
+    const header = within(screen.getByRole("form", { name: "Look up a commune" }));
+    const search = header.getByRole("textbox");
+    await user.type(search, "Fabrezan");
+    await user.click(header.getByRole("button", { name: "Look up" }));
+
+    // The commune is named in the sidebar from here on. Leaving it in the
+    // field only makes the next lookup a deletion first.
+    await waitFor(() => expect(search).toHaveValue(""));
   });
 
   it("will not look up a query too short to mean anything", async () => {
