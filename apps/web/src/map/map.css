@@ -1,0 +1,11 @@
+/*
+ * Placing a point is the only thing the map styles now. Property markers and
+ * their status shapes are gone: the commune is the subject, and a map of
+ * saved houses is not what a buyer is looking at while researching a place.
+ *
+ * Any calming filter belongs to the basemap that needs one, so it is set on
+ * the tile pane in area-map.tsx rather than declared here.
+ */
+.leaflet-container.hg-placing {
+  cursor: crosshair;
+}

@@ -9,8 +9,8 @@ import type { Property } from "./api/types";
  * Confining it to one module (ADR-011) means one mock covers every test that
  * renders the app. The map's own behaviour is verified in the browser instead.
  */
-vi.mock("./properties/property-map", () => ({
-  PropertyMap: () => null,
+vi.mock("./map/area-map", () => ({
+  AreaMap: () => null,
   REGION_VIEW: { latitude: 43.7, longitude: 3.6, zoom: 8 },
 }));
 

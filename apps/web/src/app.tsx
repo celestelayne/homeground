@@ -5,7 +5,7 @@ import { SourcesPanel } from "./sources/sources-panel.js";
 import { useAreaLookup } from "./areas/use-area-lookup.js";
 import { AddPropertyPanel } from "./properties/add-property-panel.js";
 import { PropertyDetailPanel } from "./properties/property-detail-panel.js";
-import { PropertyMap, REGION_VIEW } from "./properties/property-map.js";
+import { AreaMap, REGION_VIEW } from "./map/area-map.js";
 import { PropertySidebar } from "./properties/property-sidebar.js";
 import { useProperties } from "./properties/use-properties.js";
 import { AppHeader } from "./ui/app-header.js";
@@ -129,10 +129,7 @@ export function App() {
               onDismiss={firstUse ? undefined : () => setShowLanding(false)}
             />
           ) : null}
-          <PropertyMap
-            properties={properties}
-            selectedId={selectedId}
-            onSelect={select}
+          <AreaMap
             placing={placing}
             onPlace={setPlacedPoint}
             focus={focus}
