@@ -7,6 +7,7 @@ import { registerErrorHandler } from "./errors.js";
 import type { FetchLike } from "./geocoding/ign.js";
 import { geocodingRoutes } from "./geocoding/routes.js";
 import { propertyRoutes } from "./properties/routes.js";
+import { sourceRoutes } from "./sources/routes.js";
 
 export interface AppOptions {
   db: Db;
@@ -43,6 +44,7 @@ export function buildApp({ db, logger = false, fetchImpl }: AppOptions) {
   app.register(propertyRoutes, { prefix: "/api", db });
   app.register(geocodingRoutes, { prefix: "/api", fetchImpl });
   app.register(areaRoutes, { prefix: "/api", db, fetchImpl });
+  app.register(sourceRoutes, { prefix: "/api" });
 
   return app;
 }

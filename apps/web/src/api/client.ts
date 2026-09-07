@@ -1,4 +1,11 @@
-import type { Area, CreateProperty, GeocodeCandidate, Property, UpdateProperty } from "./types.js";
+import type {
+  Area,
+  CreateProperty,
+  GeocodeCandidate,
+  Property,
+  Source,
+  UpdateProperty,
+} from "./types.js";
 
 /** Same origin in development, via the Vite proxy. */
 const BASE = "/api";
@@ -68,6 +75,13 @@ export async function geocode(query: string): Promise<GeocodeCandidate[]> {
  */
 export async function getArea(code: string): Promise<Area> {
   return request<Area>(`/areas/${encodeURIComponent(code)}`);
+}
+
+/** Everything HomeGround draws on, and what each one cannot tell you. */
+export async function getSources(): Promise<Source[]> {
+  const { sources } = await request<{ sources: Source[] }>("/sources");
+
+  return sources;
 }
 
 export async function updateProperty(id: string, patch: UpdateProperty): Promise<Property> {

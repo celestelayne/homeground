@@ -4,7 +4,7 @@ import { getTestDb } from "../test/database.js";
 import commune from "./__fixtures__/geo-api-commune.json" with { type: "json" };
 import census from "./__fixtures__/melodi-dwellings.json" with { type: "json" };
 import { getArea, registerSources } from "./store.js";
-import { SOURCES } from "./sources.js";
+import { SOURCES } from "../sources/registry.js";
 
 const { db } = getTestDb();
 

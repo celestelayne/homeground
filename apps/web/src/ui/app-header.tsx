@@ -5,11 +5,13 @@ interface AppHeaderProps {
   onGoHome: () => void;
   /** Look a commune up. Permanent: it is the main thing a user comes to do. */
   onSearch: (query: string) => void;
+  /** What HomeGround draws on, and what each source cannot tell you. */
+  onShowSources: () => void;
 }
 
 const MIN_QUERY = 3;
 
-export function AppHeader({ onGoHome, onSearch }: AppHeaderProps) {
+export function AppHeader({ onGoHome, onSearch, onShowSources }: AppHeaderProps) {
   const [query, setQuery] = useState("");
   const searchId = useId();
   const ready = query.trim().length >= MIN_QUERY;
@@ -74,6 +76,14 @@ export function AppHeader({ onGoHome, onSearch }: AppHeaderProps) {
           Look up
         </button>
       </form>
+
+      <button
+        type="button"
+        onClick={onShowSources}
+        className="flex-none rounded-sharp border border-line-2 px-[9px] py-[5px] text-caption text-ink-2 hover:bg-row-hover"
+      >
+        Sources &amp; methodology
+      </button>
     </header>
   );
 }

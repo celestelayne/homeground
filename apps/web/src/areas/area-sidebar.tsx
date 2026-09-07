@@ -1,4 +1,5 @@
 import type { Area, Evidence } from "../api/types.js";
+import { labelFor } from "../sources/metric-labels.js";
 import type { AreaLookup, CommuneChoice } from "./use-area-lookup.js";
 
 interface AreaSidebarProps {
@@ -96,17 +97,6 @@ function AreaDetail({ area }: { area: Area }) {
   );
 }
 
-/** How a metric is written for a reader. */
-const LABELS: Record<string, string> = {
-  population: "Population",
-  "area.sqKm": "Commune area",
-  "population.density": "Density",
-  "dwellings.main": "Lived-in homes",
-  "dwellings.secondHome": "Second homes",
-  "dwellings.vacant": "Empty homes",
-  "dwellings.secondHomeShare": "Second homes, share of all",
-};
-
 const SOURCE_NAMES: Record<string, string> = {
   "geo-api-gouv": "Découpage administratif",
   "insee-census": "INSEE census",
@@ -132,7 +122,7 @@ function Measurements({ evidence }: { evidence: Evidence[] }) {
       {ordered.map((fact) => (
         <div key={`${fact.metric}-${fact.observedAt}`} className="flex flex-col gap-[2px]">
           <dt className="text-label font-medium tracking-[0.09em] text-ink-3 uppercase">
-            {LABELS[fact.metric] ?? fact.metric}
+            {labelFor(fact.metric)}
             {fact.observedAt ? (
               <span className="numeric ml-1 normal-case">
                 {new Date(fact.observedAt).getUTCFullYear()}

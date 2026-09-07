@@ -97,3 +97,23 @@ export interface UpdateProperty {
 export interface ApiError {
   error: { code: string; message: string };
 }
+
+/**
+ * A source, as the Sources and methodology panel shows it.
+ *
+ * `limitations` is never empty. Every source misleads somebody, and saying how
+ * is a condition of using it rather than something a user discovers.
+ */
+export interface Source {
+  id: string;
+  name: string;
+  publisher: string;
+  description: string;
+  url: string;
+  cadence: string;
+  coverage: string;
+  licence: string;
+  limitations: string[];
+  /** The metrics this source is the origin of. */
+  metrics: string[];
+}

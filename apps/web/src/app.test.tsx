@@ -58,6 +58,28 @@ beforeEach(() => {
   areasFetched = [];
 
   vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
+    if (url.startsWith("/api/sources")) {
+      return new Response(
+        JSON.stringify({
+          sources: [
+            {
+              id: "insee-census",
+              name: "Recensement de la population",
+              publisher: "INSEE",
+              description: "Housing occupancy by commune.",
+              url: "https://api.insee.fr/melodi",
+              cadence: "Annual",
+              coverage: "France",
+              licence: "Licence Ouverte 2.0",
+              limitations: ["Figures are weighted estimates, not counts."],
+              metrics: ["dwellings.secondHomeShare"],
+            },
+          ],
+        }),
+        { status: 200 },
+      );
+    }
+
     if (url.startsWith("/api/areas/")) {
       const code = url.split("/").pop() as string;
       areasFetched.push(code);
@@ -463,5 +485,59 @@ describe("before anything is saved", () => {
     await renderWithList();
 
     expect(screen.getByRole("complementary", { name: "Saved properties" })).toBeInTheDocument();
+  });
+});
+
+describe("sources and methodology", () => {
+  it("says what HomeGround does and does not claim", async () => {
+    stored = [];
+
+    render(<App />);
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole("button", { name: "Sources & methodology" }));
+
+    const panel = within(await screen.findByRole("region", { name: "Sources and methodology" }));
+    expect(panel.getByText(/does not judge a property/)).toBeInTheDocument();
+    expect(panel.getByText(/does not tell you whether anywhere is safe/)).toBeInTheDocument();
+  });
+
+  it("states a limitation for every source it lists", async () => {
+    stored = [];
+
+    render(<App />);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: "Sources & methodology" }));
+
+    const panel = within(await screen.findByRole("region", { name: "Sources and methodology" }));
+    // The panel exists to say what a source cannot tell you.
+    expect(
+      await panel.findByText(/Figures are weighted estimates, not counts./),
+    ).toBeInTheDocument();
+    expect(panel.getByText(/Limitation\./)).toBeInTheDocument();
+  });
+
+  it("names what each source is the origin of, in the words the figures use", async () => {
+    stored = [];
+
+    render(<App />);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: "Sources & methodology" }));
+
+    const panel = within(await screen.findByRole("region", { name: "Sources and methodology" }));
+    expect(await panel.findByText(/Second homes, share of all/)).toBeInTheDocument();
+  });
+
+  it("closes again", async () => {
+    stored = [];
+
+    render(<App />);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: "Sources & methodology" }));
+    await user.click(await screen.findByRole("button", { name: "Close sources and methodology" }));
+
+    expect(
+      screen.queryByRole("region", { name: "Sources and methodology" }),
+    ).not.toBeInTheDocument();
   });
 });

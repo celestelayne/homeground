@@ -5,7 +5,7 @@ import type { FetchLike } from "../geocoding/ign.js";
 import { CENSUS_METHOD, CENSUS_METHOD_VERSION, fetchCensus, toCensusFigures } from "./census.js";
 import { AreaLookupUnavailableError, fetchCommune, toCommune } from "./geo-api.js";
 import type { Area, Evidence } from "./schema.js";
-import { SOURCES } from "./sources.js";
+import { SOURCES } from "../sources/registry.js";
 
 const GEO_METHOD = "geo-api-commune";
 const GEO_METHOD_VERSION = 1;
