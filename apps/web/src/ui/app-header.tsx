@@ -1,18 +1,25 @@
+import { useId, useState } from "react";
+
 interface AppHeaderProps {
-  onAddProperty: () => void;
-  addingProperty: boolean;
-  /** Hidden before anything is saved: the first-use overlay offers its own. */
-  showAddProperty?: boolean;
   /** Back to the region, with nothing selected and nothing half-written. */
   onGoHome: () => void;
+  /** Look a commune up. Permanent: it is the main thing a user comes to do. */
+  onSearch: (query: string) => void;
 }
 
-export function AppHeader({
-  onAddProperty,
-  addingProperty,
-  showAddProperty = true,
-  onGoHome,
-}: AppHeaderProps) {
+const MIN_QUERY = 3;
+
+export function AppHeader({ onGoHome, onSearch }: AppHeaderProps) {
+  const [query, setQuery] = useState("");
+  const searchId = useId();
+  const ready = query.trim().length >= MIN_QUERY;
+
+  function submit() {
+    if (ready) {
+      onSearch(query.trim());
+    }
+  }
+
   return (
     <header className="flex h-header flex-none items-center gap-[14px] border-b border-line-2 bg-surface px-[14px]">
       {/* Fixed to the sidebar width so the wordmark aligns with the column below. */}
@@ -33,16 +40,40 @@ export function AppHeader({
         </span>
       </div>
 
-      {showAddProperty ? (
+      <form
+        aria-label="Look up a commune"
+        className="flex min-w-0 flex-1 items-center gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          submit();
+        }}
+      >
+        <label htmlFor={searchId} className="sr-only">
+          Look up a commune
+        </label>
+        <input
+          id={searchId}
+          className="h-[30px] w-full max-w-[420px] min-w-0 rounded-sharp border border-line-2 px-[9px] text-body focus:border-ink focus:shadow-[0_0_0_3px_rgba(27,26,23,.07)] focus:outline-none"
+          placeholder="Look up a commune — Fabrezan, or 11200"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          // A form whose only submit button is disabled does not submit on
+          // Enter, so Enter is handled here rather than left to the browser.
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              submit();
+            }
+          }}
+        />
         <button
-          type="button"
-          onClick={onAddProperty}
-          aria-pressed={addingProperty}
-          className="rounded-sharp bg-ink px-[9px] py-[6px] text-caption text-surface"
+          type="submit"
+          disabled={!ready}
+          className="rounded-sharp border border-line-2 px-[9px] py-[5px] text-caption text-ink-2 hover:bg-row-hover disabled:opacity-40"
         >
-          + Add property
+          Look up
         </button>
-      ) : null}
+      </form>
     </header>
   );
 }

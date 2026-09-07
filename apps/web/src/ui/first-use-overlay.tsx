@@ -5,18 +5,30 @@ interface FirstUseOverlayProps {
   onLookup: (query: string) => void;
   /** Skip the lookup, for somewhere the user can already find on the map. */
   onPlaceOnMap: () => void;
+  /**
+   * Close it and go back to the map. Absent on genuine first use, where there
+   * is nothing behind this to go back to.
+   */
+  onDismiss?: (() => void) | undefined;
 }
 
 const MIN_QUERY = 3;
 
 /**
- * Shown over the map when nothing is saved. The gradient thins to the right so
- * the map stays legible: geography is the mental model, and it should be
- * established before anything has been saved.
+ * Shown over the map on first use, and whenever the user goes home. The
+ * gradient thins to the right so the map stays legible: geography is the
+ * mental model, and it should be established before anything has been saved.
  */
-export function FirstUseOverlay({ onLookup, onPlaceOnMap }: FirstUseOverlayProps) {
+export function FirstUseOverlay({ onLookup, onPlaceOnMap, onDismiss }: FirstUseOverlayProps) {
   const [query, setQuery] = useState("");
   const inputId = useId();
+  const ready = query.trim().length >= MIN_QUERY;
+
+  function submit() {
+    if (ready) {
+      onLookup(query.trim());
+    }
+  }
 
   return (
     <div
@@ -26,6 +38,16 @@ export function FirstUseOverlay({ onLookup, onPlaceOnMap }: FirstUseOverlayProps
           "linear-gradient(90deg, rgb(247 245 241 / 0.96) 0%, rgb(247 245 241 / 0.90) 42%, rgb(247 245 241 / 0.28) 100%)",
       }}
     >
+      {onDismiss ? (
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Close and return to the map"
+          className="absolute top-3 right-3 px-2 py-1 text-ink-3 hover:text-ink"
+        >
+          ✕
+        </button>
+      ) : null}
       <div className="ml-[7vw] flex max-w-[520px] flex-col gap-4">
         <span className="text-label font-medium tracking-[0.09em] text-ink-3 uppercase">
           HomeGround
@@ -41,13 +63,11 @@ export function FirstUseOverlay({ onLookup, onPlaceOnMap }: FirstUseOverlayProps
         </p>
 
         <form
+          aria-label="Look up a place"
           className="flex flex-col gap-2"
           onSubmit={(event) => {
             event.preventDefault();
-
-            if (query.trim().length >= MIN_QUERY) {
-              onLookup(query.trim());
-            }
+            submit();
           }}
         >
           <label htmlFor={inputId} className="sr-only">
@@ -61,10 +81,18 @@ export function FirstUseOverlay({ onLookup, onPlaceOnMap }: FirstUseOverlayProps
               placeholder="A village, hamlet or address — Montouliers"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
+              // A form whose only submit button is disabled does not submit on
+              // Enter, so Enter is handled here rather than left to the browser.
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  submit();
+                }
+              }}
             />
             <button
               type="submit"
-              disabled={query.trim().length < MIN_QUERY}
+              disabled={!ready}
               className="h-[38px] rounded-sharp bg-ink px-4 text-caption text-surface disabled:opacity-40"
             >
               Look up

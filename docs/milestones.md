@@ -182,6 +182,11 @@ Each is either resolved into an ADR or deferred to the milestone that requires i
 
 **Recorded without an ADR**
 
+* **Where a commune's character description comes from** — no owning milestone.
+  An area brief wants a sentence of orientation, and no service HomeGround uses
+  publishes one. ADR-004 forbids writing it, so the slot stays empty and
+  labelled until a source is chosen. The intercommunality name is the nearest
+  sourced substitute.
 * **Which Mapbox base map style** — Streets, Light or Outdoors. ADR-011's amendment settles the provider and leaves the style open. A temporary picker in the map exists to answer it by looking; it is removed once the answer is chosen.
 
 **Deferred, with owning milestone**
@@ -190,6 +195,9 @@ Each is either resolved into an ADR or deferred to the milestone that requires i
 * **Methodology version attachment** — M2, which introduces method versioning.
 * **Wildfire classification method** — M8, and explicitly gated on resolution in `docs/methodology.md` first.
 * **Mobile repository** — M9. The mobile application currently lives outside this repository. Whether it moves into the monorepo, and what that would require, is undecided.
+* **Caching commune facts and boundaries** — owned by the milestone that
+  introduces the area brief, alongside PostGIS. geo.api.gouv.fr rate-limits in
+  ordinary use, and the data effectively never changes.
 * **Hosting and deployed environments** — no owning milestone yet. Required by the first milestone that needs an environment beyond local development and CI.
 * **Evidence staleness** — no owning milestone. M2 introduces a Stale state, but no milestone yet owns detecting staleness or recomputing evidence.
 * **Correcting a mis-saved property** — no owning milestone. M1 has no delete and cannot edit coordinates, following `specs/property.md`. A property saved against the wrong location is permanent.

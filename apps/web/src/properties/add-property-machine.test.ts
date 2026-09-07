@@ -8,6 +8,7 @@ const candidate: GeocodeCandidate = {
   latitude: 43.610962,
   longitude: 3.874026,
   precision: "exact",
+  communeCode: "34172",
 };
 
 const named = (draft: AddPropertyDraft) => reduce(draft, { type: "name-changed", value: "Le Mas" });

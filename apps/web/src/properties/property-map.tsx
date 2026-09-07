@@ -38,6 +38,40 @@ interface PropertyMapProps {
    * new object to move the map; the same object twice does nothing.
    */
   focus?: { latitude: number; longitude: number; zoom?: number } | null;
+  /**
+   * The commune under research, drawn as an outline with everything outside it
+   * dimmed. The dimming is not decoration: an area brief describes the commune
+   * and nothing beyond it, so what is dimmed is what the brief does not cover.
+   */
+  boundary?: AreaBoundary | null;
+}
+
+export type AreaBoundary =
+  | { type: "Polygon"; coordinates: number[][][] }
+  | { type: "MultiPolygon"; coordinates: number[][][][] };
+
+/** Big enough to cover the map at any zoom, so the scrim has no visible edge. */
+const WORLD_RING: L.LatLngTuple[] = [
+  [-89.9, -179.9],
+  [89.9, -179.9],
+  [89.9, 179.9],
+  [-89.9, 179.9],
+];
+
+/**
+ * The outer ring of each part, as Leaflet [lat, lng]. GeoJSON gives [lng, lat],
+ * and reversing them puts an Aude commune in the Indian Ocean.
+ *
+ * A commune's own holes are ignored: they are rare, and a hole in the scrim's
+ * hole would dim an enclave that the brief does in fact describe.
+ */
+function outerRings(boundary: AreaBoundary): L.LatLngTuple[][] {
+  const parts = boundary.type === "Polygon" ? [boundary.coordinates] : boundary.coordinates;
+
+  return parts
+    .map((part) => part[0] ?? [])
+    .filter((ring) => ring.length > 0)
+    .map((ring) => ring.map(([lng, lat]) => [lat as number, lng as number] as L.LatLngTuple));
 }
 
 /**
@@ -51,6 +85,7 @@ export function PropertyMap({
   placing = false,
   onPlace,
   focus = null,
+  boundary = null,
 }: PropertyMapProps) {
   const container = useRef<HTMLDivElement>(null);
   // TEMPORARY: for comparing basemaps.
@@ -185,6 +220,51 @@ export function PropertyMap({
       });
     }
   }, [selectedId, properties]);
+
+  // The commune under research: a scrim over everywhere it is not, and a line
+  // on the edge itself. The commune keeps its terrain unfiltered, because that
+  // is the thing the user came to read.
+  useEffect(() => {
+    const instance = map.current;
+
+    if (!instance) {
+      return;
+    }
+
+    if (!boundary) {
+      return;
+    }
+
+    const rings = outerRings(boundary);
+
+    if (rings.length === 0) {
+      return;
+    }
+
+    // One polygon whose first ring is the world and whose remaining rings are
+    // the commune, so the commune is punched out of the scrim.
+    const scrim = L.polygon([WORLD_RING, ...rings], {
+      stroke: false,
+      fillColor: "#1b1a17",
+      fillOpacity: 0.28,
+      interactive: false,
+    }).addTo(instance);
+
+    const edge = L.polygon(rings, {
+      color: "#1b1a17",
+      weight: 1.5,
+      opacity: 0.9,
+      fill: false,
+      interactive: false,
+    }).addTo(instance);
+
+    instance.fitBounds(edge.getBounds(), { padding: [32, 32] });
+
+    return () => {
+      scrim.remove();
+      edge.remove();
+    };
+  }, [boundary]);
 
   // A lookup moves the map without selecting or creating anything. The two
   // writers of the camera never compete: selection is null while adding.

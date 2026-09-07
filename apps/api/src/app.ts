@@ -1,5 +1,6 @@
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify from "fastify";
+import { areaRoutes } from "./areas/routes.js";
 import type { Db } from "./db/client.js";
 import { registerErrorHandler } from "./errors.js";
 import type { FetchLike } from "./geocoding/ign.js";
@@ -34,6 +35,7 @@ export function buildApp({ db, logger = false, fetchImpl }: AppOptions) {
 
   app.register(propertyRoutes, { prefix: "/api", db });
   app.register(geocodingRoutes, { prefix: "/api", fetchImpl });
+  app.register(areaRoutes, { prefix: "/api", fetchImpl });
 
   return app;
 }

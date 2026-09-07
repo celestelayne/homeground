@@ -1,5 +1,7 @@
 import "./styles/global.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { AreaSidebar } from "./areas/area-sidebar.js";
+import { useAreaLookup } from "./areas/use-area-lookup.js";
 import { AddPropertyPanel } from "./properties/add-property-panel.js";
 import { PropertyDetailPanel } from "./properties/property-detail-panel.js";
 import { PropertyMap, REGION_VIEW } from "./properties/property-map.js";
@@ -22,6 +24,11 @@ export function App() {
   // Where a lookup landed. Not a selection and not a property — just somewhere
   // the map has been pointed.
   const [focus, setFocus] = useState<Point | null>(null);
+  // True on arrival: the root route is the landing hero. Looking a commune up
+  // is the thing a user comes to do, so it is what they are shown first,
+  // whether or not anything has been saved.
+  const [showLanding, setShowLanding] = useState(true);
+  const { lookup, search, choose, clear } = useAreaLookup();
 
   function closeAdd() {
     setAdding(false);
@@ -33,43 +40,72 @@ export function App() {
   function startAdding(query: string) {
     setInitialQuery(query);
     setAdding(true);
+    setShowLanding(false);
     setSelectedId(null);
   }
 
+  function select(id: string) {
+    closeAdd();
+    setShowLanding(false);
+    setSelectedId(id);
+  }
+
   // The logo goes home. There is no router, so home is the state the
-  // application opens in: the region, nothing selected, nothing half-written.
-  // A fresh object every time, so clicking it twice works twice.
+  // application opens in: the region, nothing selected, nothing half-written,
+  // and the search bar in front of you.
+  // A fresh focus object every time, so clicking it twice works twice.
   function goHome() {
     closeAdd();
     setSelectedId(null);
+    setShowLanding(true);
+    clear();
     setFocus({ ...REGION_VIEW });
   }
+
+  // Looking a commune up takes over the sidebar and moves the map. It creates
+  // nothing: researching a place is not the same as tracking a house.
+  async function lookUpArea(query: string) {
+    closeAdd();
+    setSelectedId(null);
+    setShowLanding(false);
+    await search(query);
+  }
+
+  // A commune that loads moves the map to it. When it has a boundary the map
+  // fits to that instead, so only the boundary-less case needs a centre.
+  // `lookup` only changes when the hook sets it, so this cannot loop.
+  useEffect(() => {
+    if (lookup.kind === "loaded" && !lookup.area.boundary) {
+      setFocus({ ...lookup.area.centre });
+    }
+  }, [lookup]);
 
   // Nothing saved yet: the sidebar has nothing to list, and the overlay
   // introduces the product over a legible map.
   const firstUse = state === "ready" && properties.length === 0 && !adding;
 
+  // The landing hero is what you see before you have looked anything up. It
+  // cannot be reachable only while the database happens to be empty — saving a
+  // property must not take away the search bar — and it steps aside the moment
+  // a lookup gives the sidebar something to say.
+  const landing = (firstUse || showLanding) && !adding && lookup.kind === "idle";
+
   return (
     <AppShell
-      header={
-        <AppHeader
-          showAddProperty={!firstUse}
-          addingProperty={adding}
-          onAddProperty={() => startAdding("")}
-          onGoHome={goHome}
-        />
-      }
+      header={<AppHeader onGoHome={goHome} onSearch={(query) => void lookUpArea(query)} />}
+      // The landing hero has no sidebar: nothing has been looked up, so there
+      // is nothing for it to say. A lookup then takes it over — the commune is
+      // the subject, and the property list steps aside while it is.
       sidebar={
-        firstUse ? undefined : state === "error" ? (
+        landing ? undefined : lookup.kind !== "idle" ? (
+          <AreaSidebar lookup={lookup} onChoose={(choice) => void choose(choice)} />
+        ) : state === "error" ? (
           <p className="px-4 py-4 text-body text-ink-3">Could not load your properties.</p>
         ) : (
           <PropertySidebar
             properties={properties}
             selectedId={selectedId}
-            onSelect={(id) => {
-              closeAdd();
-              setSelectedId(id);
-            }}
+            onSelect={select}
             showRejected={showRejected}
             onToggleRejected={() => setShowRejected((shown) => !shown)}
           />
@@ -77,19 +113,21 @@ export function App() {
       }
       map={
         <>
-          {firstUse ? (
-            <FirstUseOverlay onLookup={startAdding} onPlaceOnMap={() => startAdding("")} />
+          {landing ? (
+            <FirstUseOverlay
+              onLookup={(query) => void lookUpArea(query)}
+              onPlaceOnMap={() => startAdding("")}
+              onDismiss={firstUse ? undefined : () => setShowLanding(false)}
+            />
           ) : null}
           <PropertyMap
             properties={properties}
             selectedId={selectedId}
-            onSelect={(id) => {
-              closeAdd();
-              setSelectedId(id);
-            }}
+            onSelect={select}
             placing={placing}
             onPlace={setPlacedPoint}
             focus={focus}
+            boundary={lookup.kind === "loaded" ? lookup.area.boundary : null}
           />
         </>
       }
