@@ -30,6 +30,8 @@ export function App() {
   // whether or not anything has been saved.
   const [showLanding, setShowLanding] = useState(true);
   const [showSources, setShowSources] = useState(false);
+  // The outline says what the brief covers, but it also sits over the terrain.
+  const [showBoundary, setShowBoundary] = useState(true);
   const { lookup, search, choose, clear } = useAreaLookup();
 
   function closeAdd() {
@@ -70,6 +72,8 @@ export function App() {
     closeAdd();
     setSelectedId(null);
     setShowLanding(false);
+    // A new commune brings its outline back; hiding one was about that one.
+    setShowBoundary(true);
     await search(query);
   }
 
@@ -106,7 +110,12 @@ export function App() {
       // the subject, and the property list steps aside while it is.
       sidebar={
         landing ? undefined : lookup.kind !== "idle" ? (
-          <AreaSidebar lookup={lookup} onChoose={(choice) => void choose(choice)} />
+          <AreaSidebar
+            lookup={lookup}
+            onChoose={(choice) => void choose(choice)}
+            onToggleBoundary={() => setShowBoundary((shown) => !shown)}
+            boundaryShown={showBoundary}
+          />
         ) : state === "error" ? (
           <p className="px-4 py-4 text-body text-ink-3">Could not load your properties.</p>
         ) : (
@@ -133,7 +142,7 @@ export function App() {
             placing={placing}
             onPlace={setPlacedPoint}
             focus={focus}
-            boundary={lookup.kind === "loaded" ? lookup.area.boundary : null}
+            boundary={showBoundary && lookup.kind === "loaded" ? lookup.area.boundary : null}
             facilities={lookup.kind === "loaded" ? lookup.area.facilities : []}
           />
         </>
