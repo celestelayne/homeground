@@ -82,7 +82,7 @@ pull request. Tests need PostgreSQL running; they use a separate
 
 ```
 apps/api    Fastify, Drizzle, PostgreSQL
-apps/web    React, Vite, MapLibre
+apps/web    React, Vite, Leaflet
 docs        product, architecture, methodology, milestones, decisions
 specs       implementation contracts for what is being built
 ```
@@ -94,4 +94,4 @@ specs       implementation contracts for what is being built
 
 Geocoding and map tiles come from IGN's Géoplateforme, which needs no API key.
 HomeGround currently requires no credentials of any kind — see
-`docs/decisions/ADR-010-ign-geocoding.md` and `ADR-011-maplibre.md`.
+`docs/decisions/ADR-010-ign-geocoding.md` and `ADR-011-leaflet.md`.

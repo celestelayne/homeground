@@ -1,13 +1,12 @@
-import { Map as MapLibreMap, type MapMouseEvent, Marker, NavigationControl } from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
+import "leaflet/dist/leaflet.css";
 import "./map-marker.css";
+import * as L from "leaflet";
 import { useEffect, useRef } from "react";
 import type { Property } from "../api/types.js";
-import { createMarkerElement } from "./map-marker.js";
-import { baseStyle } from "./map-style.js";
+import { AERIAL_TILES, BASE_TILES, MAX_ZOOM, TILE_ATTRIBUTION } from "./map-tiles.js";
 
 /** Roughly the Hérault and the Gard, before anything is selected. */
-const REGION_CENTRE: [number, number] = [3.6, 43.7];
+const REGION_CENTRE: [number, number] = [43.7, 3.6];
 const REGION_ZOOM = 8;
 const SELECTED_ZOOM = 12;
 
@@ -21,9 +20,8 @@ interface PropertyMapProps {
 }
 
 /**
- * The only module that imports MapLibre. Required by ADR-002, and by the fact
- * that MapLibre needs WebGL and cannot render in jsdom, so component tests
- * mock this one file.
+ * The only module that imports Leaflet, so component tests mock this one file
+ * and the mapping library stays swappable. See ADR-011.
  */
 export function PropertyMap({
   properties,
@@ -33,9 +31,11 @@ export function PropertyMap({
   onPlace,
 }: PropertyMapProps) {
   const container = useRef<HTMLDivElement>(null);
-  const map = useRef<MapLibreMap | null>(null);
-  const markers = useRef(new globalThis.Map<string, Marker>());
-  // Held in a ref so rebuilding markers does not depend on the callback.
+  const map = useRef<L.Map | null>(null);
+  const aerial = useRef<L.TileLayer | null>(null);
+  const markers = useRef(new Map<string, L.Marker>());
+
+  // Held in refs so rebuilding markers does not depend on callback identity.
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
   const onPlaceRef = useRef(onPlace);
@@ -46,40 +46,26 @@ export function PropertyMap({
       return;
     }
 
-    const instance = new MapLibreMap({
-      container: container.current,
-      style: baseStyle(),
+    const instance = L.map(container.current, {
       center: REGION_CENTRE,
       zoom: REGION_ZOOM,
-      attributionControl: { compact: true },
+      zoomControl: true,
+      attributionControl: true,
     });
 
-    // MapLibre reports source and tile failures only through this event, but
-    // it also emits transient source errors while a style is still loading and
-    // then recovers from them. Reporting those trains people to ignore the
-    // listener, which is the only channel a real failure arrives on.
-    instance.on("error", (event) => {
-      if (instance.isStyleLoaded()) {
-        console.error("map error", event.error?.message ?? event);
-      }
+    L.tileLayer(BASE_TILES, { maxZoom: MAX_ZOOM, attribution: TILE_ATTRIBUTION }).addTo(instance);
+
+    aerial.current = L.tileLayer(AERIAL_TILES, {
+      maxZoom: MAX_ZOOM,
+      attribution: TILE_ATTRIBUTION,
     });
 
-    // The failure actually worth knowing about is a style that never finishes
-    // loading: the map draws a canvas and its markers, requests no tiles, and
-    // otherwise says nothing at all.
-    const styleWatchdog = setTimeout(() => {
-      if (!instance.isStyleLoaded()) {
-        console.error("map style never finished loading; no tiles will be requested");
-      }
-    }, 15_000);
-
-    instance.addControl(new NavigationControl({ showCompass: false }), "bottom-right");
     map.current = instance;
 
     return () => {
-      clearTimeout(styleWatchdog);
       instance.remove();
       map.current = null;
+      aerial.current = null;
       markers.current.clear();
     };
   }, []);
@@ -100,21 +86,20 @@ export function PropertyMap({
       const existing = markers.current.get(property.id);
 
       if (existing) {
-        existing.setLngLat([property.longitude, property.latitude]);
-        (existing.getElement() as HTMLElement).dataset.status = property.status;
+        existing.setLatLng([property.latitude, property.longitude]);
+        setMarkerStatus(existing, property.status);
         continue;
       }
 
-      const element = createMarkerElement(property.name, property.status);
-      element.addEventListener("click", (event) => {
-        event.stopPropagation();
-        onSelectRef.current(property.id);
-      });
+      const marker = L.marker([property.latitude, property.longitude], {
+        icon: markerIcon(property),
+        // Status is carried by shape, and the button inside carries the name.
+        keyboard: false,
+      })
+        .addTo(instance)
+        .on("click", () => onSelectRef.current(property.id));
 
-      markers.current.set(
-        property.id,
-        new Marker({ element }).setLngLat([property.longitude, property.latitude]).addTo(instance),
-      );
+      markers.current.set(property.id, marker);
     }
 
     for (const [id, marker] of markers.current) {
@@ -125,33 +110,45 @@ export function PropertyMap({
     }
   }, [properties]);
 
-  // Placing a property shows aerial imagery and turns the next click into a
-  // coordinate. A road map cannot tell you which building is the one.
+  // Selection drives emphasis and the camera. One value, two writers.
+  useEffect(() => {
+    for (const [id, marker] of markers.current) {
+      const element = marker.getElement();
+
+      if (element) {
+        element.dataset.selected = String(id === selectedId);
+        element.dataset.dimmed = String(selectedId !== null && id !== selectedId);
+      }
+    }
+
+    const selected = properties.find((property) => property.id === selectedId);
+
+    if (selected && map.current) {
+      map.current.flyTo([selected.latitude, selected.longitude], SELECTED_ZOOM, {
+        duration: 0.9,
+      });
+    }
+  }, [selectedId, properties]);
+
+  // Placing shows aerial imagery and turns the next click into a coordinate.
   useEffect(() => {
     const instance = map.current;
 
-    if (!instance) {
+    if (!instance || !aerial.current) {
       return;
     }
 
-    const apply = () => {
-      instance.setLayoutProperty("aerial-layer", "visibility", placing ? "visible" : "none");
-    };
-
-    if (instance.isStyleLoaded()) {
-      apply();
-    } else {
-      instance.once("style.load", apply);
-    }
-
-    instance.getCanvas().style.cursor = placing ? "crosshair" : "";
+    instance.getContainer().classList.toggle("hg-placing", placing);
 
     if (!placing) {
+      aerial.current.remove();
       return;
     }
 
-    const onClick = (event: MapMouseEvent) => {
-      onPlaceRef.current?.({ latitude: event.lngLat.lat, longitude: event.lngLat.lng });
+    aerial.current.addTo(instance);
+
+    const onClick = (event: L.LeafletMouseEvent) => {
+      onPlaceRef.current?.({ latitude: event.latlng.lat, longitude: event.latlng.lng });
     };
 
     instance.on("click", onClick);
@@ -161,25 +158,31 @@ export function PropertyMap({
     };
   }, [placing]);
 
-  // Selection drives emphasis and the camera. One value, two writers.
-  useEffect(() => {
-    for (const [id, marker] of markers.current) {
-      const element = marker.getElement() as HTMLElement;
-
-      element.dataset.selected = String(id === selectedId);
-      element.dataset.dimmed = String(selectedId !== null && id !== selectedId);
-    }
-
-    const selected = properties.find((property) => property.id === selectedId);
-
-    if (selected && map.current) {
-      map.current.flyTo({
-        center: [selected.longitude, selected.latitude],
-        zoom: SELECTED_ZOOM,
-        duration: 900,
-      });
-    }
-  }, [selectedId, properties]);
-
   return <div ref={container} className="h-full w-full" />;
+}
+
+function markerIcon(property: Property): L.DivIcon {
+  return L.divIcon({
+    className: "",
+    iconSize: [17, 17],
+    iconAnchor: [8.5, 8.5],
+    html: `<button type="button" class="hg-marker" data-status="${property.status}" aria-label="${escapeHtml(property.name)}"><span class="hg-marker-shape" aria-hidden="true"></span></button>`,
+  });
+}
+
+function setMarkerStatus(marker: L.Marker, status: Property["status"]): void {
+  const button = marker.getElement()?.querySelector<HTMLElement>(".hg-marker");
+
+  if (button) {
+    button.dataset.status = status;
+  }
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(
+    /[&<>"']/g,
+    (character) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character] ??
+      character,
+  );
 }
