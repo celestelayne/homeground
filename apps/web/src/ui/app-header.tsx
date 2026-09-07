@@ -19,6 +19,9 @@ export function AppHeader({ onGoHome, onSearch, onShowSources }: AppHeaderProps)
   function submit() {
     if (ready) {
       onSearch(query.trim());
+      // The commune being researched is named in the sidebar from here on, so
+      // leaving it in the field only makes the next lookup a deletion first.
+      setQuery("");
     }
   }
 
