@@ -49,6 +49,24 @@ export const EvidenceSchema = Type.Object({
 });
 
 /**
+ * A located thing inside a commune — a pharmacy, a hospital.
+ *
+ * `precision` is the source's own statement about its coordinates, carried
+ * rather than discarded: a facility placed at its commune is not at the point
+ * its coordinate names. Same three words as a property's location tier,
+ * because it is the same problem.
+ */
+export const FacilitySchema = Type.Object({
+  id: Type.String(),
+  kind: Type.Union([Type.Literal("pharmacy"), Type.Literal("hospital")]),
+  name: Type.String(),
+  latitude: Type.Number({ minimum: -90, maximum: 90 }),
+  longitude: Type.Number({ minimum: -180, maximum: 180 }),
+  precision: Type.Union([Type.Literal("exact"), Type.Literal("zone"), Type.Literal("commune")]),
+  sourceId: Type.String(),
+});
+
+/**
  * A French commune, as HomeGround can currently source it.
  *
  * Every field here is a fact from an authoritative service. Nothing is
@@ -85,6 +103,8 @@ export const AreaSchema = Type.Object({
    * specs/evidence.md.
    */
   evidence: Type.Array(EvidenceSchema),
+  /** Located things the sources place inside this commune. */
+  facilities: Type.Array(FacilitySchema),
 });
 
 export const AreaParamsSchema = Type.Object(
@@ -94,4 +114,5 @@ export const AreaParamsSchema = Type.Object(
 
 export type Area = Static<typeof AreaSchema>;
 export type Evidence = Static<typeof EvidenceSchema>;
+export type Facility = Static<typeof FacilitySchema>;
 export type Boundary = Static<typeof BoundarySchema>;

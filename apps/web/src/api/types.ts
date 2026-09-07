@@ -60,6 +60,23 @@ export interface Evidence {
   methodVersion: number;
 }
 
+/**
+ * A located thing inside a commune.
+ *
+ * `precision` is the source's statement about its coordinates. A facility
+ * placed at its commune is not at the point its coordinate names, and must
+ * not be drawn as though it were.
+ */
+export interface Facility {
+  id: string;
+  kind: "pharmacy" | "hospital";
+  name: string;
+  latitude: number;
+  longitude: number;
+  precision: "exact" | "zone" | "commune";
+  sourceId: string;
+}
+
 export interface Area {
   /** INSEE code — the identity of a commune. A postcode is not. */
   code: string;
@@ -71,6 +88,8 @@ export interface Area {
   centre: { latitude: number; longitude: number };
   /** Figures are no longer fields: a measurement without provenance is an assertion. */
   evidence: Evidence[];
+  /** Located things the sources place inside this commune. */
+  facilities: Facility[];
   /** GeoJSON, [longitude, latitude]. Null when the source gave none usable. */
   boundary:
     | { type: "Polygon"; coordinates: number[][][] }

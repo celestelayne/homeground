@@ -213,3 +213,58 @@ export const evidence = pgTable(
     index("evidence_by_area").on(table.areaCode, table.metric),
   ],
 );
+
+/**
+ * How precisely a facility's coordinates identify it.
+ *
+ * Deliberately the same three words `specs/property.md` uses for a property's
+ * location, because it is the same problem: a coordinate that looks precise
+ * and is not is worse than no coordinate. FINESS publishes a geocoding level
+ * with every establishment, and around four per cent of pharmacies resolve
+ * only to their commune.
+ */
+export const facilityPrecision = pgEnum("facility_precision", ["exact", "zone", "commune"]);
+
+/** What kind of place it is. Closed by what HomeGround has mappings for. */
+export const facilityKind = pgEnum("facility_kind", ["pharmacy", "hospital"]);
+
+/**
+ * A located thing retrieved from a source — a pharmacy, a hospital.
+ *
+ * Not evidence: evidence is a measurement with a value and a unit, and a
+ * pharmacy has neither. It is a subject with a position, and the counts
+ * derived from these rows are what become evidence. See specs/evidence.md.
+ */
+export const facilities = pgTable(
+  "facilities",
+  {
+    /** The source's own identifier. FINESS numbers are stable. */
+    id: text("id").primaryKey(),
+    /**
+     * The INSEE code the source places it in.
+     *
+     * Deliberately not a foreign key to `areas`. FINESS is a national file
+     * ingested in one pass, while `areas` holds only the communes somebody has
+     * looked up — so almost every facility would reference a commune that does
+     * not exist yet. The facilities wait for the commune rather than the other
+     * way round.
+     */
+    areaCode: text("area_code").notNull(),
+    kind: facilityKind("kind").notNull(),
+    name: text("name").notNull(),
+    latitude: doublePrecision("latitude").notNull(),
+    longitude: doublePrecision("longitude").notNull(),
+    /** Never inferred: the source states it. */
+    precision: facilityPrecision("precision").notNull(),
+    sourceId: text("source_id")
+      .notNull()
+      .references(() => sources.id),
+    observedAt: timestamp("observed_at", { withTimezone: true }),
+    retrievedAt: timestamp("retrieved_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    check("facilities_latitude_range", sql`${table.latitude} between -90 and 90`),
+    check("facilities_longitude_range", sql`${table.longitude} between -180 and 180`),
+    index("facilities_by_area").on(table.areaCode, table.kind),
+  ],
+);

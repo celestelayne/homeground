@@ -1,10 +1,10 @@
-import { eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import type { Db } from "../db/client.js";
-import { areaBoundaries, areas, evidence, sources } from "../db/schema.js";
+import { areaBoundaries, areas, evidence, facilities, sources } from "../db/schema.js";
 import type { FetchLike } from "../geocoding/ign.js";
 import { CENSUS_METHOD, CENSUS_METHOD_VERSION, fetchCensus, toCensusFigures } from "./census.js";
 import { AreaLookupUnavailableError, fetchCommune, toCommune } from "./geo-api.js";
-import type { Area, Evidence } from "./schema.js";
+import type { Area, Evidence, Facility } from "./schema.js";
 import { SOURCES } from "../sources/registry.js";
 
 const GEO_METHOD = "geo-api-commune";
@@ -71,6 +71,17 @@ async function read(db: Db, code: string): Promise<Area | null> {
         : null,
     centre: { latitude: row.centreLatitude, longitude: row.centreLongitude },
     boundary: (boundaryRow?.geojson ?? null) as Area["boundary"],
+    facilities: (await db.select().from(facilities).where(eq(facilities.areaCode, code))).map(
+      (row): Facility => ({
+        id: row.id,
+        kind: row.kind,
+        name: row.name,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        precision: row.precision,
+        sourceId: row.sourceId,
+      }),
+    ),
     evidence: facts
       .map(
         (fact): Evidence => ({
@@ -116,6 +127,7 @@ async function store(db: Db, code: string, fetchImpl?: FetchLike): Promise<void>
   const rows = [
     ...administrativeEvidence(code, commune),
     ...(await censusEvidence(code, fetchImpl)),
+    ...(await facilityEvidence(db, code)),
   ];
 
   if (rows.length > 0) {
@@ -199,4 +211,47 @@ async function censusEvidence(code: string, fetchImpl?: FetchLike) {
       },
     ];
   }
+}
+
+const FINESS_METHOD = "finess-facility-count";
+const FINESS_METHOD_VERSION = 1;
+
+/**
+ * How many hospitals and pharmacies FINESS places in this commune.
+ *
+ * Counting nothing is only a finding once the directory has been ingested.
+ * Before that, zero pharmacies would be a claim about the commune when it is
+ * really a statement about HomeGround, so the count is Unknown instead.
+ */
+async function facilityEvidence(db: Db, code: string) {
+  const [{ total } = { total: 0 }] = await db.select({ total: count() }).from(facilities);
+  const ingested = total > 0;
+
+  const here = ingested
+    ? await db
+        .select({ kind: facilities.kind, found: count() })
+        .from(facilities)
+        .where(eq(facilities.areaCode, code))
+        .groupBy(facilities.kind)
+    : [];
+
+  const counted = (kind: "pharmacy" | "hospital") =>
+    here.find((row) => row.kind === kind)?.found ?? 0;
+
+  return (
+    [
+      ["health.pharmacies", "pharmacy", "pharmacies"],
+      ["health.hospitals", "hospital", "hospitals"],
+    ] as const
+  ).map(([metric, kind, unit]) => ({
+    areaCode: code,
+    metric,
+    value: ingested ? counted(kind) : null,
+    unit: ingested ? unit : null,
+    state: ingested ? ("known" as const) : ("unknown" as const),
+    sourceId: "finess",
+    observedAt: null,
+    method: FINESS_METHOD,
+    methodVersion: FINESS_METHOD_VERSION,
+  }));
 }

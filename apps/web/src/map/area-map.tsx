@@ -1,7 +1,9 @@
 import "leaflet/dist/leaflet.css";
 import "./map.css";
+import "./facility-markers.css";
 import * as L from "leaflet";
 import { useEffect, useRef, useState } from "react";
+import type { Facility } from "../api/types.js";
 import { BaseMapPicker } from "./base-map-picker.js";
 import {
   AERIAL_ATTRIBUTION,
@@ -39,6 +41,14 @@ interface AreaMapProps {
    * and nothing beyond it, so what is dimmed is what the brief does not cover.
    */
   boundary?: AreaBoundary | null;
+  /**
+   * Hospitals and pharmacies inside the commune.
+   *
+   * Drawn as points only where the source says it knows the address. One
+   * located to its commune is drawn as an area, because that is what the
+   * source actually told us.
+   */
+  facilities?: Facility[];
 }
 
 export type AreaBoundary =
@@ -73,7 +83,13 @@ function outerRings(boundary: AreaBoundary): L.LatLngTuple[][] {
  * The only module that imports Leaflet, so component tests mock this one file
  * and the mapping library stays swappable. See ADR-011.
  */
-export function AreaMap({ placing = false, onPlace, focus = null, boundary = null }: AreaMapProps) {
+export function AreaMap({
+  placing = false,
+  onPlace,
+  focus = null,
+  boundary = null,
+  facilities = [],
+}: AreaMapProps) {
   const container = useRef<HTMLDivElement>(null);
   // TEMPORARY: for comparing basemaps.
   const [basemap, setBasemap] = useState<BaseMap>(DEFAULT_BASE_MAP);
@@ -198,6 +214,30 @@ export function AreaMap({ placing = false, onPlace, focus = null, boundary = nul
     }
   }, [focus]);
 
+  // Hospitals and pharmacies, each drawn to the precision the source claims.
+  useEffect(() => {
+    const instance = map.current;
+
+    if (!instance || facilities.length === 0) {
+      return;
+    }
+
+    const drawn = facilities.map((facility) =>
+      L.marker([facility.latitude, facility.longitude], {
+        icon: facilityIcon(facility),
+        keyboard: false,
+      })
+        .addTo(instance)
+        .bindTooltip(tooltipFor(facility), { direction: "top", offset: [0, -8] }),
+    );
+
+    return () => {
+      for (const marker of drawn) {
+        marker.remove();
+      }
+    };
+  }, [facilities]);
+
   // Placing shows aerial imagery and turns the next click into a coordinate.
   useEffect(() => {
     const instance = map.current;
@@ -243,4 +283,44 @@ function baseLayer(basemap: BaseMap): L.TileLayer {
     ...(basemap.tileSize ? { tileSize: basemap.tileSize } : {}),
     ...(basemap.zoomOffset ? { zoomOffset: basemap.zoomOffset } : {}),
   });
+}
+
+const FACILITY_SIZE: Record<Facility["precision"], number> = {
+  exact: 15,
+  zone: 15,
+  commune: 34,
+};
+
+function facilityIcon(facility: Facility): L.DivIcon {
+  const size = FACILITY_SIZE[facility.precision];
+
+  return L.divIcon({
+    className: "",
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    html:
+      `<button type="button" class="hg-facility" data-kind="${facility.kind}"` +
+      ` data-precision="${facility.precision}" aria-label="${escapeHtml(tooltipFor(facility))}">` +
+      `<span class="hg-facility-shape" aria-hidden="true"></span></button>`,
+  });
+}
+
+/** What the source said, including how well it located it. */
+function tooltipFor(facility: Facility): string {
+  const kind = facility.kind === "pharmacy" ? "Pharmacy" : "Hospital";
+
+  if (facility.precision === "commune") {
+    return `${kind}: ${facility.name} — located to the commune only`;
+  }
+
+  return `${kind}: ${facility.name}`;
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(
+    /[&<>"']/g,
+    (character) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character] ??
+      character,
+  );
 }

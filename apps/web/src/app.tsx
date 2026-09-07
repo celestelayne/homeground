@@ -134,6 +134,7 @@ export function App() {
             onPlace={setPlacedPoint}
             focus={focus}
             boundary={lookup.kind === "loaded" ? lookup.area.boundary : null}
+            facilities={lookup.kind === "loaded" ? lookup.area.facilities : []}
           />
         </>
       }
