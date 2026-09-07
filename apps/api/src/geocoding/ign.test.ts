@@ -12,7 +12,31 @@ describe("toCandidates", () => {
       latitude: 43.610962,
       longitude: 3.874026,
       precision: "exact",
+      communeCode: "34172",
     });
+  });
+
+  it("keeps the INSEE code, which is what identifies a commune", () => {
+    const [candidate] = toCandidates(recorded);
+
+    // Not the postcode: 11200 alone covers five communes, and commune names
+    // repeat across France. 34172 is Montpellier and only Montpellier.
+    expect(candidate?.communeCode).toBe("34172");
+  });
+
+  it("leaves the commune unknown rather than reading one out of the label", () => {
+    const noCitycode = {
+      features: [
+        {
+          properties: { label: "12 Rue Foch 34000 Montpellier", type: "housenumber" },
+          geometry: { coordinates: [3.874026, 43.610962] },
+        },
+      ],
+    };
+
+    // The label says Montpellier. Guessing 34172 from that would key evidence
+    // to a commune the source never confirmed.
+    expect(toCandidates(noCitycode)[0]?.communeCode).toBeNull();
   });
 
   it("reads GeoJSON coordinates as [longitude, latitude]", () => {
