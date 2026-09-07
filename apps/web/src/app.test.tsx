@@ -67,13 +67,33 @@ beforeEach(() => {
           code,
           name: "Fabrezan",
           postcodes: ["11200"],
-          population: 1306,
-          areaSqKm: 28.87,
-          densityPerSqKm: 45.2,
           department: { code: "11", name: "Aude" },
           region: { code: "76", name: "Occitanie" },
           intercommunality: { code: "200035863", name: "CC Corbières et Minervois" },
           centre: { latitude: 43.1282, longitude: 2.7139 },
+          boundary: null,
+          evidence: [
+            {
+              metric: "population",
+              value: 1306,
+              unit: "residents",
+              state: "known",
+              sourceId: "geo-api-gouv",
+              observedAt: null,
+              method: "geo-api-commune",
+              methodVersion: 1,
+            },
+            {
+              metric: "dwellings.secondHomeShare",
+              value: 23.52,
+              unit: "%",
+              state: "estimated",
+              sourceId: "insee-census",
+              observedAt: "2023-01-01T00:00:00.000Z",
+              method: "second-home-share-of-all-dwellings",
+              methodVersion: 1,
+            },
+          ],
         }),
         { status: 200 },
       );
@@ -285,6 +305,8 @@ describe("before anything is saved", () => {
 
     expect(await screen.findByRole("heading", { name: /Fabrezan/ })).toBeInTheDocument();
     expect(screen.getByText(/1,306 residents/)).toBeInTheDocument();
+    // Every figure says where it came from.
+    expect(screen.getAllByText(/INSEE census|Découpage administratif/).length).toBeGreaterThan(0);
   });
 
   it("says the results are area-level, not about a house", async () => {

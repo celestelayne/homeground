@@ -1,16 +1,19 @@
 import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
+import type { Db } from "../db/client.js";
 import { ErrorSchema } from "../errors.js";
 import type { FetchLike } from "../geocoding/ign.js";
-import { AreaLookupUnavailableError, AreaNotFoundError, fetchCommune, toArea } from "./geo-api.js";
+import { AreaLookupUnavailableError, AreaNotFoundError } from "./geo-api.js";
 import { AreaParamsSchema, AreaSchema } from "./schema.js";
+import { getArea } from "./store.js";
 
 export interface AreaRoutesOptions {
+  db: Db;
   fetchImpl?: FetchLike;
 }
 
 export const areaRoutes: FastifyPluginAsyncTypebox<AreaRoutesOptions> = async (
   app,
-  { fetchImpl },
+  { db, fetchImpl },
 ) => {
   app.get(
     "/areas/:code",
@@ -22,7 +25,8 @@ export const areaRoutes: FastifyPluginAsyncTypebox<AreaRoutesOptions> = async (
     },
     async (request, reply) => {
       try {
-        return toArea(await fetchCommune(request.params.code, fetchImpl));
+        // Fetched the first time, held afterwards.
+        return await getArea(db, request.params.code, fetchImpl);
       } catch (error) {
         // "No such commune" and "could not ask" are different facts. Collapsing
         // them would tell a user their commune does not exist because a service

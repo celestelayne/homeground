@@ -46,18 +46,31 @@ export interface GeocodeCandidate {
  * services HomeGround uses publish none, and ADR-004 forbids inventing
  * geography.
  */
+/** One measured or retrieved fact, with everything needed to trust it. */
+export interface Evidence {
+  metric: string;
+  /** Null exactly when the state carries absence. */
+  value: number | null;
+  unit: string | null;
+  state: "known" | "estimated" | "unknown" | "unavailable" | "stale";
+  sourceId: string;
+  /** When the source observed it. Not when HomeGround fetched it. */
+  observedAt: string | null;
+  method: string;
+  methodVersion: number;
+}
+
 export interface Area {
   /** INSEE code — the identity of a commune. A postcode is not. */
   code: string;
   name: string;
   postcodes: string[];
-  population: number | null;
-  areaSqKm: number | null;
-  densityPerSqKm: number | null;
   department: { code: string; name: string };
   region: { code: string; name: string };
   intercommunality: { code: string; name: string } | null;
   centre: { latitude: number; longitude: number };
+  /** Figures are no longer fields: a measurement without provenance is an assertion. */
+  evidence: Evidence[];
   /** GeoJSON, [longitude, latitude]. Null when the source gave none usable. */
   boundary:
     | { type: "Polygon"; coordinates: number[][][] }

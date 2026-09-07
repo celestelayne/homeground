@@ -1,5 +1,5 @@
 import type { FetchLike } from "../geocoding/ign.js";
-import type { Area, Boundary } from "./schema.js";
+import type { Boundary } from "./schema.js";
 
 /**
  * geo.api.gouv.fr — the French government's commune reference, built on INSEE
@@ -64,8 +64,29 @@ export async function fetchCommune(
 
 const HECTARES_PER_SQ_KM = 100;
 
+/**
+ * A commune exactly as the administrative reference describes it.
+ *
+ * Not the API's Area: population, surface and density are measurements and
+ * leave here as evidence carrying their provenance. This type is the provider
+ * boundary, and nothing outside this module and the store should see it.
+ */
+export interface CommuneFacts {
+  code: string;
+  name: string;
+  postcodes: string[];
+  population: number | null;
+  areaSqKm: number | null;
+  densityPerSqKm: number | null;
+  department: { code: string; name: string };
+  region: { code: string; name: string };
+  intercommunality: { code: string; name: string } | null;
+  centre: { latitude: number; longitude: number };
+  boundary: Boundary;
+}
+
 /** Pure, so it is testable against a recorded response with no network. */
-export function toArea(payload: unknown): Area {
+export function toCommune(payload: unknown): CommuneFacts {
   const c = payload as {
     nom?: unknown;
     code?: unknown;

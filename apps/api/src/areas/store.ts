@@ -1,0 +1,202 @@
+import { eq } from "drizzle-orm";
+import type { Db } from "../db/client.js";
+import { areaBoundaries, areas, evidence, sources } from "../db/schema.js";
+import type { FetchLike } from "../geocoding/ign.js";
+import { CENSUS_METHOD, CENSUS_METHOD_VERSION, fetchCensus, toCensusFigures } from "./census.js";
+import { AreaLookupUnavailableError, fetchCommune, toCommune } from "./geo-api.js";
+import type { Area, Evidence } from "./schema.js";
+import { SOURCES } from "./sources.js";
+
+const GEO_METHOD = "geo-api-commune";
+const GEO_METHOD_VERSION = 1;
+
+/** Registers the sources rows, so evidence has something to cite. */
+export async function registerSources(db: Db): Promise<void> {
+  for (const source of SOURCES) {
+    const { metrics: _metrics, ...row } = source;
+
+    await db.insert(sources).values(row).onConflictDoUpdate({ target: sources.id, set: row });
+  }
+}
+
+/**
+ * A commune with its evidence.
+ *
+ * Fetched from the upstream services the first time it is asked for and held
+ * afterwards, which is what M2 requires and what the rate limiting demands:
+ * geo.api.gouv.fr and INSEE both throttle in ordinary use.
+ */
+export async function getArea(db: Db, code: string, fetchImpl?: FetchLike): Promise<Area> {
+  const held = await read(db, code);
+
+  if (held) {
+    return held;
+  }
+
+  await store(db, code, fetchImpl);
+
+  const stored = await read(db, code);
+
+  if (!stored) {
+    throw new AreaLookupUnavailableError("Commune was fetched but could not be read back");
+  }
+
+  return stored;
+}
+
+async function read(db: Db, code: string): Promise<Area | null> {
+  const [row] = await db.select().from(areas).where(eq(areas.code, code)).limit(1);
+
+  if (!row) {
+    return null;
+  }
+
+  const [boundaryRow] = await db
+    .select()
+    .from(areaBoundaries)
+    .where(eq(areaBoundaries.code, code))
+    .limit(1);
+
+  const facts = await db.select().from(evidence).where(eq(evidence.areaCode, code));
+
+  return {
+    code: row.code,
+    name: row.name,
+    postcodes: row.postcodes,
+    department: { code: row.departmentCode, name: row.departmentName },
+    region: { code: row.regionCode, name: row.regionName },
+    intercommunality:
+      row.intercommunalityCode && row.intercommunalityName
+        ? { code: row.intercommunalityCode, name: row.intercommunalityName }
+        : null,
+    centre: { latitude: row.centreLatitude, longitude: row.centreLongitude },
+    boundary: (boundaryRow?.geojson ?? null) as Area["boundary"],
+    evidence: facts
+      .map(
+        (fact): Evidence => ({
+          metric: fact.metric,
+          value: fact.value,
+          unit: fact.unit,
+          state: fact.state,
+          sourceId: fact.sourceId,
+          observedAt: fact.observedAt ? fact.observedAt.toISOString() : null,
+          method: fact.method,
+          methodVersion: fact.methodVersion,
+        }),
+      )
+      .sort(
+        (a, b) =>
+          a.metric.localeCompare(b.metric) ||
+          (a.observedAt ?? "").localeCompare(b.observedAt ?? ""),
+      ),
+  };
+}
+
+async function store(db: Db, code: string, fetchImpl?: FetchLike): Promise<void> {
+  const commune = toCommune(await fetchCommune(code, fetchImpl));
+
+  await db.insert(areas).values({
+    code: commune.code,
+    name: commune.name,
+    postcodes: commune.postcodes,
+    departmentCode: commune.department.code,
+    departmentName: commune.department.name,
+    regionCode: commune.region.code,
+    regionName: commune.region.name,
+    intercommunalityCode: commune.intercommunality?.code ?? null,
+    intercommunalityName: commune.intercommunality?.name ?? null,
+    centreLatitude: commune.centre.latitude,
+    centreLongitude: commune.centre.longitude,
+  });
+
+  if (commune.boundary) {
+    await db.insert(areaBoundaries).values({ code: commune.code, geojson: commune.boundary });
+  }
+
+  const rows = [
+    ...administrativeEvidence(code, commune),
+    ...(await censusEvidence(code, fetchImpl)),
+  ];
+
+  if (rows.length > 0) {
+    await db.insert(evidence).values(rows);
+  }
+}
+
+/** What the administrative reference publishes about a commune. */
+function administrativeEvidence(code: string, commune: ReturnType<typeof toCommune>) {
+  const measured = (metric: string, value: number | null, unit: string) =>
+    value === null
+      ? {
+          areaCode: code,
+          metric,
+          value: null,
+          unit: null,
+          // The source answered and had no figure. Not a failure, and not zero.
+          state: "unknown" as const,
+          sourceId: "geo-api-gouv",
+          observedAt: null,
+          method: GEO_METHOD,
+          methodVersion: GEO_METHOD_VERSION,
+        }
+      : {
+          areaCode: code,
+          metric,
+          value,
+          unit,
+          state: "known" as const,
+          sourceId: "geo-api-gouv",
+          observedAt: null,
+          method: GEO_METHOD,
+          methodVersion: GEO_METHOD_VERSION,
+        };
+
+  return [
+    measured("population", commune.population, "residents"),
+    measured("area.sqKm", commune.areaSqKm, "km²"),
+    measured("population.density", commune.densityPerSqKm, "residents per km²"),
+  ];
+}
+
+/**
+ * Census figures, or a single `unavailable` marker.
+ *
+ * A census service that cannot answer must not make the commune's other
+ * evidence disappear: one failed source does not invalidate the rest of an
+ * assessment. docs/methodology.md, and it is why this is caught here rather
+ * than allowed to fail the whole lookup.
+ */
+async function censusEvidence(code: string, fetchImpl?: FetchLike) {
+  try {
+    const figures = toCensusFigures(await fetchCensus(code, fetchImpl));
+
+    return figures.map((figure) => ({
+      areaCode: code,
+      metric: figure.metric,
+      value: figure.value,
+      unit: figure.unit,
+      // INSEE publishes these as weighted estimates, with decimals. Calling
+      // them known would launder an estimate into a count.
+      state: "estimated" as const,
+      sourceId: "insee-census",
+      observedAt: figure.observedAt,
+      method: figure.method,
+      methodVersion: figure.methodVersion,
+    }));
+  } catch {
+    return [
+      {
+        areaCode: code,
+        metric: "dwellings.secondHomeShare",
+        value: null,
+        unit: null,
+        // Could not ask. Different from asking and being told nothing.
+        state: "unavailable" as const,
+        sourceId: "insee-census",
+        observedAt: null,
+        method: CENSUS_METHOD,
+        methodVersion: CENSUS_METHOD_VERSION,
+      },
+    ];
+  }
+}

@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
 import recorded from "./__fixtures__/geo-api-commune.json" with { type: "json" };
-import { AreaLookupUnavailableError, AreaNotFoundError, fetchCommune, toArea } from "./geo-api.js";
+import {
+  AreaLookupUnavailableError,
+  AreaNotFoundError,
+  fetchCommune,
+  toCommune,
+} from "./geo-api.js";
 
-describe("toArea", () => {
+describe("toCommune", () => {
   it("maps a recorded response", () => {
     // The boundary is hundreds of coordinate pairs; its shape is asserted below
     // rather than transcribed here.
-    const { boundary, ...facts } = toArea(recorded);
+    const { boundary, ...facts } = toCommune(recorded);
 
     expect(boundary?.type).toBe("Polygon");
     expect(facts).toEqual({
@@ -28,18 +33,18 @@ describe("toArea", () => {
 
   it("reads GeoJSON coordinates as [longitude, latitude]", () => {
     // Reversing these puts an Aude commune in the Indian Ocean.
-    const { centre } = toArea(recorded);
+    const { centre } = toCommune(recorded);
 
     expect(centre.latitude).toBeGreaterThan(40);
     expect(centre.longitude).toBeLessThan(10);
   });
 
   it("converts the published hectares to square kilometres", () => {
-    expect(toArea(recorded).areaSqKm).toBe(28.87);
+    expect(toCommune(recorded).areaSqKm).toBe(28.87);
   });
 
   it("leaves a missing population missing rather than calling it zero", () => {
-    const area = toArea({ ...recorded, population: undefined });
+    const area = toCommune({ ...recorded, population: undefined });
 
     expect(area.population).toBeNull();
     // And no density, rather than a density of nobody.
@@ -47,7 +52,7 @@ describe("toArea", () => {
   });
 
   it("gives no density when the surface is unknown", () => {
-    const area = toArea({ ...recorded, surface: undefined });
+    const area = toCommune({ ...recorded, surface: undefined });
 
     expect(area.areaSqKm).toBeNull();
     expect(area.densityPerSqKm).toBeNull();
@@ -56,11 +61,11 @@ describe("toArea", () => {
   it("keeps the intercommunality, which carries the only sourced local context", () => {
     // "Corbières et Minervois" names two appellations. It is the source's own
     // wording, not a description HomeGround wrote.
-    expect(toArea(recorded).intercommunality?.name).toContain("Minervois");
+    expect(toCommune(recorded).intercommunality?.name).toContain("Minervois");
   });
 
   it("has no intercommunality rather than an empty one when the source omits it", () => {
-    expect(toArea({ ...recorded, epci: undefined }).intercommunality).toBeNull();
+    expect(toCommune({ ...recorded, epci: undefined }).intercommunality).toBeNull();
   });
 
   it("drops a boundary it cannot read rather than drawing half a commune", () => {
@@ -68,13 +73,13 @@ describe("toArea", () => {
     // commune is. No boundary is honest; a partial one is not.
     const ragged = { ...recorded, contour: { type: "Polygon", coordinates: [[[2.7, 43.1], "x"]] } };
 
-    expect(toArea(ragged).boundary).toBeNull();
-    expect(toArea({ ...recorded, contour: undefined }).boundary).toBeNull();
+    expect(toCommune(ragged).boundary).toBeNull();
+    expect(toCommune({ ...recorded, contour: undefined }).boundary).toBeNull();
     expect(
-      toArea({ ...recorded, contour: { type: "Point", coordinates: [2.7, 43.1] } }).boundary,
+      toCommune({ ...recorded, contour: { type: "Point", coordinates: [2.7, 43.1] } }).boundary,
     ).toBeNull();
     // The facts survive a boundary that does not.
-    expect(toArea(ragged).name).toBe("Fabrezan");
+    expect(toCommune(ragged).name).toBe("Fabrezan");
   });
 
   it("keeps a multi-part commune whole", () => {
@@ -103,19 +108,19 @@ describe("toArea", () => {
       },
     };
 
-    const boundary = toArea(islands).boundary;
+    const boundary = toCommune(islands).boundary;
 
     expect(boundary?.type).toBe("MultiPolygon");
     expect(boundary?.coordinates).toHaveLength(2);
   });
 
   it("refuses a response it cannot read rather than inventing a commune", () => {
-    expect(() => toArea({ nom: "Fabrezan" })).toThrow(AreaLookupUnavailableError);
-    expect(() => toArea(null)).toThrow(AreaLookupUnavailableError);
+    expect(() => toCommune({ nom: "Fabrezan" })).toThrow(AreaLookupUnavailableError);
+    expect(() => toCommune(null)).toThrow(AreaLookupUnavailableError);
   });
 
   it("refuses a commune with no usable centre", () => {
-    expect(() => toArea({ ...recorded, centre: { coordinates: ["x", "y"] } })).toThrow(
+    expect(() => toCommune({ ...recorded, centre: { coordinates: ["x", "y"] } })).toThrow(
       AreaLookupUnavailableError,
     );
   });

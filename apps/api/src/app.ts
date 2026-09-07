@@ -1,6 +1,7 @@
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify from "fastify";
 import { areaRoutes } from "./areas/routes.js";
+import { registerSources } from "./areas/store.js";
 import type { Db } from "./db/client.js";
 import { registerErrorHandler } from "./errors.js";
 import type { FetchLike } from "./geocoding/ign.js";
@@ -33,9 +34,15 @@ export function buildApp({ db, logger = false, fetchImpl }: AppOptions) {
 
   app.get("/health", async () => ({ status: "ok" }));
 
+  // Evidence cites a source by foreign key, so the registry has to exist
+  // before anything is stored. Idempotent, so it is safe on every boot.
+  app.addHook("onReady", async () => {
+    await registerSources(db);
+  });
+
   app.register(propertyRoutes, { prefix: "/api", db });
   app.register(geocodingRoutes, { prefix: "/api", fetchImpl });
-  app.register(areaRoutes, { prefix: "/api", fetchImpl });
+  app.register(areaRoutes, { prefix: "/api", db, fetchImpl });
 
   return app;
 }
