@@ -41,90 +41,11 @@ Only the current milestone below is specified.
 
 ## Current Milestone
 
-### M2 — Evidence model, proven on commune facts
+None. M2 is complete.
 
-#### Goal
-
-A commune carries sourced, versioned evidence with an explicit state, and the
-interface shows both the figure and what produced it.
-
-The contract and the first evidence ship together. An evidence model with no
-evidence is a layer, and this document forbids layer milestones.
-
-#### Acceptance Criteria
-
-M2 is complete when:
-
-* evidence for a commune is served from HomeGround's own store rather than
-  fetched from a third party on each request
-* every piece of evidence carries its value, its unit, its source, the date the
-  source observed it, and the version of the method that produced it
-* a figure a source does not provide is Unknown, and Unknown is distinguishable
-  in the API and on screen from zero and from a field that was never requested
-* one source failing leaves the evidence from the other source intact and
-  marks only its own as unavailable
-* every figure on screen can be traced to its source without leaving the page
-* a Sources and methodology panel lists every source in use, each with its
-  update cadence, its coverage, and at least one stated limitation
-* the panel is generated from the same registry the evidence references, so a
-  source cannot appear in one and not the other — a source with no evidence
-  behind it, or evidence citing a source the panel omits, fails a test
-* a source cannot be registered without a stated limitation
-* the panel says plainly that HomeGround assembles public evidence, does not
-  judge a property, and does not say whether anywhere is safe
-* a commune with no data renders as Unknown throughout, never as a commune of
-  zero people with no shops
-* evidence is retrievable by INSEE code alone
-* the same commune requested twice does not hit the upstream service twice
-* the invariants in `specs/evidence.md` are covered by tests
-
-#### Out of Scope
-
-M2 does not include:
-
-* comparison against other communes, or any statement that a figure is high or
-  low — that is M3, and until it exists a count is reported, never judged
-* wildfire, recorded prices, routing, and personal criteria
-* evidence attached to a Property rather than an Area
-* detecting staleness, or recomputing evidence when a source updates
-* a written description of a commune's character
-* listing sources HomeGround does not yet use. The panel describes what is
-  actually wired up, so EFFIS, Géorisques, FINESS and départemental fire
-  records appear when the milestones that use them land, not before
-* PostGIS, and storing boundaries as geometry
-* automatic or scheduled ingestion
-* authentication, deployment and hosting
-
-#### Authorized Dependencies
-
-In addition to those carried from M0 and M1:
-
-* FINESS, the national directory of health establishments, in its geolocated
-  form — hospitals and pharmacies with coordinates
-* INSEE census population, age structure and dwelling-occupancy data
-* both ingested rather than proxied
-* `proj4`, to convert FINESS coordinates from Lambert-93 (EPSG:2154) to
-  WGS84. Established by the step 1 spike: FINESS publishes projected
-  coordinates, and there is no way to place an establishment on the map
-  without converting them. PostGIS would also do it, but PostGIS is M5 and
-  reaching for it here would pull a database extension forward to avoid a
-  small library.
-
-Explicitly **not** authorized:
-
-* **React Query.** The requirement it was deferred against — one failed source
-  must not invalidate the rest of an assessment — turns out to be answerable in
-  the evidence contract, where each piece carries its own state, rather than in
-  the client's fetching library. Revisit when a genuine per-query staleness
-  requirement appears.
-* **PostGIS** — M5 introduces it.
-* **A scheduler** — ingestion is a command run by hand until a milestone needs
-  it to be automatic.
-
-#### Governing Specs
-
-`specs/evidence.md`, written as the first step of this milestone.
-`specs/property.md` is unchanged and Property gains no evidence here.
+Promoting M3 means specifying it: goal, acceptance criteria, out-of-scope
+list and authorized dependencies. Until that is written, no milestone is
+current and nothing is authorized to be built.
 
 ---
 
@@ -239,6 +160,119 @@ already needs. See the amendment to `ADR-005`.
 
 ## Completed Milestones
 
+### M2 — Evidence model, proven on commune facts
+
+#### Goal
+
+A commune carries sourced, versioned evidence with an explicit state, and the
+interface shows both the figure and what produced it.
+
+The contract and the first evidence ship together. An evidence model with no
+evidence is a layer, and this document forbids layer milestones.
+
+#### Acceptance Criteria
+
+M2 is complete when:
+
+* evidence for a commune is served from HomeGround's own store rather than
+  fetched from a third party on each request
+* every piece of evidence carries its value, its unit, its source, the date the
+  source observed it, and the version of the method that produced it
+* a figure a source does not provide is Unknown, and Unknown is distinguishable
+  in the API and on screen from zero and from a field that was never requested
+* one source failing leaves the evidence from the other source intact and
+  marks only its own as unavailable
+* every figure on screen can be traced to its source without leaving the page
+* a Sources and methodology panel lists every source in use, each with its
+  update cadence, its coverage, and at least one stated limitation
+* the panel is generated from the same registry the evidence references, so a
+  source cannot appear in one and not the other — a source with no evidence
+  behind it, or evidence citing a source the panel omits, fails a test
+* a source cannot be registered without a stated limitation
+* the panel says plainly that HomeGround assembles public evidence, does not
+  judge a property, and does not say whether anywhere is safe
+* a commune with no data renders as Unknown throughout, never as a commune of
+  zero people with no shops
+* evidence is retrievable by INSEE code alone
+* the same commune requested twice does not hit the upstream service twice
+* the invariants in `specs/evidence.md` are covered by tests
+
+#### Out of Scope
+
+M2 does not include:
+
+* comparison against other communes, or any statement that a figure is high or
+  low — that is M3, and until it exists a count is reported, never judged
+* wildfire, recorded prices, routing, and personal criteria
+* evidence attached to a Property rather than an Area
+* detecting staleness, or recomputing evidence when a source updates
+* a written description of a commune's character
+* listing sources HomeGround does not yet use. The panel describes what is
+  actually wired up, so EFFIS, Géorisques, FINESS and départemental fire
+  records appear when the milestones that use them land, not before
+* PostGIS, and storing boundaries as geometry
+* automatic or scheduled ingestion
+* authentication, deployment and hosting
+
+#### Authorized Dependencies
+
+In addition to those carried from M0 and M1:
+
+* FINESS, the national directory of health establishments, in its geolocated
+  form — hospitals and pharmacies with coordinates
+* INSEE census population, age structure and dwelling-occupancy data
+* both ingested rather than proxied
+* `proj4`, to convert FINESS coordinates from Lambert-93 (EPSG:2154) to
+  WGS84. Established by the step 1 spike: FINESS publishes projected
+  coordinates, and there is no way to place an establishment on the map
+  without converting them. PostGIS would also do it, but PostGIS is M5 and
+  reaching for it here would pull a database extension forward to avoid a
+  small library.
+
+Explicitly **not** authorized:
+
+* **React Query.** The requirement it was deferred against — one failed source
+  must not invalidate the rest of an assessment — turns out to be answerable in
+  the evidence contract, where each piece carries its own state, rather than in
+  the client's fetching library. Revisit when a genuine per-query staleness
+  requirement appears.
+* **PostGIS** — M5 introduces it.
+* **A scheduler** — ingestion is a command run by hand until a milestone needs
+  it to be automatic.
+
+#### Governing Specs
+
+`specs/evidence.md`, written as the first step of this milestone.
+`specs/property.md` is unchanged and Property gains no evidence here.
+
+#### Outcome
+
+Complete. A commune carries sourced, versioned evidence held in HomeGround's
+own store: the second commune request takes eighteen milliseconds against
+twelve hundred for the first, which is what stopped INSEE and
+geo.api.gouv.fr rate-limiting ordinary use.
+
+Two sources of deliberately different shapes proved the contract. Census
+figures are attributed to a commune; FINESS establishments are located things
+carrying coordinates, and 21,116 of them are held with the precision the
+source claims for each. About one in twenty-five resolves only to its
+commune, and is drawn as an area rather than a point because a dot would
+claim an address the source never gave.
+
+The Sources and methodology panel is generated from the registry the evidence
+cites, so it cannot describe a source that is not wired up, and no source can
+be registered without stating a limitation.
+
+Unknown survived the whole path. A commune the sources know nothing about —
+Tsingoni, in Mayotte — renders Unknown throughout rather than as a commune of
+no people with no shops, and its pharmacy count says Unknown rather than zero
+because the FINESS extract stops at metropolitan France. Both were found by
+looking at a real commune rather than reasoning about a hypothetical one.
+
+Built in five steps, each reviewed before the next began.
+
+---
+
 ### M1 — Property Map Workspace
 
 #### Goal
@@ -352,36 +386,27 @@ Each is either resolved into an ADR or deferred to the milestone that requires i
   labelled until a source is chosen. The intercommunality name is the nearest
   sourced substitute. M3 may make the question moot: a commune measured against
   similar communes, and against its own past, describes itself.
-* **How an area brief presents many figures** — M3. Three census editions of
-  four dwelling metrics plus the administrative figures is fifteen rows, which
-  pushes population below the fold. Honest but not readable. M3 adds comparison
-  and will restructure the panel regardless, so the shape is decided there
-  rather than twice.
 * **Which Mapbox base map style** — Streets, Light or Outdoors. ADR-011's amendment settles the provider and leaves the style open. A temporary picker in the map exists to answer it by looking; it is removed once the answer is chosen.
 
 **Deferred, with owning milestone**
 
-* **React Query** — resolved, and declined. It was deferred against a named
-  requirement: one failed source must not invalidate the rest of an assessment.
-  M2 meets that requirement in the evidence contract, where each piece carries
-  its own state, rather than in the client's fetching library. A methodology
-  rule does not belong in a cache. Revisit only if a genuine per-query
-  staleness requirement appears.
-* **Methodology version attachment** — M2, which introduces method versioning.
+* **How an area brief presents many figures** — M3. Partly answered: the brief
+  shows the latest observation of each metric rather than every census edition
+  it holds. M3 adds comparison and a second axis of figures, so the shape is
+  settled there rather than twice.
 * **Wildfire classification method** — M10, and explicitly gated on resolution in `docs/methodology.md` first.
 * **Mobile repository** — M12. The mobile application currently lives outside this repository. Whether it moves into the monorepo, and what that would require, is undecided.
-* **Caching commune facts and boundaries** — M2, which is the first milestone
-  to hold commune data rather than fetch it per request. geo.api.gouv.fr
-  rate-limits in ordinary use, and the data effectively never changes.
 * **Hosting and deployed environments** — no owning milestone yet. Required by the first milestone that needs an environment beyond local development and CI.
-* **Evidence staleness** — no owning milestone. M2 introduces a Stale state, but no milestone yet owns detecting staleness or recomputing evidence.
+* **Evidence staleness** — no owning milestone. M2 carries a Stale state in the
+  contract and nothing sets it. Detecting that a source has published something
+  newer, and recomputing against it, is unowned.
 * **Correcting a mis-saved property** — no owning milestone. M1 has no delete and cannot edit coordinates, following `specs/property.md`. A property saved against the wrong location is permanent.
 * **Raising a location tier after saving** — no owning milestone. `specs/property.md` allows a user to raise a tier as they learn more; M1 declares it at save and never revisits it.
 * **Recorded property sales** — M6. France publishes every recorded sale since 2010 under an open licence, geolocated to the parcel. It is a price source, but also an index keyed on what listings publish — commune, type, built surface, land surface — so a property that has changed hands can be matched to its parcel and reach `exact` tier without anyone guessing from photographs. Comparability is a methodology decision and must be resolved before implementation, as `docs/methodology.md` requires.
 * **Settlement context** — M3. INSEE's commune density grid classifies
   communes, which is now the subject, so the mismatch that blocked this is gone
   for area-level use. How a property's position modifies its commune's class
-  remains unresolved and returns with M10.
+  remains unresolved and returns with M11.
 
 ---
 
