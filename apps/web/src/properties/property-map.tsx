@@ -62,7 +62,13 @@ export function PropertyMap({
 
     map.current = instance;
 
+    // Leaflet measures its container once. Hiding the sidebar changes the map's
+    // width and it has no way to notice, so it renders into the old size.
+    const resize = new ResizeObserver(() => instance.invalidateSize());
+    resize.observe(container.current);
+
     return () => {
+      resize.disconnect();
       instance.remove();
       map.current = null;
       aerial.current = null;

@@ -7,6 +7,7 @@ import { PropertySidebar } from "./properties/property-sidebar.js";
 import { useProperties } from "./properties/use-properties.js";
 import { AppHeader } from "./ui/app-header.js";
 import { AppShell } from "./ui/app-shell.js";
+import { FirstUseOverlay } from "./ui/first-use-overlay.js";
 
 type Point = { latitude: number; longitude: number };
 
@@ -24,10 +25,15 @@ export function App() {
     setPlacedPoint(null);
   }
 
+  // Nothing saved yet: the sidebar has nothing to list, and the overlay
+  // introduces the product over a legible map.
+  const firstUse = state === "ready" && properties.length === 0 && !adding;
+
   return (
     <AppShell
       header={
         <AppHeader
+          showAddProperty={!firstUse}
           addingProperty={adding}
           onAddProperty={() => {
             setAdding(true);
@@ -36,7 +42,7 @@ export function App() {
         />
       }
       sidebar={
-        state === "error" ? (
+        firstUse ? undefined : state === "error" ? (
           <p className="px-4 py-4 text-body text-ink-3">Could not load your properties.</p>
         ) : (
           <PropertySidebar
@@ -52,16 +58,19 @@ export function App() {
         )
       }
       map={
-        <PropertyMap
-          properties={properties}
-          selectedId={selectedId}
-          onSelect={(id) => {
-            closeAdd();
-            setSelectedId(id);
-          }}
-          placing={placing}
-          onPlace={setPlacedPoint}
-        />
+        <>
+          {firstUse ? <FirstUseOverlay onAddProperty={() => setAdding(true)} /> : null}
+          <PropertyMap
+            properties={properties}
+            selectedId={selectedId}
+            onSelect={(id) => {
+              closeAdd();
+              setSelectedId(id);
+            }}
+            placing={placing}
+            onPlace={setPlacedPoint}
+          />
+        </>
       }
       // Adding takes the panel: you cannot be reading one property and
       // creating another at the same time.
