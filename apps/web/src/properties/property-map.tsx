@@ -54,15 +54,30 @@ export function PropertyMap({
       attributionControl: { compact: true },
     });
 
-    // MapLibre reports source and tile failures only through this event.
+    // MapLibre reports source and tile failures only through this event, but
+    // it also emits transient source errors while a style is still loading and
+    // then recovers from them. Reporting those trains people to ignore the
+    // listener, which is the only channel a real failure arrives on.
     instance.on("error", (event) => {
-      console.error("map error", event.error?.message ?? event);
+      if (instance.isStyleLoaded()) {
+        console.error("map error", event.error?.message ?? event);
+      }
     });
+
+    // The failure actually worth knowing about is a style that never finishes
+    // loading: the map draws a canvas and its markers, requests no tiles, and
+    // otherwise says nothing at all.
+    const styleWatchdog = setTimeout(() => {
+      if (!instance.isStyleLoaded()) {
+        console.error("map style never finished loading; no tiles will be requested");
+      }
+    }, 15_000);
 
     instance.addControl(new NavigationControl({ showCompass: false }), "bottom-right");
     map.current = instance;
 
     return () => {
+      clearTimeout(styleWatchdog);
       instance.remove();
       map.current = null;
       markers.current.clear();
