@@ -192,3 +192,49 @@ describe("changing a property", () => {
     expect(patches).toHaveLength(0);
   });
 });
+
+describe("before anything is saved", () => {
+  it("introduces the product over the map", async () => {
+    stored = [];
+
+    render(<App />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Find somewhere worth living." }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the saved properties column, which has nothing to list", async () => {
+    stored = [];
+
+    render(<App />);
+    await screen.findByRole("heading", { name: "Find somewhere worth living." });
+
+    expect(
+      screen.queryByRole("complementary", { name: "Saved properties" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens the add panel from the overlay", async () => {
+    stored = [];
+
+    render(<App />);
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole("button", { name: "Add your first property" }));
+
+    expect(screen.getByRole("heading", { name: "Add property" })).toBeInTheDocument();
+  });
+
+  it("steps aside once a property exists", async () => {
+    stored = [property()];
+
+    render(<App />);
+    await screen.findByRole("button", { name: /Mas above the village/ });
+
+    expect(
+      screen.queryByRole("heading", { name: "Find somewhere worth living." }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("complementary", { name: "Saved properties" })).toBeInTheDocument();
+  });
+});

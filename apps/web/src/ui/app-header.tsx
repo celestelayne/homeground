@@ -1,9 +1,15 @@
 interface AppHeaderProps {
   onAddProperty: () => void;
   addingProperty: boolean;
+  /** Hidden before anything is saved: the first-use overlay offers its own. */
+  showAddProperty?: boolean;
 }
 
-export function AppHeader({ onAddProperty, addingProperty }: AppHeaderProps) {
+export function AppHeader({
+  onAddProperty,
+  addingProperty,
+  showAddProperty = true,
+}: AppHeaderProps) {
   return (
     <header className="flex h-header flex-none items-center gap-[14px] border-b border-line-2 bg-surface px-[14px]">
       {/* Fixed to the sidebar width so the wordmark aligns with the column below. */}
@@ -15,14 +21,16 @@ export function AppHeader({ onAddProperty, addingProperty }: AppHeaderProps) {
         </span>
       </div>
 
-      <button
-        type="button"
-        onClick={onAddProperty}
-        aria-pressed={addingProperty}
-        className="rounded-sharp bg-ink px-[9px] py-[6px] text-caption text-surface"
-      >
-        + Add property
-      </button>
+      {showAddProperty ? (
+        <button
+          type="button"
+          onClick={onAddProperty}
+          aria-pressed={addingProperty}
+          className="rounded-sharp bg-ink px-[9px] py-[6px] text-caption text-surface"
+        >
+          + Add property
+        </button>
+      ) : null}
     </header>
   );
 }
