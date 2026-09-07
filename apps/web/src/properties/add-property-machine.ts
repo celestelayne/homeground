@@ -47,6 +47,17 @@ export const emptyDraft: AddPropertyDraft = {
   placing: false,
 };
 
+/**
+ * A draft that begins from a query typed somewhere else, such as the first-use
+ * overlay. It starts at `typing` rather than `confirmed`: a query is a question,
+ * not a location, and specs/property.md forbids saving from unconfirmed
+ * geocoding output. The search still has to run and a candidate still has to be
+ * confirmed.
+ */
+export function draftFromQuery(query: string): AddPropertyDraft {
+  return { ...emptyDraft, location: { kind: "typing", query } };
+}
+
 export type AddPropertyAction =
   | { type: "listing-url-changed"; value: string; suggestedName: string | null }
   | { type: "name-changed"; value: string }

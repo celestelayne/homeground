@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="HomeGround">
+  <path
+    d="M32 12 L52 30 L52 52 L12 52 L12 30 Z"
+    fill="#234b3d"
+    stroke="#234b3d"
+    stroke-width="8"
+    stroke-linejoin="round"
+    stroke-linecap="round"
+  />
+  <path
+    d="M27 47 C 18 36, 22 23, 42 18 C 44 32, 38 43, 27 47 Z"
+    fill="#93bea0"
+  />
+  <path
+    d="M29 46 C 29 37, 31 30, 37 23"
+    fill="none"
+    stroke="#234b3d"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
+  <path
+    d="M30 55 L30 46"
+    fill="none"
+    stroke="#93bea0"
+    stroke-width="3.5"
+    stroke-linecap="round"
+  />
+</svg>

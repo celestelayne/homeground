@@ -182,7 +182,7 @@ Each is either resolved into an ADR or deferred to the milestone that requires i
 
 **Recorded without an ADR**
 
-None.
+* **Which Mapbox base map style** — Streets, Light or Outdoors. ADR-011's amendment settles the provider and leaves the style open. A temporary picker in the map exists to answer it by looking; it is removed once the answer is chosen.
 
 **Deferred, with owning milestone**
 

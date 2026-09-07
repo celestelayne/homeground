@@ -11,6 +11,7 @@ import type { Property } from "./api/types";
  */
 vi.mock("./properties/property-map", () => ({
   PropertyMap: () => null,
+  REGION_VIEW: { latitude: 43.7, longitude: 3.6, zoom: 8 },
 }));
 
 function property(overrides: Partial<Property> = {}): Property {
@@ -33,12 +34,35 @@ function property(overrides: Partial<Property> = {}): Property {
 
 let stored: Property[] = [];
 const patches: Array<{ id: string; body: unknown }> = [];
+/** Every query the app actually sent to the geocoder, in order. */
+let geocoded: string[] = [];
 
 beforeEach(() => {
   stored = [];
   patches.length = 0;
+  geocoded = [];
 
   vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
+    if (url.startsWith("/api/geocode")) {
+      const query = new URL(url, "http://test").searchParams.get("q") ?? "";
+      geocoded.push(query);
+
+      return new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              id: "candidate-1",
+              label: query,
+              latitude: 43.351,
+              longitude: 2.889,
+              precision: "commune",
+            },
+          ],
+        }),
+        { status: 200 },
+      );
+    }
+
     if (init?.method === "PATCH") {
       const id = url.split("/").pop() as string;
       const body = JSON.parse(String(init.body));
@@ -215,15 +239,79 @@ describe("before anything is saved", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("opens the add panel from the overlay", async () => {
+  it("carries a looked-up place into the add panel, and runs the lookup there", async () => {
     stored = [];
 
     render(<App />);
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole("button", { name: "Add your first property" }));
+    await user.type(
+      await screen.findByRole("textbox", { name: "Address, village or place name" }),
+      "Montouliers",
+    );
+    await user.click(screen.getByRole("button", { name: "Look up" }));
 
     expect(screen.getByRole("heading", { name: "Add property" })).toBeInTheDocument();
+    // The query arrives already searched: asking twice for the same lookup is
+    // the thing the overlay's field exists to avoid.
+    expect(await screen.findByRole("button", { name: /Montouliers/ })).toBeInTheDocument();
+    expect(geocoded).toEqual(["Montouliers"]);
+  });
+
+  it("will not look up a query too short to mean anything", async () => {
+    stored = [];
+
+    render(<App />);
+    const user = userEvent.setup();
+
+    await user.type(
+      await screen.findByRole("textbox", { name: "Address, village or place name" }),
+      "Mo",
+    );
+
+    expect(screen.getByRole("button", { name: "Look up" })).toBeDisabled();
+  });
+
+  it("opens the add panel without a lookup, for a place with no address", async () => {
+    stored = [];
+
+    render(<App />);
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole("button", { name: "place the point yourself" }));
+
+    expect(screen.getByRole("heading", { name: "Add property" })).toBeInTheDocument();
+    expect(geocoded).toEqual([]);
+  });
+
+  it("goes home from the logo, closing what was open", async () => {
+    stored = [property({ name: "Mas above the village" })];
+
+    render(<App />);
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole("button", { name: /Mas above the village/ }));
+    expect(screen.getByRole("heading", { name: "Mas above the village" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "HomeGround" }));
+
+    expect(
+      screen.queryByRole("heading", { name: "Mas above the village" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("goes home from the logo while adding, abandoning the draft", async () => {
+    stored = [property()];
+
+    render(<App />);
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole("button", { name: "+ Add property" }));
+    expect(screen.getByRole("heading", { name: "Add property" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "HomeGround" }));
+
+    expect(screen.queryByRole("heading", { name: "Add property" })).not.toBeInTheDocument();
   });
 
   it("steps aside once a property exists", async () => {

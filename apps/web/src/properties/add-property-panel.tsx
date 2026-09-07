@@ -1,9 +1,11 @@
-import { useEffect, useReducer, useState } from "react";
+import { type Dispatch, useEffect, useReducer, useRef, useState } from "react";
 import { createProperty, geocode } from "../api/client.js";
 import type { GeocodeCandidate, LocationTier } from "../api/types.js";
 import {
+  type AddPropertyAction,
   type AddPropertyDraft,
   canSave,
+  draftFromQuery,
   emptyDraft,
   locationQuery,
   reduce,
@@ -12,21 +14,55 @@ import { Field, inputClass } from "./field.js";
 import { readListingUrl } from "./listing-url.js";
 import { LocationTierSelector } from "./location-tier-selector.js";
 
+const MIN_QUERY = 3;
+
+/**
+ * At module scope so the mount effect below can depend on the query alone.
+ * `dispatch` is stable, so this needs no memoisation.
+ */
+async function runSearch(dispatch: Dispatch<AddPropertyAction>, query: string): Promise<void> {
+  if (query.trim().length < MIN_QUERY) {
+    return;
+  }
+
+  dispatch({ type: "search-started", query });
+
+  try {
+    const candidates = await geocode(query);
+    dispatch({ type: "candidates-returned", query, candidates });
+  } catch {
+    dispatch({ type: "lookup-failed", query });
+  }
+}
+
 interface AddPropertyPanelProps {
   /** Coordinates from a point placed on the map, if the user has placed one. */
   placedPoint: { latitude: number; longitude: number } | null;
+  /** A query typed before the panel opened, from the first-use overlay. */
+  initialQuery?: string;
   onPlacingChange: (placing: boolean) => void;
+  /**
+   * Where the lookup landed, so the map can be moved there. Positioning the map
+   * is not the same as locating the property — specs/property.md is explicit
+   * that entering an address positions the map and establishes nothing.
+   */
+  onLocated: (point: { latitude: number; longitude: number }) => void;
   onClose: () => void;
   onSaved: (id: string) => void;
 }
 
 export function AddPropertyPanel({
   placedPoint,
+  initialQuery = "",
   onPlacingChange,
+  onLocated,
   onClose,
   onSaved,
 }: AddPropertyPanelProps) {
-  const [draft, dispatch] = useReducer(reduce, emptyDraft);
+  const [draft, dispatch] = useReducer(
+    reduce,
+    initialQuery ? draftFromQuery(initialQuery) : emptyDraft,
+  );
   const [saving, setSaving] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
 
@@ -37,21 +73,38 @@ export function AddPropertyPanel({
     }
   }, [placedPoint]);
 
+  // A query carried in from the overlay runs itself, so the lookup the user
+  // asked for there is not something they have to ask for again here.
+  useEffect(() => {
+    void runSearch(dispatch, initialQuery);
+  }, [initialQuery]);
+
+  // Held in a ref so moving the map cannot re-trigger the effect that moves it.
+  const onLocatedRef = useRef(onLocated);
+  onLocatedRef.current = onLocated;
+
+  // A lookup moves the map. That is all it does: a property whose hamlet has no
+  // postal address is found by searching the hamlet and then placing a point,
+  // and the search is what gets the map there. Placing does not move the map —
+  // the user is already looking at where they meant.
+  useEffect(() => {
+    const location = draft.location;
+
+    if (location.kind === "candidates") {
+      const best = location.candidates[0];
+
+      if (best) {
+        onLocatedRef.current({ latitude: best.latitude, longitude: best.longitude });
+      }
+    } else if (location.kind === "confirmed" && location.source === "geocode") {
+      onLocatedRef.current({ latitude: location.latitude, longitude: location.longitude });
+    }
+  }, [draft.location]);
+
   const query = locationQuery(draft.location);
 
   async function search() {
-    if (query.trim().length < 3) {
-      return;
-    }
-
-    dispatch({ type: "search-started", query });
-
-    try {
-      const candidates = await geocode(query);
-      dispatch({ type: "candidates-returned", query, candidates });
-    } catch {
-      dispatch({ type: "lookup-failed", query });
-    }
+    await runSearch(dispatch, query);
   }
 
   async function save() {
