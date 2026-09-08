@@ -41,12 +41,124 @@ Only the current milestone below is specified.
 
 ## Current Milestone
 
-None. M4 is complete — its specification and outcome are under *Completed
-Milestones* below.
+### M5 — Climate
 
-Promoting M5 means specifying it: goal, acceptance criteria, out-of-scope list
-and authorized dependencies. Until that is written, no milestone is current and
-nothing is authorized to be built.
+#### Goal
+
+What the weather here actually is, and what it is becoming.
+
+Fifth on the stated-needs list, seven people, and the cheapest of the top five
+to answer: commune-keyed, keyless, no routing, no PostGIS. It is also the one a
+buyer most often decides on from a fortnight's holiday in June.
+
+#### Established by looking, before this was written
+
+**Observations.** Météo-France publishes monthly station records per
+département — 1950 to 2024 plus the current years, gzipped CSV, Licence
+Ouverte, each station carrying its coordinates and altitude. The Aude holds 126
+stations since 1950. Only 39 still reported after 2020, and only 26 of those
+measure temperature.
+
+**The finding this milestone turns on.** Fabrezan's nearest station is
+Ferrals-les-Corbières, 2.6 km away, and it measures rainfall only. The nearest
+station that measures temperature is Lézignan-Corbières, 5.1 km away. A commune
+does not inherit *a* station: it inherits a different one for each thing
+measured, and both distances are facts the reader needs.
+
+**Projections.** The DRIAS indices are published as text files on a grid of
+8,602 land points, for three scenarios and three horizons — near (2021–2050),
+middle (2041–2070) and far (2071–2100) — with a reference period alongside.
+They carry mean, minimum and maximum temperature, summer days, tropical nights,
+frost days, and heating and cooling degree days. The file currently published
+was extracted in 2015 from the CNRM2014 experiment, and a later DRIAS
+generation exists.
+
+#### The distinction this milestone rests on
+
+**A commune has no weather of its own.** Every figure here is borrowed from a
+station or a grid point somewhere else, and the borrowing is the thing most
+easily hidden. HomeGround shows what was borrowed, from where, and how far
+away — the same rule that draws a commune-precision facility as an area rather
+than a point.
+
+**An observation and a projection are different claims.** "August averages 30.4°
+here" is a record. "It reaches 33° by 2050 under RCP4.5" is a model output under
+a named assumption, and it may not appear without the scenario and the horizon
+attached.
+
+#### Acceptance Criteria
+
+M5 is complete when:
+
+* every climate figure names the station or grid point it came from, how far
+  that is from the commune, and at what altitude
+* a commune whose rainfall and temperature come from different stations says
+  so, rather than implying one station answered both
+* normals are computed over a stated period, and the number of months actually
+  observed is carried with them. A station that reported for half the period is
+  not silently averaged into one that reported throughout
+* a projection never appears without its scenario and its horizon, in words a
+  reader can weigh — not "RCP4.5" alone
+* HomeGround shows more than one scenario, or states which single one it shows
+  and why, recorded in an ADR. Showing the worst alone is alarmism and showing
+  the mildest alone is comfort; either, chosen silently, is HomeGround deciding
+  what the reader should conclude
+* where no station within a stated distance measures a thing, the figure is
+  Unknown — not the nearest station at any distance, and not the départemental
+  average
+* everything is served from HomeGround's own store, ingested by an explicit
+  command, as FINESS and Géorisques are
+* the invariants are covered by tests, including the case that made this
+  milestone: a commune whose nearest station measures only rain
+
+#### Out of Scope
+
+M5 does not include:
+
+* any judgment of climate. No "pleasant", no "ideal", no comfort index, no
+  ranking of communes by weather. The figures are shown; the reader decides
+  whether they want to live in it
+* comparison against other communes, which is M14 and which ADR-012 already
+  defines the basis for
+* wildfire history, which is M11, and the drought declarations M4 already shows
+* water restrictions, air quality and pollen, each of which is its own source
+* daily or hourly data. A buyer choosing a region is not reading a forecast
+* property-level microclimate — aspect, shelter, valley cold air. Real, and not
+  a commune-level fact
+* geometry and PostGIS, which M11 introduces
+
+#### Authorized Dependencies
+
+In addition to those carried from earlier milestones:
+
+* **Météo-France monthly climate records**, per département, gzipped CSV,
+  Licence Ouverte, keyless
+* **The DRIAS projection indices**, published as point files per scenario,
+  Licence Ouverte, keyless
+* No new libraries. Node decompresses gzip itself, and the zip reader written
+  for M3 already covers the archives
+
+#### Open Questions This Milestone Must Answer
+
+Recorded here rather than decided during implementation:
+
+* **Which scenario, or how many.** The decision that shapes what a reader
+  concludes, and it belongs in an ADR before any of it reaches the screen
+* **Which DRIAS generation.** The file on the portal was extracted in 2015; a
+  later generation exists and step 0 establishes whether it is obtainable in
+  the same shape
+* **Whether a commune's own altitude is obtainable.** A station 300 m below a
+  village is describing a different place, and without the commune's altitude
+  HomeGround can state the station's and no more
+
+#### Governing Specs
+
+`specs/evidence.md`. A borrowed figure is still evidence and carries its
+method: which station, chosen how, over which period. The station and its
+distance belong in the basis a comparison already uses.
+
+`docs/methodology.md` governs the wording. Reporting what a station recorded is
+evidence; calling a climate good is a judgment this application does not make.
 
 ---
 
@@ -60,14 +172,6 @@ commune replaced the property as the subject of research. Again after M3, when
 they need to know about a place — was put beside what HomeGround was building,
 and the two did not match. Both are
 recorded under *Why this order*, because a reader may remember either.
-
-**M5 — Climate.** What the weather is, and what it is becoming: Météo-France
-normals, and the DRIAS projections for the decades a buyer would live through.
-Second only to admin among the things people ask, and the cheapest of them to
-answer — keyless, commune-keyed, no PostGIS, no routing.
-
-A commune has no weather station of its own. The station a figure comes from,
-and how far away it is, are part of the evidence rather than a detail.
 
 **M6 — Trades and professionals.** Who a person can actually call: plumbers,
 electricians, builders, notaires, landscapers. Second on the stated-needs list
