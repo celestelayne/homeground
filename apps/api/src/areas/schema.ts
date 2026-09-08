@@ -46,6 +46,18 @@ export const EvidenceSchema = Type.Object({
   observedAt: Type.Union([Type.String(), Type.Null()]),
   method: Type.String(),
   methodVersion: Type.Number(),
+  /**
+   * What a comparison was made against, in the words a reader sees, and how
+   * many communes were in that group.
+   *
+   * Null on a plain measurement. Present together or not at all: a position
+   * shown without the group it is a position among is not a fact, and the
+   * storage constraint enforces the same rule. See specs/evidence.md.
+   */
+  basis: Type.Union([Type.String(), Type.Null()]),
+  /** The classification that decided who the peers are. ADR-012. */
+  basisSourceId: Type.Union([Type.String(), Type.Null()]),
+  peers: Type.Union([Type.Number(), Type.Null()]),
 });
 
 /**

@@ -41,11 +41,12 @@ Only the current milestone below is specified.
 
 ## Current Milestone
 
-None. M2 is complete.
+None. M3 is complete — its specification and outcome are under *Completed
+Milestones* below.
 
-Promoting M3 means specifying it: goal, acceptance criteria, out-of-scope
-list and authorized dependencies. Until that is written, no milestone is
-current and nothing is authorized to be built.
+Promoting M4 means specifying it: goal, acceptance criteria, out-of-scope list
+and authorized dependencies. Until that is written, no milestone is current and
+nothing is authorized to be built.
 
 ---
 
@@ -159,6 +160,163 @@ already needs. See the amendment to `ADR-005`.
 ---
 
 ## Completed Milestones
+
+
+### M3 — Comparison against similar communes
+
+#### Goal
+
+A figure about a commune is shown beside the same figure for communes like it,
+so a reader can tell an ordinary village from an unusually served one.
+
+A count is not a finding. Fabrezan has one pharmacy; whether that is worth
+knowing depends entirely on what communes of its size and situation usually
+have. M2 can state the count and is forbidden from judging it. M3 supplies the
+only thing that makes the count mean anything — the distribution it sits in —
+and still does not judge it.
+
+The comparison is a position, never a verdict. "More than four fifths of
+communes in its class have none" is a fact. "Well served" is an opinion, and
+HomeGround does not hold opinions about places.
+
+#### Established by looking, before this was written
+
+Four things were checked against the live sources, because they decide what
+this milestone can promise:
+
+* **BPE is on the melodi API already wired for the census**, keyed by commune
+  and needing no key. `DS_BPE?GEO=COM-11132` returns 58 observations for
+  Fabrezan across around twenty facility types.
+* **A national pull is possible**, but returns mixed geographic levels in one
+  response — arrondissements, communes, départements, regions. An ingest that
+  does not filter to communes would compare a village to a region.
+* **The commune-level dataset carries one edition.** Fabrezan's observations
+  are all `TIME_PERIOD` 2025.
+* **`DS_BPE_EVOLUTION` returns nothing at commune level** — an empty
+  observation list for both Fabrezan and Narbonne. Change over time therefore
+  needs a second edition from elsewhere, and the criterion below is written to
+  be droppable if step 0 cannot find one.
+
+#### Acceptance Criteria
+
+M3 is complete when:
+
+* a commune's figure is shown beside the distribution of that figure across a
+  named group of comparable communes, and the group is named on screen —
+  "communes in the same density class", not "similar communes"
+* the basis for comparability is a published classification, never one
+  HomeGround invented, and it appears in the Sources and methodology panel with
+  its publisher, its year and at least one stated limitation
+* a comparison states position without judgment. No "good", "poor",
+  "well served", no ranking of communes against each other, no composite score
+* comparison figures are evidence like any other: value, unit, state, source,
+  the date the source observed it, and a method version that changes when the
+  derivation changes
+* a commune the comparison source does not cover renders Unknown — not
+  average, not zero, not omitted from the panel
+* a peer group too small to say anything about renders Unknown, and the
+  minimum size is stated on screen rather than buried in code
+* counts for every commune are held in HomeGround's own store, ingested by an
+  explicit command, so no national distribution is computed at request time
+* M2's rule still holds under the new load: the same commune requested twice
+  does not hit an upstream service twice
+* ~~a metric whose earlier edition HomeGround holds shows both observations
+  with their dates~~ — **dropped, and recorded below.** Three things were
+  checked. INSEE's API carries only the current edition, and asking it for
+  2024, 2023 or 2022 returns 400. The type codes were renumbered between
+  editions: a bakery was B203 and is now B207, and B203 is absent from the
+  2025 nomenclature entirely, so comparing editions by code would compare
+  different definitions. And no official mapping between the old codes and the
+  new was published alongside the file. A third party mirrors an earlier
+  edition, which would mean citing a copy rather than the publisher
+* the comparison invariants added to `specs/evidence.md` are covered by tests:
+  Unknown survives comparison, an uncovered commune is not average, an empty
+  peer group is not zero
+
+#### Out of Scope
+
+M3 does not include:
+
+* scoring, ranking or recommending. No composite index, no single number for a
+  commune, no "communes like the ones you liked"
+* judging a figure. The distribution is shown; the reader draws the conclusion
+* placing BPE equipment on the map. BPE counts are attributed to a commune, not
+  located, and FINESS remains the only source of located facilities
+* wildfire, recorded prices, routing, personal criteria, property-level
+  evidence of any kind
+* a written description of a commune's character — still unowned, still empty
+  and labelled
+* PostGIS, which M5 introduces
+* automatic or scheduled ingestion, authentication, deployment and hosting
+
+#### Authorized Dependencies
+
+In addition to those carried from M0, M1 and M2:
+
+* **INSEE BPE**, through the melodi API already used for the census — the
+  commune-level counts, ingested rather than proxied
+* **A published classification for comparability.** INSEE's grille communale
+  de densité, in seven levels, is the intended one. It is published in
+  fragments regionally on data.gouv and as a national table by INSEE, and step
+  0 establishes whether the national table can be obtained keyed by INSEE code.
+  If it cannot, the fallback is INSEE's own published population tranches — a
+  banding HomeGround takes from a publication rather than choosing. Whichever
+  is used is recorded in an ADR, because the choice decides what "similar"
+  means for the life of the product
+* **An archived BPE edition**, if one is obtainable at commune level, for the
+  change-over-time criterion
+
+Explicitly **not** authorized:
+
+* **A charting library.** Distributions in this milestone are small and drawn
+  as SVG. A library arrives when a chart HomeGround needs cannot be drawn
+  without one
+* **A statistics library.** A percentile over held counts is a query, not a
+  dependency
+* **PostGIS** — M5 introduces it
+* **A scheduler** — ingestion stays a command run by hand
+
+#### Outcome
+
+Complete, in five steps. A commune's everyday counts are shown beside the
+distribution of the same count across the communes INSEE places in its class:
+Fabrezan has five GPs where the median bourg rural has one, and one school,
+which 96% of its class also have. The second figure is the one that matters —
+it stops a count reading as a finding.
+
+802,594 commune counts and 34,935 classified communes are held locally, so no
+distribution is computed from a third party at request time, and none is
+computed at request time at all.
+
+Three absences stayed three facts, each found by checking real communes rather
+than reasoning about them. Porte des Pierres Dorées is in BPE and not in the
+2024 grid, so it keeps its counts and has no position. A commune in neither
+source is Unknown rather than zero, because BPE publishes no zeroes and a
+missing row is only readable as none for a commune known to exist. A class
+below thirty communes says nothing, and says so.
+
+Two things the data taught that no amount of planning would have: `Number("")`
+is 0, so an empty cell arrived as a commune with none of something until a
+test caught it; and all 69 grid communes with no BPE rows turn out to have been
+abolished since 2024, so the peer classes carry a few places that no longer
+exist — stated as a limitation rather than quietly filtered.
+
+The time-series criterion was dropped on evidence, not on effort. See above.
+
+#### Governing Specs
+
+`specs/evidence.md`, amended as the first step of this milestone to cover a
+figure derived from other communes' figures: what its source is, what its
+method version covers, and the rule that a comparison HomeGround cannot make
+is Unknown rather than absent.
+
+`docs/methodology.md` governs the wording. A position in a distribution is a
+measurement; a description of that position as good or bad is a judgment this
+application does not make.
+
+---
+
+---
 
 ### Interim — A photograph of the commune
 
@@ -424,13 +582,20 @@ Each is either resolved into an ADR or deferred to the milestone that requires i
 
 **Deferred, with owning milestone**
 
-* **How an area brief presents many figures** — M3. Partly answered: the brief
-  shows the latest observation of each metric rather than every census edition
-  it holds. M3 adds comparison and a second axis of figures, so the shape is
-  settled there rather than twice.
+* **How an area brief presents many figures** — M3, now current, and answered
+  there. The brief shows the latest observation of each metric rather than
+  every census edition it holds; M3 adds a distribution beside each figure and
+  settles the shape once rather than twice.
 * **Wildfire classification method** — M10, and explicitly gated on resolution in `docs/methodology.md` first.
 * **Mobile repository** — M12. The mobile application currently lives outside this repository. Whether it moves into the monorepo, and what that would require, is undecided.
 * **Hosting and deployed environments** — no owning milestone yet. Required by the first milestone that needs an environment beyond local development and CI.
+* **What a commune had ten years ago** — no owning milestone. M3 dropped this
+  after establishing that INSEE serves only the current BPE edition and
+  renumbered its facility codes between editions, with no published mapping
+  between them. A time series needs either an archived edition from the
+  publisher or that mapping; neither exists today. HomeGround holds an
+  `edition` column against every count so a second edition can sit beside the
+  first the day one is obtainable.
 * **Re-asking a source that could not be reached** — no owning milestone. A
   commune is fetched once and held, so a lookup made while a source was down
   keeps its `unavailable` answer permanently. Visible today in the commune
@@ -442,10 +607,12 @@ Each is either resolved into an ADR or deferred to the milestone that requires i
 * **Correcting a mis-saved property** — no owning milestone. M1 has no delete and cannot edit coordinates, following `specs/property.md`. A property saved against the wrong location is permanent.
 * **Raising a location tier after saving** — no owning milestone. `specs/property.md` allows a user to raise a tier as they learn more; M1 declares it at save and never revisits it.
 * **Recorded property sales** — M6. France publishes every recorded sale since 2010 under an open licence, geolocated to the parcel. It is a price source, but also an index keyed on what listings publish — commune, type, built surface, land surface — so a property that has changed hands can be matched to its parcel and reach `exact` tier without anyone guessing from photographs. Comparability is a methodology decision and must be resolved before implementation, as `docs/methodology.md` requires.
-* **Settlement context** — M3. INSEE's commune density grid classifies
-  communes, which is now the subject, so the mismatch that blocked this is gone
-  for area-level use. How a property's position modifies its commune's class
-  remains unresolved and returns with M11.
+* **Settlement context** — M3, now current. INSEE's commune density grid
+  classifies communes, which is now the subject, so the mismatch that blocked
+  this is gone for area-level use. M3 uses the classification as its definition
+  of a comparable commune and records the choice in an ADR. How a property's
+  position modifies its commune's class remains unresolved and returns with
+  M11.
 
 ---
 
