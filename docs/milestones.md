@@ -116,11 +116,19 @@ Gated on the comparability decision in `docs/methodology.md` being resolved
 first. Fabrezan's 2023 house sales span €508 to €9,310 per square metre, so an
 unsegmented median would be a confident-looking number that means nothing.
 
-**M9 — Transport and links.** Whether there is a bus at all, how far the
-nearest station is, and how far the nearest airport that flies where a person's
-family lives. Timetable feeds are published nationally and openly. Presence and
-distance need no routing, which is why this precedes M10 rather than waiting
-for it.
+**M9 — Connection and access.** Whether there is a bus at all, how far the
+nearest station is, how far the nearest airport that flies where a person's
+family lives — and whether the internet is good enough to work on. Timetable
+feeds are published nationally and openly, and the telecoms regulator publishes
+fibre and broadband deployment per commune, quarterly.
+
+These belong together because they are one question asked twice. "Can I run a
+self-employed life from here" means internet that works, power that stays on,
+and being able to reach a client or an airport; two of those three are
+answerable here. Presence and distance need no routing, which is why this
+precedes M10 rather than waiting for it.
+
+Power resilience is the third, and it is not in this milestone. See below.
 
 **M10 — Reachable services.** Travel-time evidence for services sparse enough
 that the answer is a property of the commune rather than of a house: emergency
@@ -197,13 +205,20 @@ were asking. No register holds it. HomeGround must not let a registration read
 as a recommendation, and the gap stays open until something other than open
 data closes it.
 
-**Four cheap sources nobody owns.** Internet and mobile coverage, schools,
-drought restriction orders and protected areas are each published per commune,
-keyless, and each sits low on the list — three people apiece or fewer. Low
-demand is not the same as low value: a factor nobody raises may be one nobody
-knows to raise, and each of these is a day's work rather than a milestone's.
-They are candidates to fold into whichever milestone is nearest rather than to
-schedule on their own.
+**Power resilience.** Part of what people mean by working from here, and the
+part with no source at the right grain: the outage durations the network
+operator publishes appear to stop at département level, and a department-wide
+average says nothing about a village at the end of a rural line. Approximating
+it from a coarser figure would be inventing a fact about a place, so nothing is
+owned until a commune-level source is found or ruled out properly.
+
+**Three cheap sources nobody owns.** Schools, drought restriction orders and
+protected areas are each published per commune, keyless, and each sits low on
+the list — three people apiece or fewer. Low demand is not the same as low
+value: a factor nobody raises may be one nobody knows to raise, and each of
+these is a day's work rather than a milestone's. They are candidates to fold
+into whichever milestone is nearest rather than to schedule on their own.
+Internet coverage was the fourth, and has gone into M9.
 
 ---
 

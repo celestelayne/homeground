@@ -34,22 +34,27 @@ This list is the reason the milestone sequence was reordered after M3. See
 | 14 | Leisure and culture | 3 | 3 | 2 | Unowned |
 | 15 | Landscape and nature | 3 | 3 | 1 | Unowned — protected areas are published and mappable |
 | 16 | Shops and services | 3 | 3 | 1 | Unowned — counts were built and removed; nearest-and-how-far was not |
-| 17 | Internet and mobile | 3 | 4 | 0 | Unowned — ARCEP publishes coverage per commune |
+| 17 | Internet and mobile | 3 | 4 | 0 | M9 — ARCEP publishes deployment per commune, quarterly |
 | 18 | Accessibility | 3 | 3 | 0 | Unowned — the meaning needs pinning down before a source is chosen |
 | 19 | Seasonality | 3 | 3 | 0 | Partly answered today — second-home share is already served |
 | 20 | Schools | 3 | 5 | 0 | Unowned — the national directory names each school and its canteen |
 | 21 | Pollution and cleanliness | 2 | 5 | 1 | Unowned — air quality and registered industrial sites are published |
-| 22 | Utilities | 2 | 3 | 1 | Unowned |
+| 22 | Utilities | 2 | 3 | 1 | Unowned — power resilience is published no finer than département |
 | 23 | Water access | 2 | 2 | 1 | Unowned — drought restriction orders are published per commune |
 | 24 | Other | 1 | 1 | 0 | — |
 
 ## Two factors, read closely
 
 **Professional services** carries two readings, and they are different products.
-One is *can I run a self-employed or international life from here* — which is
-mostly administration (rank 1) and connectivity (rank 17) wearing another name.
+
+One is *can I run a self-employed or international life from here*, and asked
+plainly it means three things: internet good enough to work on, power that
+stays on, and being able to reach clients and an airport. That is
+infrastructure and access, not paperwork — it overlaps ranks 8, 11, 17 and 22
+rather than rank 1, and M9 is where it lands.
+
 The other is *can I find a plumber, a notaire, a builder, a landscaper*, and
-that is the one HomeGround takes.
+that is what this factor means here.
 
 Read that way it is answerable, which the first pass of this research concluded
 it was not. The national business register lists every registered business with
