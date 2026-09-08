@@ -9,6 +9,7 @@ import {
   numeric,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -123,6 +124,57 @@ export const sources = pgTable(
  * and live in `evidence` with their provenance — the same rule that keeps
  * derived evidence off `properties`. See ADR-003.
  */
+/**
+ * How many facilities of each kind INSEE counts in each commune, nationally.
+ *
+ * National because that is the point: a comparison needs the distribution, not
+ * one commune's row. Independent of `areas` for the same reason FINESS is —
+ * 34,873 communes must not become 34,873 area rows, and a commune nobody has
+ * looked up still belongs in the distribution its neighbours are measured
+ * against.
+ *
+ * The file is sparse. A commune with no bakery has no bakery row, and a
+ * commune with no facilities at all is absent entirely, so zero is carried by
+ * absence. Reading absence as zero is only honest for a commune known to
+ * exist, which is what `commune_density` establishes.
+ */
+export const bpeCounts = pgTable(
+  "bpe_counts",
+  {
+    /** INSEE code. Not a foreign key: this table covers all of France. */
+    code: text("code").notNull(),
+    /** BPE's own type code, kept as published — "B207" is a bakery. */
+    facilityType: text("facility_type").notNull(),
+    /** Edition year, so two editions sit side by side rather than replace. */
+    edition: integer("edition").notNull(),
+    count: integer("count").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.code, table.facilityType, table.edition] }),
+    index("bpe_by_type").on(table.facilityType, table.edition),
+    // A published count is never negative, and never zero: INSEE writes an
+    // absence by omitting the row, not by publishing a nought.
+    check("bpe_counts_positive", sql`${table.count} > 0`),
+  ],
+);
+
+/**
+ * The class a commune belongs to, from INSEE's density grid.
+ *
+ * This is the definition of a comparable commune — see ADR-012. It doubles as
+ * the reference list of communes that exist, which is what makes a missing BPE
+ * row readable as zero rather than as silence.
+ */
+export const communeDensity = pgTable("commune_density", {
+  code: text("code").primaryKey(),
+  /** 1 to 7, densest first, as INSEE numbers them. */
+  level: integer("level").notNull(),
+  /** INSEE's own words: "Rural à habitat dispersé". Never translated. */
+  label: text("label").notNull(),
+  /** Grid edition. A commune can move class between editions. */
+  edition: integer("edition").notNull(),
+});
+
 export const areas = pgTable(
   "areas",
   {
