@@ -166,8 +166,14 @@ function Fire({ name }: { name: string }) {
     <p className="m-0 rounded-card border border-line bg-surface-2 px-4 py-[10px] text-caption leading-[1.5] text-ink-2">
       <span className="text-ink">{name} is designated for forest fire</span>, and no fire appears in
       the declarations above. Fires never do: the natural disaster regime does not cover them, so
-      the state issues no order when one burns. What has actually burned here is not in this
-      archive.
+      the state issues no order when one burns.
+      {/*
+        Naming the database matters. The first version said only that fires
+        were not in this archive, and a reader who had just been told the
+        commune is designated for fire still went looking for one here.
+      */}{" "}
+      Fires are recorded separately, in the national fire database (BDIFF), which HomeGround does
+      not yet hold. Nothing above is a statement about whether {name} has burned.
     </p>
   );
 }
