@@ -96,6 +96,35 @@ export const SOURCES: SourceDefinition[] = [
     provides: [],
   },
   {
+    id: "georisques",
+    name: "Géorisques — GASPAR, and the radon potential",
+    publisher: "Ministère de la Transition écologique; radon from the Autorité de sûreté nucléaire",
+    description:
+      "What every commune in France is officially recorded as exposed to, the " +
+      "natural disasters the state has declared there with the dates of the " +
+      "orders, and the radon potential of the ground beneath it.",
+    url: "https://www.georisques.gouv.fr/donnees/bases-de-donnees/base-gaspar",
+    cadence: "Continuously, as prefectoral orders are signed and procedures are revised",
+    coverage:
+      "France entière. 31,733 communes carry a designation and 34,699 have been declared for at " +
+      "least one disaster; 24 communes in the reference list are absent from the archive entirely",
+    licence: "Licence Ouverte",
+    limitations: [
+      "A designation says a commune is recorded as exposed, not that any particular house is. Where within a commune the exposure lies is not in this data.",
+      "Designations are common: most communes carry several, so the number alone says little without the count of communes carrying the same one.",
+      "A declared disaster is a record that something happened and was recognised, not a rate and not a forecast. Six droughts in eight years describes the past.",
+      "No fire is ever declared: the natural disaster regime excludes forest fire, which ordinary insurance covers, so an archive of 247,140 declarations contains not one. Absence of fire here says nothing about whether a commune burns.",
+      "One order can declare several kinds at once, so a commune has more declarations than orders — both counts are true and they are different.",
+      "A commune the archive does not carry is unknown, never a commune with nothing recorded. Recent mergers are the usual reason.",
+      "Radon potential describes the geology under a commune, not the concentration inside any building, which depends on the building.",
+    ],
+    metrics: ["exposure.designations", "disasters.declared", "exposure.radon"],
+    provides: [
+      "The designations themselves, in the authority's words",
+      "Declared natural disasters, with the date of the event and of the order",
+    ],
+  },
+  {
     id: "insee-density-grid",
     name: "Grille communale de densité",
     publisher: "INSEE",

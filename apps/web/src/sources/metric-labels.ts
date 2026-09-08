@@ -14,6 +14,9 @@ export const METRIC_LABELS: Record<string, string> = {
   "dwellings.secondHomeShare": "Second homes, share of all",
   "health.pharmacies": "Pharmacies",
   "health.hospitals": "Hospitals",
+  "exposure.designations": "Recorded exposures",
+  "exposure.radon": "Radon potential",
+  "disasters.declared": "Declared disasters",
 };
 
 /**

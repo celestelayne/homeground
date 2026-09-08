@@ -110,6 +110,23 @@ export interface Area {
   evidence: Evidence[];
   /** Located things the sources place inside this commune. */
   facilities: Facility[];
+  /**
+   * What the state records this commune as exposed to, each with how many
+   * communes in France carry the same designation.
+   *
+   * Null means the national archive does not carry this commune — a recent
+   * merger, usually. An empty list means it does carry it and records
+   * nothing. The two are different facts and are worded differently.
+   */
+  exposures: { riskCode: string; label: string; prevalence: number | null }[] | null;
+  /**
+   * Natural disasters the state has declared here, most recent first. One
+   * order can appear several times: it may declare more than one kind, and
+   * more than one episode of the same kind.
+   */
+  disasters:
+    | { id: string; riskCode: string; label: string; beganAt: string; signedAt: string | null }[]
+    | null;
   /** GeoJSON, [longitude, latitude]. Null when the source gave none usable. */
   boundary:
     | { type: "Polygon"; coordinates: number[][][] }

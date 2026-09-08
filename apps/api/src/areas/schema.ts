@@ -126,6 +126,46 @@ export const AreaSchema = Type.Object({
   /** Located things the sources place inside this commune. */
   facilities: Type.Array(FacilitySchema),
   /**
+   * What the state records this commune as exposed to, each with how many
+   * communes in France carry the same designation.
+   *
+   * Null when the national archive does not carry this commune at all, which
+   * is not the same as a commune with nothing recorded — that is an empty
+   * list. Twenty-four communes in the reference list are absent from the
+   * archive entirely, and a commune created since its last edition is absent
+   * too.
+   */
+  exposures: Type.Union([
+    Type.Array(
+      Type.Object({
+        /** The authority's own code — "127" is differential settlement. */
+        riskCode: Type.String(),
+        /** The authority's own words, never softened. */
+        label: Type.String(),
+        prevalence: Type.Union([Type.Number(), Type.Null()]),
+      }),
+    ),
+    Type.Null(),
+  ]),
+  /**
+   * Natural disasters the state has declared here, most recent first. Null
+   * carries the same meaning as above.
+   */
+  disasters: Type.Union([
+    Type.Array(
+      Type.Object({
+        id: Type.String(),
+        riskCode: Type.String(),
+        label: Type.String(),
+        /** When the episode began. Part of what identifies the declaration. */
+        beganAt: Type.String(),
+        /** When the order was signed. A different fact. */
+        signedAt: Type.Union([Type.String(), Type.Null()]),
+      }),
+    ),
+    Type.Null(),
+  ]),
+  /**
    * A photograph of the commune, contributed to Wikimedia Commons.
    *
    * Not evidence: it is whatever one person chose to point a camera at, so it
