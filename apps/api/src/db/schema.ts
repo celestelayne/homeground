@@ -123,21 +123,55 @@ export const sources = pgTable(
  * and live in `evidence` with their provenance — the same rule that keeps
  * derived evidence off `properties`. See ADR-003.
  */
-export const areas = pgTable("areas", {
-  /** INSEE code. A postcode is not an identity: 11200 covers five communes. */
-  code: text("code").primaryKey(),
-  name: text("name").notNull(),
-  postcodes: text("postcodes").array().notNull(),
-  departmentCode: text("department_code").notNull(),
-  departmentName: text("department_name").notNull(),
-  regionCode: text("region_code").notNull(),
-  regionName: text("region_name").notNull(),
-  intercommunalityCode: text("intercommunality_code"),
-  intercommunalityName: text("intercommunality_name"),
-  centreLatitude: doublePrecision("centre_latitude").notNull(),
-  centreLongitude: doublePrecision("centre_longitude").notNull(),
-  retrievedAt: timestamp("retrieved_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const areas = pgTable(
+  "areas",
+  {
+    /** INSEE code. A postcode is not an identity: 11200 covers five communes. */
+    code: text("code").primaryKey(),
+    name: text("name").notNull(),
+    postcodes: text("postcodes").array().notNull(),
+    departmentCode: text("department_code").notNull(),
+    departmentName: text("department_name").notNull(),
+    regionCode: text("region_code").notNull(),
+    regionName: text("region_name").notNull(),
+    intercommunalityCode: text("intercommunality_code"),
+    intercommunalityName: text("intercommunality_name"),
+    centreLatitude: doublePrecision("centre_latitude").notNull(),
+    centreLongitude: doublePrecision("centre_longitude").notNull(),
+    /**
+     * A photograph of the commune from Wikimedia Commons, and the credit its
+     * licence obliges.
+     *
+     * Not evidence — it is what one contributor chose to photograph — so it
+     * lives on the commune rather than in the evidence table. It borrows the
+     * evidence vocabulary all the same, because the same three answers apply:
+     * `known` is a picture, `unknown` is Wikidata answering and holding none,
+     * `unavailable` is Wikidata not answering. A commune is stored once, so
+     * writing the third as the second would print "nobody has photographed this
+     * commune" on the strength of a 502.
+     *
+     * The credit is stored beside the URL because the licence requires it to be
+     * shown with the picture: a schema that could hold the image without the
+     * artist would make dropping the attribution a one-line change.
+     */
+    imageState: text("image_state").notNull().default("unavailable"),
+    imageUrl: text("image_url"),
+    imageArtist: text("image_artist"),
+    imageLicence: text("image_licence"),
+    imageDescriptionUrl: text("image_description_url"),
+    retrievedAt: timestamp("retrieved_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // A URL exactly when there is a picture. Absence has no url, and a picture
+    // that could not be described as one of the three states cannot be stored:
+    // the same rule evidence keeps, for the same reason.
+    check(
+      "areas_image_state_matches_url",
+      sql`(${table.imageState} = 'known' and ${table.imageUrl} is not null)
+        or (${table.imageState} in ('unknown', 'unavailable') and ${table.imageUrl} is null)`,
+    ),
+  ],
+);
 
 /**
  * A commune's administrative boundary, kept so that looking one up twice does

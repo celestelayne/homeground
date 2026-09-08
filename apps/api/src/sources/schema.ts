@@ -24,6 +24,8 @@ export const SourceSchema = Type.Object({
   limitations: Type.Array(Type.String(), { minItems: 1 }),
   /** The metrics this source is the origin of, so the panel shows the link. */
   metrics: Type.Array(Type.String()),
+  /** What it supplies that is not a measurement, in plain words. */
+  provides: Type.Array(Type.String()),
 });
 
 export const SourcesResultSchema = Type.Object({

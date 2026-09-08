@@ -36,9 +36,11 @@ describe("the sources and methodology registry", () => {
   });
 
   it("names, for every source, what it is the origin of", async () => {
-    // A source claiming nothing is a source with nothing behind it.
+    // A source claiming nothing is a source with nothing behind it. Most
+    // claim metrics; one supplies a photograph, which is not a measurement
+    // and must still be declared.
     for (const source of await sources()) {
-      expect(source.metrics.length).toBeGreaterThanOrEqual(1);
+      expect(source.metrics.length + source.provides.length).toBeGreaterThanOrEqual(1);
     }
   });
 

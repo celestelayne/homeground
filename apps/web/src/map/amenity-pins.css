@@ -23,7 +23,7 @@
   height: 25px;
   border-radius: 50%;
   border: 2px solid #ffffff;
-  background: var(--color-ink);
+  background: var(--color-ink-2);
   color: var(--color-surface);
   font-size: 11px;
   font-variant-numeric: tabular-nums;
@@ -31,8 +31,18 @@
   transition: scale 0.15s;
 }
 
-.hg-amenity[data-kind="hospital"] .hg-amenity-shape {
+/*
+ * Colour names the category, in the same two tokens the list uses — see
+ * KIND_COLOUR in areas/amenities.ts, the only other place they appear. It
+ * carries nothing else: no state, no ranking. A pin's tooltip names the
+ * facility, so a reader who cannot separate the two colours loses nothing.
+ */
+.hg-amenity[data-kind="pharmacy"] .hg-amenity-shape {
   background: var(--color-ink-2);
+}
+
+.hg-amenity[data-kind="hospital"] .hg-amenity-shape {
+  background: var(--color-health);
 }
 
 .hg-amenity:hover .hg-amenity-shape {

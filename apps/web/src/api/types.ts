@@ -102,6 +102,28 @@ export interface Area {
     | { type: "Polygon"; coordinates: number[][][] }
     | { type: "MultiPolygon"; coordinates: number[][][][] }
     | null;
+  /**
+   * A photograph contributed to Wikimedia Commons.
+   *
+   * Not evidence — it is what one person chose to photograph. The two
+   * absences differ and are worded differently: `unknown` is Wikidata
+   * answering and holding no picture, `unavailable` is Wikidata not
+   * answering.
+   *
+   * The credit comes with the URL because the licence requires it to be shown
+   * with the picture. A null artist means the credit could not be read, not
+   * that none is owed.
+   */
+  image:
+    | {
+        state: "known";
+        url: string;
+        artist: string | null;
+        licence: string | null;
+        descriptionUrl: string | null;
+      }
+    | { state: "unknown" }
+    | { state: "unavailable" };
 }
 
 export interface CreateProperty {
@@ -142,4 +164,6 @@ export interface Source {
   limitations: string[];
   /** The metrics this source is the origin of. */
   metrics: string[];
+  /** What it supplies that is not a measurement, in plain words. */
+  provides: string[];
 }

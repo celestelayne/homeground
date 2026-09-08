@@ -2,10 +2,11 @@ import { count, eq, like } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { areaBoundaries, areas, evidence, facilities, sources } from "../db/schema.js";
 import type { FetchLike } from "../geocoding/ign.js";
+import { SOURCES } from "../sources/registry.js";
+import { fetchCommuneImage } from "../wikidata/commune-image.js";
 import { CENSUS_METHOD, CENSUS_METHOD_VERSION, fetchCensus, toCensusFigures } from "./census.js";
 import { AreaLookupUnavailableError, fetchCommune, toCommune } from "./geo-api.js";
 import type { Area, Evidence, Facility } from "./schema.js";
-import { SOURCES } from "../sources/registry.js";
 
 const GEO_METHOD = "geo-api-commune";
 const GEO_METHOD_VERSION = 1;
@@ -71,6 +72,18 @@ async function read(db: Db, code: string): Promise<Area | null> {
         : null,
     centre: { latitude: row.centreLatitude, longitude: row.centreLongitude },
     boundary: (boundaryRow?.geojson ?? null) as Area["boundary"],
+    // The credit travels with the picture. Reading one without the other is
+    // not possible from here, which is the point.
+    image:
+      row.imageState === "known" && row.imageUrl
+        ? {
+            state: "known" as const,
+            url: row.imageUrl,
+            artist: row.imageArtist,
+            licence: row.imageLicence,
+            descriptionUrl: row.imageDescriptionUrl,
+          }
+        : { state: row.imageState === "unknown" ? ("unknown" as const) : ("unavailable" as const) },
     facilities: (await db.select().from(facilities).where(eq(facilities.areaCode, code))).map(
       (row): Facility => ({
         id: row.id,
@@ -106,6 +119,10 @@ async function read(db: Db, code: string): Promise<Area | null> {
 
 async function store(db: Db, code: string, fetchImpl?: FetchLike): Promise<void> {
   const commune = toCommune(await fetchCommune(code, fetchImpl));
+  // Never throws: a commune nobody has photographed and a Wikimedia that did
+  // not answer both come back as a state. Neither is worth failing a lookup
+  // over — the commune is no less researched without its picture.
+  const image = await fetchCommuneImage(code, fetchImpl);
 
   await db.insert(areas).values({
     code: commune.code,
@@ -119,6 +136,11 @@ async function store(db: Db, code: string, fetchImpl?: FetchLike): Promise<void>
     intercommunalityName: commune.intercommunality?.name ?? null,
     centreLatitude: commune.centre.latitude,
     centreLongitude: commune.centre.longitude,
+    imageState: image.state,
+    imageUrl: image.state === "known" ? image.url : null,
+    imageArtist: image.state === "known" ? image.artist : null,
+    imageLicence: image.state === "known" ? image.licence : null,
+    imageDescriptionUrl: image.state === "known" ? image.descriptionUrl : null,
   });
 
   if (commune.boundary) {
