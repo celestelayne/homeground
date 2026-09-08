@@ -56,8 +56,9 @@ Named and sequenced. Not specified until current.
 
 The sequence has been reordered twice. Once when M1 was complete, as the
 commune replaced the property as the subject of research. Again after M3, when
-a ranked list of what people actually say they need to know about a place was
-put beside what HomeGround was building, and the two did not match. Both are
+`docs/research/stated-needs.md` — a ranked list of what people actually say
+they need to know about a place — was put beside what HomeGround was building,
+and the two did not match. Both are
 recorded under *Why this order*, because a reader may remember either.
 
 **M4 — Designated exposure.** What a commune is officially recorded as exposed
@@ -152,10 +153,11 @@ returned evidence. It does not create evidence.
 ## Asked For, And Not Owned
 
 Things people say they need to know that no milestone above delivers. Recorded
-so that the gap is visible rather than forgotten.
+so that the gap is visible rather than forgotten. The full ranking, and what
+each factor's status is, lives in `docs/research/stated-needs.md`.
 
-**Community vitality, and integration with neighbours.** Two of the most-raised
-factors, and HomeGround has no honest source for either. The only candidates
+**Community vitality, and integration with neighbours.** Sixth and ninth on the
+list, six people each, and HomeGround has no honest source for either. The only candidates
 are proxies: the count of registered associations in a commune, and the census
 share of residents born outside France. Both are facts, and neither is what the
 person asking meant. Shipping a proxy under the name of the thing it proxies is
@@ -168,11 +170,20 @@ residency, licence exchange. The answers are national and identical in every
 commune. That is written guidance, not evidence attached to a place, and it
 does not belong in this sequence.
 
-**Professional services.** The largest unanswered gap in the same research —
+**Professional services.** The largest unanswered gap in the research: seven of
+its twelve mentions went unanswered by anybody —
 finding a notaire, an accountant or a doctor who works in English. No open
 dataset exists. It is a directory somebody maintains, which is a different kind
 of work from anything above and should be recognised as one before it is
 promised.
+
+**Four cheap sources nobody owns.** Internet and mobile coverage, schools,
+drought restriction orders and protected areas are each published per commune,
+keyless, and each sits low on the list — three people apiece or fewer. Low
+demand is not the same as low value: a factor nobody raises may be one nobody
+knows to raise, and each of these is a day's work rather than a milestone's.
+They are candidates to fold into whichever milestone is nearest rather than to
+schedule on their own.
 
 ---
 
@@ -208,9 +219,10 @@ was taken off the screen within the week. So was the health designation built
 to replace it. Neither was wrong; both answered questions people were not
 asking.
 
-What changed the order was a ranked list of what people say they need to know
-before they start looking at property, counted by how many separate people
-raised each thing. Set beside the roadmap, it said three things.
+What changed the order was `docs/research/stated-needs.md`: a ranked list of
+what people say they need to know before they start looking at property,
+counted by how many separate people raised each thing. Set beside the roadmap,
+it said three things.
 
 **The order was upside down.** Administration, professional services and cost
 of living lead the list. Facility counts — what M3 built — appear nowhere on
