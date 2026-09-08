@@ -7,6 +7,11 @@ import { SOURCES } from "../sources/registry.js";
 import { fetchCommuneImage } from "../wikidata/commune-image.js";
 import { CENSUS_METHOD, CENSUS_METHOD_VERSION, fetchCensus, toCensusFigures } from "./census.js";
 import { COMPARISON_METHODS, comparisonEvidence } from "./comparison.js";
+import {
+  designationEvidence,
+  ZONING_METHOD,
+  SHARE_METHOD as ZONING_SHARE_METHOD,
+} from "./designations.js";
 import { AreaLookupUnavailableError, fetchCommune, toCommune } from "./geo-api.js";
 import type { Area, Evidence, Facility } from "./schema.js";
 
@@ -104,6 +109,7 @@ async function read(db: Db, code: string): Promise<Area | null> {
           metric: fact.metric,
           value: fact.value,
           unit: fact.unit,
+          category: fact.category,
           state: fact.state,
           sourceId: fact.sourceId,
           observedAt: fact.observedAt ? fact.observedAt.toISOString() : null,
@@ -161,6 +167,8 @@ async function store(db: Db, code: string, fetchImpl?: FetchLike): Promise<void>
     // Read from HomeGround's own tables, so this costs no upstream request
     // and cannot fail because a third party is down.
     ...(await comparisonEvidence(db, code)),
+    // Read from HomeGround's own tables, like the comparison.
+    ...(await designationEvidence(db, code)),
   ];
 
   if (rows.length > 0) {
@@ -323,17 +331,21 @@ async function facilityEvidence(db: Db, code: string) {
 }
 
 /**
- * Recomputes every held commune's comparisons.
+ * Recomputes everything a held commune derives from HomeGround's own tables:
+ * its comparisons against similar communes, and its health designations.
  *
- * A commune is fetched once and held, so an ingest that brings new counts
- * would otherwise leave the communes already looked up comparing themselves
- * against figures nobody holds any more. Run at the end of an ingest.
+ * A commune is fetched once and held, so an ingest that brings new figures
+ * would otherwise leave the communes already looked up citing figures nobody
+ * holds any more. Run at the end of an ingest.
  */
 export async function refreshComparisons(db: Db): Promise<number> {
   const held = await db.select({ code: areas.code }).from(areas);
 
   for (const { code } of held) {
-    const rows = await comparisonEvidence(db, code);
+    const rows = [
+      ...(await comparisonEvidence(db, code)),
+      ...(await designationEvidence(db, code)),
+    ];
 
     await db.transaction(async (tx) => {
       await tx
@@ -341,7 +353,12 @@ export async function refreshComparisons(db: Db): Promise<number> {
         .where(
           and(
             eq(evidence.areaCode, code),
-            inArray(evidence.method, [...COMPARISON_METHODS, BPE_METHOD]),
+            inArray(evidence.method, [
+              ...COMPARISON_METHODS,
+              BPE_METHOD,
+              ZONING_METHOD,
+              ZONING_SHARE_METHOD,
+            ]),
           ),
         );
 

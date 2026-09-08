@@ -159,6 +159,38 @@ export const bpeCounts = pgTable(
 );
 
 /**
+ * What the regional health authorities have designated each commune as, for
+ * each profession they zone.
+ *
+ * A designation, not a measurement: an ARS looked at supply against need in a
+ * health catchment and published a decree. National, because how common a
+ * designation is decides how it should be read — 87% of communes are
+ * designated under-served for general practitioners, so the designation alone
+ * would read as an alarm about one place when it describes most of France.
+ */
+export const healthZoning = pgTable(
+  "health_zoning",
+  {
+    code: text("code").notNull(),
+    /** "gp", "dentist", "nurse" — HomeGround's word for the profession. */
+    profession: text("profession").notNull(),
+    /** The authority's own value, kept as published: "2_ZAC". */
+    level: text("level").notNull(),
+    /** When the ARS decreed it. The observation date of the designation. */
+    decreedAt: timestamp("decreed_at", { withTimezone: true }),
+    /**
+     * The health catchment the designation was drawn for — "Lézignan-Corbières".
+     * The commune is inside it; the decision was made about the catchment.
+     */
+    catchment: text("catchment"),
+  },
+  (table) => [
+    primaryKey({ columns: [table.code, table.profession] }),
+    index("health_zoning_by_profession").on(table.profession, table.level),
+  ],
+);
+
+/**
  * The class a commune belongs to, from INSEE's density grid.
  *
  * This is the definition of a comparable commune — see ADR-012. It doubles as
@@ -262,9 +294,14 @@ export const evidence = pgTable(
       .references(() => areas.code, { onDelete: "cascade" }),
     /** What is measured: "population", "dwellings.second_home_share". */
     metric: text("metric").notNull(),
-    /** Null exactly when the state carries absence. */
+    /** Null exactly when the state carries absence, or the fact is a category. */
     value: doublePrecision("value"),
     unit: text("unit"),
+    /**
+     * What an authority designated, where a measurement would carry a number:
+     * "2_ZAC". Kept in the authority's own words. See specs/evidence.md.
+     */
+    category: text("category"),
     state: evidenceState("state").notNull(),
     sourceId: text("source_id")
       .notNull()
@@ -289,14 +326,18 @@ export const evidence = pgTable(
   },
   (table) => [
     /**
-     * A comparison names its group, its group's size and its second source, or
-     * it is not a comparison. Holding one without the others would let a
-     * position be shown with nothing to say what it was a position among.
+     * Whatever a fact was decided against — a peer class, a health catchment —
+     * is named with the source that defines it, or not named at all. A
+     * position shown with nothing to say what it is a position among is not a
+     * fact, and neither is a designation with no stated area.
+     *
+     * `peers` is the size of that group where a size exists. A comparison has
+     * one; a catchment a decree was drawn over does not.
      */
     check(
-      "evidence_comparison_is_complete",
+      "evidence_basis_is_attributed",
       sql`(${table.basis} is null and ${table.basisSourceId} is null and ${table.peers} is null)
-          or (${table.basis} is not null and ${table.basisSourceId} is not null and ${table.peers} is not null)`,
+          or (${table.basis} is not null and ${table.basisSourceId} is not null)`,
     ),
     /**
      * Absence is never a value. A commune with no data is not a commune of no
@@ -305,8 +346,10 @@ export const evidence = pgTable(
      */
     check(
       "evidence_absence_has_no_value",
-      sql`(${table.state} in ('unknown', 'unavailable') and ${table.value} is null and ${table.unit} is null)
-          or (${table.state} in ('known', 'estimated', 'stale') and ${table.value} is not null and ${table.unit} is not null)`,
+      sql`(${table.state} in ('unknown', 'unavailable') and ${table.value} is null and ${table.unit} is null and ${table.category} is null)
+          or (${table.state} in ('known', 'estimated', 'stale')
+              and ((${table.value} is not null and ${table.unit} is not null and ${table.category} is null)
+                or (${table.category} is not null and ${table.value} is null and ${table.unit} is null)))`,
     ),
     /**
      * One figure per metric per observation period. Two indexes rather than

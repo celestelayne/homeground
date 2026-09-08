@@ -135,6 +135,41 @@ export const SOURCES: SourceDefinition[] = [
     provides: [],
   },
   {
+    id: "ars-zonage",
+    name: "Zonages des professionnels de santé libéraux",
+    publisher: "Agences régionales de santé, via AtlaSanté",
+    description:
+      "The regional health authorities' designation of every commune for six " +
+      "professions — general practitioner, dentist, nurse, physiotherapist, " +
+      "midwife, speech therapist — with the date of the decree that set it.",
+    url: "https://www.data.gouv.fr/datasets/zonages-des-professionnels-de-sante-liberaux",
+    cadence: "Continuously, as regional health authorities issue decrees",
+    coverage: "France entière, 35,015 communes",
+    licence: "Licence Ouverte 2.0",
+    limitations: [
+      "A designation describes a health catchment, not a commune. The commune sits inside the area the authority looked at, and its own supply may differ from it.",
+      "Most of France is designated under-served for general practitioners — 16,878 communes in the most severe category and 13,646 in the next — so a designation is a position within a national shortage rather than a mark against one place.",
+      "It records what an authority decided about supply, not whether any practitioner is taking new patients.",
+      "Each profession is zoned under its own ministerial method and on its own timetable, so the six designations are not comparable with each other.",
+      "Levels are published as the authority writes them, and the categories differ between professions: general practitioners are zoned ZIP, ZAC, ZAR or hors zone, while the others run from très sous-dotée to sur-dotée.",
+    ],
+    metrics: [
+      "health.zoning.gp",
+      "health.zoning.dentist",
+      "health.zoning.nurse",
+      "health.zoning.physiotherapist",
+      "health.zoning.midwife",
+      "health.zoning.speechTherapist",
+      "health.zoning.gp.share",
+      "health.zoning.dentist.share",
+      "health.zoning.nurse.share",
+      "health.zoning.physiotherapist.share",
+      "health.zoning.midwife.share",
+      "health.zoning.speechTherapist.share",
+    ],
+    provides: [],
+  },
+  {
     id: "insee-density-grid",
     name: "Grille communale de densité",
     publisher: "INSEE",

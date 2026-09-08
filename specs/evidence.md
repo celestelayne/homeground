@@ -257,6 +257,43 @@ not.
 
 ---
 
+## Designations
+
+A **designation** is evidence whose value is a category an authority recorded,
+not a quantity anyone measured.
+
+"This commune is a *zone d'action complémentaire* for general practitioners, by
+decree of 30 October 2025" is a designation. It has no unit, cannot be averaged
+and cannot be plotted on a scale, and it is one of the most useful things
+HomeGround can say — an authority looked, decided, and published.
+
+A designation carries the same provenance as any other evidence: a source, the
+date the authority decided, a method and a version. It differs in one field. It
+holds a `category` where a measurement holds a `value` and a `unit`, and never
+both.
+
+Three rules follow, and each exists because the alternative misleads:
+
+**The authority's own words, kept.** A category is shown as the source writes
+it, with any expansion named as an expansion. Softening *très sous-dotée* into
+"limited provision" is HomeGround editorialising a legal designation.
+
+**The distribution belongs beside it.** 87% of French communes are designated
+under-served for general practitioners. A designation shown alone reads as a
+warning about one place when it describes most of the country, so a designation
+is published with how common it is — which is a fact about the designation, not
+a judgment about the commune.
+
+**A designation is not a risk.** Reporting what an authority recorded is
+evidence. Deciding what it means for a person is a judgment, and
+`docs/methodology.md` governs it.
+
+Absence works as everywhere else. A commune the authority did not classify is
+`unknown`, and a source that could not be read is `unavailable`. Neither is a
+category, and neither is the mildest category available.
+
+---
+
 ## M2 Required Behavior
 
 M2 must support:
@@ -290,6 +327,9 @@ M3 must additionally support:
 - every piece of evidence has exactly one state
 - `unknown` and `unavailable` are never collapsed into each other
 - absence is never represented by a value
+- a designation carries a category and no unit; a measurement carries a value
+  and a unit; nothing carries both
+- a designation is shown in the authority's own words, with how common it is
 - every piece of evidence cites a registered source
 - every registered source states at least one limitation
 - every registered source is cited by at least one kind of evidence

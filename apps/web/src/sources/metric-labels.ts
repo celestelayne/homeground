@@ -20,6 +20,12 @@ export const METRIC_LABELS: Record<string, string> = {
   "health.gp": "General practitioners",
   "services.postOffice": "Post offices",
   "services.restaurant": "Restaurants and takeaways",
+  "health.zoning.gp": "GP cover designation",
+  "health.zoning.dentist": "Dentist cover designation",
+  "health.zoning.nurse": "Nurse cover designation",
+  "health.zoning.physiotherapist": "Physiotherapist cover designation",
+  "health.zoning.midwife": "Midwife cover designation",
+  "health.zoning.speechTherapist": "Speech therapist cover designation",
 };
 
 /**
@@ -30,7 +36,10 @@ export const PEER_PERCENTILE = ".peerPercentile";
 export const PEER_MEDIAN = ".peerMedian";
 
 export function baseMetricOf(metric: string): string {
-  return metric.replace(PEER_PERCENTILE, "").replace(PEER_MEDIAN, "");
+  return metric
+    .replace(PEER_PERCENTILE, "")
+    .replace(PEER_MEDIAN, "")
+    .replace(/\.share$/, "");
 }
 
 export function labelFor(metric: string): string {
