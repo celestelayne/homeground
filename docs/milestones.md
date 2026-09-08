@@ -160,6 +160,40 @@ already needs. See the amendment to `ADR-005`.
 
 ## Completed Milestones
 
+### Interim — A photograph of the commune
+
+Not a milestone. A single change made between M2 and M3, recorded here because
+it added a source and no milestone was current.
+
+Wikidata links a commune to a picture on Wikimedia Commons through the INSEE
+code HomeGround already holds — P374 to P18 — and the picture is shown at the
+head of the area panel, where the design handoff had put an upload dropzone.
+The buyer supplies nothing; there is no upload.
+
+Three things it settles:
+
+* **A photograph is not evidence.** It carries no state, no method and no
+  observation date, because it measures nothing. It is what one contributor
+  chose to point a camera at, on a day of their choosing, and the panel says
+  so. It lives on the commune row rather than in the evidence table.
+* **The absences are still kept apart.** `unknown` is Wikidata answering and
+  holding no picture; `unavailable` is Wikidata not answering. A check
+  constraint holds a URL to the first state only, and the panel words the two
+  differently — a 502 must never print "nobody has photographed this commune".
+* **The first source that constrains display.** These files are licensed on
+  attribution and share-alike terms, so the photographer and the licence are
+  stored beside the URL and rendered with the image. Every previous source
+  constrained only what HomeGround may say.
+
+The lookup goes through Wikidata's ordinary MediaWiki API, not its SPARQL
+endpoint: the query service was shedding load at one request per minute the
+day this was built, and a commune is fetched once and held, so a request
+refused there is a photograph the reader never sees. Every one of the fifty
+communes held locally resolved to a picture.
+
+Unresolved and recorded below: a commune stored while Wikimedia was
+unreachable keeps `unavailable` for good, because nothing re-asks.
+
 ### M2 — Evidence model, proven on commune facts
 
 #### Goal
@@ -397,6 +431,11 @@ Each is either resolved into an ADR or deferred to the milestone that requires i
 * **Wildfire classification method** — M10, and explicitly gated on resolution in `docs/methodology.md` first.
 * **Mobile repository** — M12. The mobile application currently lives outside this repository. Whether it moves into the monorepo, and what that would require, is undecided.
 * **Hosting and deployed environments** — no owning milestone yet. Required by the first milestone that needs an environment beyond local development and CI.
+* **Re-asking a source that could not be reached** — no owning milestone. A
+  commune is fetched once and held, so a lookup made while a source was down
+  keeps its `unavailable` answer permanently. Visible today in the commune
+  photograph, which states the failure honestly and never retries beyond the
+  one immediate retry inside the request.
 * **Evidence staleness** — no owning milestone. M2 carries a Stale state in the
   contract and nothing sets it. Detecting that a source has published something
   newer, and recomputing against it, is unowned.

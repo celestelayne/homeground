@@ -1,0 +1,18 @@
+{
+  "claims": {
+    "P18": [
+      {
+        "mainsnak": {
+          "snaktype": "value",
+          "property": "P18",
+          "hash": "e6cfc1436c483b020052ba0e2540157758cd97f0",
+          "datavalue": { "value": "FabrezanVillage.png", "type": "string" },
+          "datatype": "commonsMedia"
+        },
+        "type": "statement",
+        "id": "Q628489$A66CD459-08EE-4355-A8EA-F5A3B7D2C565",
+        "rank": "normal"
+      }
+    ]
+  }
+}

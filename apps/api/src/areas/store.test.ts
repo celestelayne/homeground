@@ -1,15 +1,27 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { areaBoundaries, areas, evidence, facilities, sources } from "../db/schema.js";
+import { SOURCES } from "../sources/registry.js";
 import { getTestDb } from "../test/database.js";
+import commons from "../wikidata/__fixtures__/commons-imageinfo.json" with { type: "json" };
+import claims from "../wikidata/__fixtures__/wikidata-claims.json" with { type: "json" };
+import search from "../wikidata/__fixtures__/wikidata-search.json" with { type: "json" };
 import commune from "./__fixtures__/geo-api-commune.json" with { type: "json" };
 import census from "./__fixtures__/melodi-dwellings.json" with { type: "json" };
 import { getArea, registerSources } from "./store.js";
-import { SOURCES } from "../sources/registry.js";
 
 const { db } = getTestDb();
 
 /** Counts what each upstream service was actually asked for. */
-function recordingFetch(options: { censusFails?: boolean; code?: string } = {}) {
+function recordingFetch(
+  options: {
+    censusFails?: boolean;
+    code?: string;
+    /** Nobody has photographed this commune. One in seven of them. */
+    noImage?: boolean;
+    /** Wikidata answers, Commons does not, so the credit cannot be read. */
+    commonsFails?: boolean;
+  } = {},
+) {
   const calls: string[] = [];
 
   const fetchImpl = (async (input: unknown) => {
@@ -20,6 +32,23 @@ function recordingFetch(options: { censusFails?: boolean; code?: string } = {}) 
       return options.censusFails
         ? new Response("", { status: 503 })
         : new Response(JSON.stringify(census), { status: 200 });
+    }
+
+    if (url.includes("wikidata.org")) {
+      // Two calls: the item carrying the INSEE code, then its P18.
+      const body = url.includes("wbgetclaims")
+        ? options.noImage
+          ? { claims: {} }
+          : claims
+        : search;
+
+      return new Response(JSON.stringify(body), { status: 200 });
+    }
+
+    if (url.includes("commons.wikimedia.org")) {
+      return options.commonsFails
+        ? new Response("", { status: 500 })
+        : new Response(JSON.stringify(commons), { status: 200 });
     }
 
     // The fixture is Fabrezan; a test asking for another commune needs the
@@ -144,14 +173,28 @@ describe("the source registry", () => {
     expect(rows.map((r) => r.id).sort()).toEqual(SOURCES.map((s) => s.id).sort());
   });
 
-  it("has evidence behind every registered source", async () => {
+  it("has evidence behind every source that claims a figure", async () => {
     // A registry entry with nothing behind it claims a capability HomeGround
     // does not have. See specs/evidence.md.
     const { fetchImpl } = recordingFetch();
     const area = await getArea(db, CODE, fetchImpl);
     const cited = new Set(area.evidence.map((f) => f.sourceId));
+    const measuring = SOURCES.filter((s) => s.metrics.length > 0).map((s) => s.id);
 
-    expect([...cited].sort()).toEqual(SOURCES.map((s) => s.id).sort());
+    expect([...cited].sort()).toEqual(measuring.sort());
+  });
+
+  it("has something behind a source that supplies no figures", async () => {
+    // Wikimedia supplies a photograph rather than a measurement. The rule is
+    // the same: a listed source is one that is actually wired up.
+    const { fetchImpl } = recordingFetch();
+    const area = await getArea(db, CODE, fetchImpl);
+
+    for (const source of SOURCES.filter((s) => s.metrics.length === 0)) {
+      expect(source.provides.length).toBeGreaterThanOrEqual(1);
+    }
+
+    expect(area.image).toMatchObject({ state: "known" });
   });
 
   it("states a limitation for every source", async () => {
@@ -217,5 +260,70 @@ describe("a commune the sources know nothing about", () => {
     // a finding rather than a gap.
     expect(pharmacies?.state).toBe("known");
     expect(pharmacies?.value).toBe(0);
+  });
+});
+
+describe("the commune photograph", () => {
+  it("carries the credit its licence obliges", async () => {
+    const { fetchImpl } = recordingFetch();
+    const area = await getArea(db, CODE, fetchImpl);
+
+    // Attribution and share-alike terms: an image without its artist is one
+    // the interface may not lawfully display, so the two are stored together.
+    expect(area.image).toEqual({
+      state: "known",
+      url: "https://commons.wikimedia.org/wiki/Special:FilePath/FabrezanVillage.png?width=1200",
+      artist: "Alricfabrezan",
+      licence: "CC BY-SA 3.0",
+      descriptionUrl: "https://commons.wikimedia.org/wiki/File:FabrezanVillage.png",
+    });
+  });
+
+  it("is unknown for a commune nobody has photographed", async () => {
+    const { fetchImpl } = recordingFetch({ noImage: true });
+    const area = await getArea(db, CODE, fetchImpl);
+
+    // Wikidata answered and holds none. An absence of photographers, and
+    // everything else about the commune stands.
+    expect(area.image).toEqual({ state: "unknown" });
+    expect(area.evidence.length).toBeGreaterThan(0);
+  });
+
+  it("keeps the photograph but records no artist when the credit could not be read", async () => {
+    const { fetchImpl } = recordingFetch({ commonsFails: true });
+    const area = await getArea(db, CODE, fetchImpl);
+
+    // Null is "not read", not "nobody to credit" — a difference the interface
+    // states rather than papers over.
+    expect(area.image).toMatchObject({ state: "known", artist: null });
+    expect(area.image).toHaveProperty(
+      "url",
+      expect.stringContaining("FabrezanVillage.png") as unknown as string,
+    );
+  });
+
+  it("does not let a missing picture fail the lookup", async () => {
+    // Wikimedia is not asked for anything the research depends on.
+    const fetchImpl = (async (input: unknown) => {
+      const url = String(input);
+
+      if (url.includes("wikidata") || url.includes("wikimedia")) {
+        throw new Error("network down");
+      }
+
+      if (url.includes("melodi")) {
+        return new Response(JSON.stringify(census), { status: 200 });
+      }
+
+      return new Response(JSON.stringify(commune), { status: 200 });
+    }) as unknown as typeof globalThis.fetch;
+
+    const area = await getArea(db, CODE, fetchImpl);
+
+    // Could not ask — which is not the same as nobody having photographed it,
+    // and is not allowed to say so.
+    expect(area.image).toEqual({ state: "unavailable" });
+    expect(area.name).toBe("Fabrezan");
+    expect(area.evidence.length).toBeGreaterThan(0);
   });
 });

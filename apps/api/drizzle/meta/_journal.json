@@ -43,6 +43,13 @@
       "when": 1788825896833,
       "tag": "0005_graceful_agent_zero",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788834234836,
+      "tag": "0006_warm_nuke",
+      "breakpoints": true
     }
   ]
 }

@@ -22,6 +22,14 @@ export interface SourceDefinition {
   limitations: string[];
   /** The metrics this source is the origin of. Asserted against evidence. */
   metrics: string[];
+  /**
+   * What it supplies that is not a measurement — a photograph, a boundary.
+   *
+   * Named in plain words because there is no metric to label. A source must
+   * supply at least one of `metrics` or `provides`: one that supplies neither
+   * is a source with nothing behind it.
+   */
+  provides: string[];
 }
 
 export const SOURCES: SourceDefinition[] = [
@@ -41,6 +49,7 @@ export const SOURCES: SourceDefinition[] = [
       "Surface is the administrative area of the commune, including land nobody lives on.",
     ],
     metrics: ["population", "area.sqKm", "population.density"],
+    provides: [],
   },
   {
     id: "insee-census",
@@ -63,6 +72,7 @@ export const SOURCES: SourceDefinition[] = [
       "dwellings.vacant",
       "dwellings.secondHomeShare",
     ],
+    provides: [],
   },
   {
     id: "finess",
@@ -83,6 +93,29 @@ export const SOURCES: SourceDefinition[] = [
       "The register lists sites, not institutions, so one hospital group appears once per site — including its day units and outposts, which carry the group's own category.",
     ],
     metrics: ["health.pharmacies", "health.hospitals"],
+    provides: [],
+  },
+  {
+    id: "wikimedia-commons",
+    name: "Wikimedia Commons",
+    publisher: "Wikimedia Foundation, linked through Wikidata",
+    description:
+      "Photographs of communes, contributed by the public. Wikidata links each " +
+      "commune to a picture through its INSEE code.",
+    url: "https://commons.wikimedia.org",
+    cadence: "Continuous, as contributors upload",
+    coverage:
+      "Worldwide, wherever somebody has taken a photograph. Roughly six communes in seven " +
+      "in the Aude have one",
+    licence: "Per file, most often CC BY-SA. Named beneath each photograph",
+    limitations: [
+      "The photograph is whatever one contributor chose to point a camera at, on a day of their choosing. It is a picture of the commune, not a picture of what the commune is like.",
+      "Nobody selects these for representativeness, so a commune may be shown by its most photogenic corner or by a single building.",
+      "A commune with no photograph is one nobody has uploaded, which says nothing whatever about the place.",
+      "The image carries no date HomeGround can rely on, so an old photograph and a recent one look the same here.",
+    ],
+    metrics: [],
+    provides: ["A photograph of the commune"],
   },
 ];
 

@@ -23,6 +23,22 @@ export const CATEGORIES = [
 
 export type AmenityKind = (typeof CATEGORIES)[number]["kind"];
 
+/**
+ * The colour a category carries, in the list and on the map.
+ *
+ * Colour names the category and nothing else: it never carries a state, a
+ * ranking or a judgment about the facility. The pins use the same two tokens
+ * through attribute selectors in `map/amenity-pins.css`, which is the only
+ * other place these need to agree.
+ *
+ * Category is also carried by the glyph beside each row and by the tooltip on
+ * each pin, so a reader who cannot separate the two colours loses nothing.
+ */
+export const KIND_COLOUR: Record<AmenityKind, string> = {
+  hospital: "bg-health",
+  pharmacy: "bg-ink-2",
+};
+
 export interface Amenity extends Facility {
   /** Position in the visible list, matching its pin. Renumbered on every toggle. */
   number: number;

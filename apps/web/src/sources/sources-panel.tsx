@@ -117,7 +117,8 @@ function SourceEntry({ source }: { source: Source }) {
       </dl>
 
       <p className="m-0 mt-3 text-caption leading-[1.55] text-ink-2">
-        <span className="font-medium">Provides.</span> {source.metrics.map(labelFor).join(" · ")}
+        <span className="font-medium">Provides.</span>{" "}
+        {[...source.metrics.map(labelFor), ...source.provides].join(" · ")}
       </p>
 
       {source.limitations.map((limitation) => (

@@ -107,6 +107,34 @@ export const AreaSchema = Type.Object({
   evidence: Type.Array(EvidenceSchema),
   /** Located things the sources place inside this commune. */
   facilities: Type.Array(FacilitySchema),
+  /**
+   * A photograph of the commune, contributed to Wikimedia Commons.
+   *
+   * Not evidence: it is whatever one person chose to point a camera at, so it
+   * is honest as a photograph of the place and says nothing about the place as
+   * a whole.
+   *
+   * Always present, because the absences differ. `unknown` is Wikidata
+   * answering and holding no picture — a fact about photographers.
+   * `unavailable` is Wikidata not answering, which is a fact about the network
+   * and about nothing else.
+   *
+   * The credit is part of the image, not metadata about it. These files are
+   * licensed on attribution and share-alike terms, so a response carrying the
+   * URL without the artist would be one the client could not lawfully render.
+   */
+  image: Type.Union([
+    Type.Object({
+      state: Type.Literal("known"),
+      url: Type.String(),
+      /** Null means the credit could not be read, not that none is owed. */
+      artist: Type.Union([Type.String(), Type.Null()]),
+      licence: Type.Union([Type.String(), Type.Null()]),
+      descriptionUrl: Type.Union([Type.String(), Type.Null()]),
+    }),
+    Type.Object({ state: Type.Literal("unknown") }),
+    Type.Object({ state: Type.Literal("unavailable") }),
+  ]),
 });
 
 export const AreaParamsSchema = Type.Object(

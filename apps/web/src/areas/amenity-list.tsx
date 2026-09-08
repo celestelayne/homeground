@@ -1,5 +1,5 @@
 import type { Amenity, AmenityKind } from "./amenities.js";
-import { CATEGORIES, formatDistance } from "./amenities.js";
+import { CATEGORIES, formatDistance, KIND_COLOUR } from "./amenities.js";
 
 interface AmenityListProps {
   amenities: Amenity[];
@@ -47,7 +47,7 @@ export function AmenityList({
             >
               <span
                 aria-hidden="true"
-                className="grid size-[19px] flex-none place-items-center rounded-full bg-ink text-[10px] text-surface"
+                className={`grid size-[19px] flex-none place-items-center rounded-full text-[10px] text-surface ${KIND_COLOUR[category.kind]}`}
               >
                 {category.glyph}
               </span>
@@ -94,7 +94,7 @@ export function AmenityList({
               >
                 <span
                   aria-hidden="true"
-                  className="numeric mt-[1px] grid size-[21px] flex-none place-items-center rounded-full bg-ink text-[11px] text-surface"
+                  className={`numeric mt-[1px] grid size-[21px] flex-none place-items-center rounded-full text-[11px] text-surface ${KIND_COLOUR[amenity.kind]}`}
                 >
                   {amenity.number}
                 </span>

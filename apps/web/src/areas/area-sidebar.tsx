@@ -1,8 +1,9 @@
 import type { Area, Evidence } from "../api/types.js";
+import { labelFor } from "../sources/metric-labels.js";
 import { Section } from "../ui/section.js";
 import type { Amenity, AmenityKind } from "./amenities.js";
 import { AmenityList } from "./amenity-list.js";
-import { labelFor } from "../sources/metric-labels.js";
+import { CommuneImage } from "./commune-image.js";
 import type { AreaLookup } from "./use-area-lookup.js";
 
 interface AreaSidebarProps {
@@ -89,7 +90,12 @@ function AreaDetail({
 
   return (
     <div className="flex flex-col">
-      <div className="px-6 pt-6 pb-5">
+      {/*
+        The commune names itself before it is pictured. The photograph is one
+        contributor's view of the place; the name and the department are what
+        the reader looked up, so they lead.
+      */}
+      <div className="px-6 pt-6">
         <span className="text-label font-medium tracking-[0.09em] text-ink-3 uppercase">
           {area.department.name} · {area.region.name}
         </span>
@@ -98,7 +104,11 @@ function AreaDetail({
           {area.name}
           {postcode ? <span className="numeric text-ink-3">, {postcode}</span> : null}
         </h1>
+      </div>
 
+      <CommuneImage area={area} />
+
+      <div className="px-6 pt-4 pb-5">
         {/*
           Where a description of the commune would go. Nothing is written here
           because no source publishes one and ADR-004 forbids inventing it —

@@ -1,8 +1,8 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { App } from "./app";
 import type { Property } from "./api/types";
+import { App } from "./app";
 
 /**
  * Leaflet needs real layout and tile loading, neither of which jsdom provides.
@@ -43,6 +43,7 @@ beforeEach(() => {
               licence: "Licence Ouverte 2.0",
               limitations: ["Figures are weighted estimates, not counts."],
               metrics: ["dwellings.secondHomeShare"],
+              provides: [],
             },
           ],
         }),
@@ -64,6 +65,13 @@ beforeEach(() => {
           intercommunality: { code: "200035863", name: "CC Corbières et Minervois" },
           centre: { latitude: 43.1282, longitude: 2.7139 },
           boundary: null,
+          image: {
+            state: "known",
+            url: "https://commons.wikimedia.org/wiki/Special:FilePath/FabrezanVillage.png?width=1200",
+            artist: "Alricfabrezan",
+            licence: "CC BY-SA 3.0",
+            descriptionUrl: "https://commons.wikimedia.org/wiki/File:FabrezanVillage.png",
+          },
           facilities: [
             {
               id: "110790433",
