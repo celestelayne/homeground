@@ -21,6 +21,11 @@ export const GeocodeCandidateSchema = Type.Object({
    * Null when the source did not give one. Never inferred from the label.
    */
   communeCode: Type.Union([Type.String(), Type.Null()]),
+  /** The commune's own name, without the street that matched. */
+  commune: Type.Union([Type.String(), Type.Null()]),
+  /** "34, Hérault, Occitanie" — département and region, as IGN writes it. */
+  context: Type.Union([Type.String(), Type.Null()]),
+  postcode: Type.Union([Type.String(), Type.Null()]),
 });
 
 export const GeocodeQuerySchema = Type.Object(

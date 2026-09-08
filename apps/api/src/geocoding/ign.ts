@@ -98,7 +98,15 @@ export function toCandidates(payload: unknown): GeocodeCandidate[] {
 
 function toCandidate(feature: unknown): GeocodeCandidate | null {
   const typed = feature as {
-    properties?: { label?: unknown; id?: unknown; type?: unknown; citycode?: unknown };
+    properties?: {
+      label?: unknown;
+      id?: unknown;
+      type?: unknown;
+      citycode?: unknown;
+      city?: unknown;
+      context?: unknown;
+      postcode?: unknown;
+    };
     geometry?: { coordinates?: unknown };
   } | null;
 
@@ -137,6 +145,8 @@ function toCandidate(feature: unknown): GeocodeCandidate | null {
   const citycode = typed?.properties?.citycode;
   const communeCode = typeof citycode === "string" && citycode.length > 0 ? citycode : null;
 
+  const text = (value: unknown) => (typeof value === "string" && value !== "" ? value : null);
+
   return {
     id,
     label,
@@ -144,5 +154,9 @@ function toCandidate(feature: unknown): GeocodeCandidate | null {
     longitude,
     precision: precisionOf(typed?.properties?.type),
     communeCode,
+    // Enough to tell two communes of the same name apart in a list.
+    commune: text(typed?.properties?.city),
+    context: text(typed?.properties?.context),
+    postcode: text(typed?.properties?.postcode),
   };
 }

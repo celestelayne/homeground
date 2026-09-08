@@ -76,6 +76,7 @@ async function read(db: Db, code: string): Promise<Area | null> {
         id: row.id,
         kind: row.kind,
         name: row.name,
+        address: row.address,
         latitude: row.latitude,
         longitude: row.longitude,
         precision: row.precision,

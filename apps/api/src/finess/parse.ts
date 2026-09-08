@@ -11,9 +11,29 @@ const LAMBERT_93 =
   "+ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs";
 const WGS84 = "+proj=longlat +datum=WGS84 +no_defs";
 
-/** The FINESS categories HomeGround has a mapping for. */
+/**
+ * The FINESS categories HomeGround has a mapping for.
+ *
+ * A hospital here means a general hospital somebody would be taken to: a
+ * centre hospitalier, a regional or university one, or a local one. Mapping
+ * only 355 left Montpellier claiming no hospitals at all, because its CHU is
+ * registered as 101.
+ *
+ * Deliberately excluded, and why:
+ *   292  psychiatric hospitals — a different question from "where would I be
+ *        taken", and answering the second with the first would mislead
+ *   127  hospitalisation at home — a service, not a place to go
+ *   271  accommodation for patients' families
+ *   426  an administrative body between hospitals
+ *   698  a catch-all the register uses for everything else
+ *   214  Centre Hébergement & Réinsertion Sociale — a homeless shelter whose
+ *        acronym reads like a regional hospital. Matching on codes rather
+ *        than reading the labels would have counted 883 of them.
+ */
 const KINDS: Record<string, "pharmacy" | "hospital"> = {
   "620": "pharmacy",
+  "101": "hospital",
+  "106": "hospital",
   "355": "hospital",
 };
 
@@ -37,6 +57,8 @@ export interface Facility {
   areaCode: string;
   kind: "pharmacy" | "hospital";
   name: string;
+  /** Street line as the register writes it: "17 R MADELEINE BRES". */
+  address: string | null;
   latitude: number;
   longitude: number;
   precision: "exact" | "zone" | "commune";
@@ -44,6 +66,9 @@ export interface Facility {
 
 /** Field positions in the 32-column establishment record. */
 const NAME = 4;
+const STREET_NUMBER = 7;
+const STREET_TYPE = 8;
+const STREET_NAME = 9;
 const COMMUNE = 12;
 const DEPARTMENT = 13;
 const CATEGORY = 18;
@@ -116,10 +141,28 @@ function toFacility(id: string, fields: string[], position?: string[]): Facility
     areaCode,
     kind,
     name,
+    address: toAddress(fields),
     latitude: point.latitude,
     longitude: point.longitude,
     precision: PRECISION_BY_LEVEL[position[4]?.split(",")[0] ?? ""] ?? "commune",
   };
+}
+
+/**
+ * The street line, as the register writes it — abbreviated the way French
+ * postal data is: R for rue, BD for boulevard, CHE for chemin.
+ *
+ * Left abbreviated rather than expanded. Expanding it means a lookup table
+ * this codebase would have to maintain and keep correct, and the abbreviations
+ * are what appears on the building.
+ */
+function toAddress(fields: string[]): string | null {
+  const line = [fields[STREET_NUMBER], fields[STREET_TYPE], fields[STREET_NAME]]
+    .map((part) => part?.trim())
+    .filter((part) => part)
+    .join(" ");
+
+  return line.length > 0 ? line : null;
 }
 
 function toWgs84(x?: string, y?: string): { latitude: number; longitude: number } | null {

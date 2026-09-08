@@ -9,6 +9,9 @@ const candidate: GeocodeCandidate = {
   longitude: 3.874026,
   precision: "exact",
   communeCode: "34172",
+  commune: "Montpellier",
+  context: "34, Hérault, Occitanie",
+  postcode: "34000",
 };
 
 const named = (draft: AddPropertyDraft) => reduce(draft, { type: "name-changed", value: "Le Mas" });

@@ -79,6 +79,8 @@ export const SOURCES: SourceDefinition[] = [
       "It registers establishments, so a practitioner working alone may not appear as one.",
       "Around one facility in twenty-five is placed at its commune rather than at its address, and is shown as an area rather than a point.",
       "Outside metropolitan France it holds nothing, so a count there is unknown rather than zero.",
+      "Hospitals means general hospitals somebody would be taken to. Hospitals registered wholly as psychiatric, and home-care services, are not counted.",
+      "The register lists sites, not institutions, so one hospital group appears once per site — including its day units and outposts, which carry the group's own category.",
     ],
     metrics: ["health.pharmacies", "health.hospitals"],
   },
