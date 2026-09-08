@@ -41,12 +41,117 @@ Only the current milestone below is specified.
 
 ## Current Milestone
 
-None. M3 is complete — its specification and outcome are under *Completed
-Milestones* below.
+### M4 — Designated exposure, and declared disasters
 
-Promoting M4 means specifying it: goal, acceptance criteria, out-of-scope list
-and authorized dependencies. Until that is written, no milestone is current and
-nothing is authorized to be built.
+#### Goal
+
+A commune shows what the state has officially recorded about its exposure: what
+it is designated as exposed to, and what has actually been declared a disaster
+there, with the dates.
+
+This is the first milestone at which a foreign buyer learns something a French
+buyer's notaire would tell them. Fabrezan is designated for forest fire,
+differential settlement and three kinds of flooding, and has been the subject
+of twenty prefectoral disaster orders since 1982. None of that appears in a
+listing.
+
+HomeGround reports these. It does not classify them, score them, or say whether
+anywhere is safe.
+
+#### Established by looking, before this was written
+
+Fabrezan, through four keyless Géorisques endpoints:
+
+* **Thirteen designations.** Flood — torrential, runoff and mudflow, rising
+  water table. Ground movement — subsidence over old workings, rockfall,
+  landslide, differential settlement. Earthquake, forest fire, radon, dam
+  rupture.
+* **Radon potential class 1**, on the authority's scale of 3. **Seismic zone
+  "2 — FAIBLE"**, on its scale of 5. Both are the authority's own words.
+* **Twenty declared natural disasters** since 1982: eleven floods or mudflows,
+  six droughts, one storm, one snow load, one wave-action event. The droughts
+  fall in 2008, 2016, 2017, 2018, 2022 and 2023 — five of the six in the last
+  eight years.
+* The national GASPAR base is published as a whole, so national prevalence is
+  obtainable rather than inferred.
+
+#### The distinction this milestone rests on
+
+A **designation** says the commune is recorded as exposed to something. It
+carries no date and no severity, and thirteen of them is unremarkable in
+France. Shown alone it reads as an alarm about one place while describing most
+of the country, which is why `specs/evidence.md` requires a designation to be
+published with how common it is.
+
+A **declared disaster** says something happened here and the state said so, on
+a date, in a published order. It is the more useful of the two and the more
+easily overstated: twenty orders since 1982 is a history, not a rate, and
+certainly not a forecast.
+
+#### Acceptance Criteria
+
+M4 is complete when:
+
+* a commune shows both what it is designated as exposed to and what has been
+  declared there, and the two are visibly different kinds of fact
+* every designation is shown with how common it is nationally, computed from
+  the national base rather than estimated
+* a declared disaster carries both dates the source publishes — when the event
+  began, and when the order was signed — and neither is presented as the other
+* the authority's own scales are shown as the authority writes them: radon
+  class 1 of 3, seismic zone "2 — FAIBLE". No translation into wording of
+  HomeGround's own, and no colour that implies a verdict
+* counts and most recent year are reported; no rate, frequency, trend or
+  projection is derived from them, because a run of six droughts is a record of
+  what happened and not a statement about what will
+* a commune with no designation recorded is distinguishable from one that was
+  never asked about — the rule the evidence contract has enforced since M2
+* everything is served from HomeGround's own store, so a lookup makes no
+  request to Géorisques
+* the national base is ingested by an explicit command, as FINESS and the
+  density grid are
+* the invariants for designations in `specs/evidence.md` are covered by tests
+
+#### Out of Scope
+
+M4 does not include:
+
+* **Connecting one fact to another.** Six drought declarations and a
+  differential-settlement designation are the mechanism that cracks stone
+  houses in clay soil, and saying so is analysis. `docs/methodology.md` governs
+  it, and it is recorded as an open decision rather than performed quietly
+* any risk score, rating, classification or Low/Moderate/High wording. Wildfire
+  classification remains M13 and is explicitly gated
+* prevention plan documents and their zoning maps — designations name what a
+  commune is exposed to, not where within it
+* registered industrial sites, which the same API serves. That is pollution,
+  a different factor, and it is not this milestone
+* geometry, flood polygons and PostGIS, which M11 introduces
+* property-level exposure. A designation describes a commune; where a house
+  sits inside it arrives with M15
+* scheduled ingestion, authentication, deployment
+
+#### Authorized Dependencies
+
+In addition to those carried from earlier milestones:
+
+* **Géorisques**, published by the ministry for ecological transition: the
+  GASPAR base of designations and disaster orders, radon potential, and the
+  seismic zoning. Keyless, Licence Ouverte, and ingested nationally rather than
+  proxied per lookup
+* No new libraries. The zip and workbook readers already in the repository
+  cover the file formats these arrive in
+
+#### Governing Specs
+
+`specs/evidence.md`, whose Designations section was written during M3 and is
+what this milestone was waiting for: a category in the authority's words, the
+date it decided, how common it is, and the rule that a fact carries a value or
+a category and never both.
+
+`docs/methodology.md` governs the wording throughout. Reporting that an
+authority designated a commune is evidence; deciding what that means for a
+person is a judgment this application does not make.
 
 ---
 
@@ -60,19 +165,6 @@ commune replaced the property as the subject of research. Again after M3, when
 they need to know about a place — was put beside what HomeGround was building,
 and the two did not match. Both are
 recorded under *Why this order*, because a reader may remember either.
-
-**M4 — Designated exposure.** What a commune is officially recorded as exposed
-to, from Géorisques: flood, ground movement, seismic, radon, dam rupture, and
-forest fire. Commune-keyed and keyless, so it needs no geometry and no routing.
-This is a designation HomeGround reports, not a classification it derives, so
-it does not touch the rule reserved for M13. It is also the first milestone at
-which a buyer learns that Fabrezan is designated for forest fire, differential
-settlement and three kinds of flooding — facts a French buyer's notaire
-surfaces and a foreign buyer does not know to ask for.
-
-`specs/evidence.md` already defines what a designation is, what it must carry,
-and that it is published with how common it is. That contract was written
-during M3 and survives it.
 
 **M5 — Climate.** What the weather is, and what it is becoming: Météo-France
 normals, and the DRIAS projections for the decades a buyer would live through.
@@ -731,6 +823,12 @@ Each is either resolved into an ADR or deferred to the milestone that requires i
   publisher or that mapping; neither exists today. HomeGround holds an
   `edition` column against every count so a second edition can sit beside the
   first the day one is obtainable.
+* **Whether a drought record explains a settlement designation** — owned by M4,
+  and deliberately not answered there. Fabrezan carries a differential
+  settlement designation and six drought declarations, five of them since 2016.
+  In clay soil that pairing is what cracks a stone house, and joining the two
+  facts is analysis rather than reporting. `docs/methodology.md` must say what
+  may be concluded from a run of declarations before anything concludes it.
 * **Re-asking a source that could not be reached** — no owning milestone. A
   commune is fetched once and held, so a lookup made while a source was down
   keeps its `unavailable` answer permanently. Visible today in the commune
