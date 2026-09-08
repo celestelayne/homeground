@@ -206,11 +206,19 @@ as a recommendation, and the gap stays open until something other than open
 data closes it.
 
 **Power resilience.** Part of what people mean by working from here, and the
-part with no source at the right grain: the outage durations the network
-operator publishes appear to stop at département level, and a department-wide
-average says nothing about a village at the end of a rural line. Approximating
-it from a coarser figure would be inventing a fact about a place, so nothing is
-owned until a commune-level source is found or ruled out properly.
+part with no source at the grain HomeGround works at. Checked rather than
+assumed: the network operator publishes average outage duration and frequency
+nationally — one row per year, no geography — and a regulatory continuity
+indicator per département, one row per department per year from 2009. The Aude
+runs between 1.35 and 3.57 on that indicator across the last eight years.
+
+A département figure cannot distinguish a village at the end of a rural line
+from a town centre, and deriving a commune figure from it would be inventing
+one. What it could honestly do is appear labelled as what it is — a
+département-level figure, in the way a facility located only to its commune is
+drawn as an area rather than a point. Whether a fact at that grain is worth
+showing at all is an open question, not a technical one, and nothing is owned
+until it is answered.
 
 **Three cheap sources nobody owns.** Schools, drought restriction orders and
 protected areas are each published per commune, keyless, and each sits low on
