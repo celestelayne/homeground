@@ -16,7 +16,7 @@ type Point = { latitude: number; longitude: number };
  *
  * Saved properties are not wired into this screen. `PropertySidebar`,
  * `PropertyDetailPanel`, `AddPropertyPanel` and `useProperties` are left in the
- * repository, dormant and unimported: properties return at M11 with listing
+ * repository, dormant and unimported: properties return at M14 with listing
  * partnerships, and working components are a better starting point than ones
  * recovered from history.
  */

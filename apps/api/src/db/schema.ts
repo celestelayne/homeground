@@ -203,7 +203,8 @@ export const areas = pgTable(
  * containment has to visibly join for it rather than find it beside a
  * commune's name.
  *
- * M5 introduces PostGIS and replaces this with real geometry. Until then
+ * The wildfire milestone introduces PostGIS and replaces this with real
+ * geometry. Until then
  * nothing queries it: no containment, no intersection, no distance.
  */
 export const areaBoundaries = pgTable("area_boundaries", {

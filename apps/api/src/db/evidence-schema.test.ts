@@ -210,7 +210,7 @@ describe("an Area holds identity, not measurements", () => {
   it("keeps the boundary out of the commune's own row", async () => {
     // ADR-005: a boundary sitting beside a commune's name invites hand-rolled
     // containment logic. In its own table, anything reaching for containment
-    // has to visibly join a blob it was told not to query. M5 replaces it with
+    // has to visibly join a blob it was told not to query. PostGIS replaces it with
     // PostGIS geometry, which is when asking questions of it becomes correct.
     expect(Object.keys(getTableColumns(areas))).not.toContain("boundary");
     expect(Object.keys(getTableColumns(areaBoundaries))).toEqual([

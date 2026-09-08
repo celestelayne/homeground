@@ -54,81 +54,125 @@ nothing is authorized to be built.
 
 Named and sequenced. Not specified until current.
 
-The sequence was reordered once M1 was complete, when the commune rather than
-the property became the subject of research. The reasoning is recorded under
-*Why this order* below, because the previous order is still the one a reader
-may remember.
-
-**M2 — Evidence model, proven on commune facts.** Assessment and Evidence
-contracts, provenance fields, Known/Estimated/Unknown/Stale states, method
-versioning, and evidence retrieval APIs — together with the first evidence that
-exercises them: where the hospitals and pharmacies are, from FINESS, and census
-population, age structure, second-home and vacancy shares.
-
-The two are deliberately different shapes. Census figures are attributed to a
-commune; FINESS establishments are located things carrying their own
-coordinates. A contract that holds both will hold what comes after. Counts
-across all communes are M3's business, not M2's.
-
-**M3 — Comparison against similar communes.** A count is not a finding. Two
-pharmacies means nothing until it is two where most communes of that size have
-none, and the national distribution needed to say so is already inside the same
-sources. Includes change over time: what a commune had ten years ago and no
-longer has, using INSEE's Base Permanente des Équipements for counts
-across all communes.
+The sequence has been reordered twice. Once when M1 was complete, as the
+commune replaced the property as the subject of research. Again after M3, when
+a ranked list of what people actually say they need to know about a place was
+put beside what HomeGround was building, and the two did not match. Both are
+recorded under *Why this order*, because a reader may remember either.
 
 **M4 — Designated exposure.** What a commune is officially recorded as exposed
 to, from Géorisques: flood, ground movement, seismic, radon, dam rupture, and
 forest fire. Commune-keyed and keyless, so it needs no geometry and no routing.
 This is a designation HomeGround reports, not a classification it derives, so
-it does not touch the rule reserved for M10. It is also the first milestone at
+it does not touch the rule reserved for M12. It is also the first milestone at
 which a buyer learns that Fabrezan is designated for forest fire, differential
 settlement and three kinds of flooding — facts a French buyer's notaire
 surfaces and a foreign buyer does not know to ask for.
 
-**M5 — Historical wildfire evidence.** Introduces PostGIS. Ingest authoritative
-fire geometries and calculate measurable historical evidence — distance to the
-nearest recorded burned area, hectares burned within the commune, most recent
-recorded year. Measurement only; classification is M10.
+`specs/evidence.md` already defines what a designation is, what it must carry,
+and that it is published with how common it is. That contract was written
+during M3 and survives it.
 
-**M6 — Recorded sale prices.** France publishes every recorded sale since 2010
-under an open licence, keyed on the commune. Gated on the comparability
-decision in `docs/methodology.md` being resolved first. Fabrezan's 2023 house
-sales span €508 to €9,310 per square metre, so an unsegmented median would be a
-confident-looking number that means nothing.
+**M5 — Climate.** What the weather is, and what it is becoming: Météo-France
+normals, and the DRIAS projections for the decades a buyer would live through.
+Second only to admin among the things people ask, and the cheapest of them to
+answer — keyless, commune-keyed, no PostGIS, no routing.
 
-**M7 — Reachable services.** Travel-time evidence for services that are sparse
-and far enough that the answer is a property of the commune rather than of a
-house: emergency department and major hospital, using explicit FINESS category
-mappings. Introduces routing. Everyday services stay presence rather than
-minutes until a property has an exact location, because a difference of a few
-minutes to a supermarket is a fact about a house, not a village.
+A commune has no weather station of its own. The station a figure comes from,
+and how far away it is, are part of the evidence rather than a detail.
 
-**M8 — Personal criteria.** Evaluate measured evidence against user-defined
+**M6 — Commune statistics: safety and employment.** Recorded offences per
+commune per year from the interior ministry's statistical service, and
+employment from INSEE. Both are the shape M2 already handles — commune-keyed
+figures with a reference year — so this is mostly ingestion.
+
+Small communes have their offence counts suppressed to protect identification,
+which is Unknown arriving from a source that deliberately withholds. Employment
+is published by *zone d'emploi* more often than by commune, and a figure that
+describes a labour market rather than a village must say so.
+
+**M7 — Cost of buying, and cost of holding.** France publishes every recorded
+sale since 2010, keyed on the commune, and the tax authority publishes the
+*taxe foncière* rate each commune levies. The first is what a house costs; the
+second is what living in it costs every year afterwards, and nobody shows it.
+
+Gated on the comparability decision in `docs/methodology.md` being resolved
+first. Fabrezan's 2023 house sales span €508 to €9,310 per square metre, so an
+unsegmented median would be a confident-looking number that means nothing.
+
+**M8 — Transport and links.** Whether there is a bus at all, how far the
+nearest station is, and how far the nearest airport that flies where a person's
+family lives. Timetable feeds are published nationally and openly. Presence and
+distance need no routing, which is why this precedes M9 rather than waiting
+for it.
+
+**M9 — Reachable services.** Travel-time evidence for services sparse enough
+that the answer is a property of the commune rather than of a house: emergency
+department and major hospital, using explicit FINESS category mappings.
+Introduces routing.
+
+Health cover belongs here rather than earlier. The regional authorities'
+designation of an area as under-supplied was built during M3 and removed: it is
+a real fact, and "thirty-eight minutes to an emergency department" is the one
+a person was actually asking for. The designation can return beside it.
+
+**M10 — Historical wildfire evidence.** Introduces PostGIS. Ingest
+authoritative fire geometries and calculate measurable historical evidence —
+distance to the nearest recorded burned area, hectares burned within the
+commune, most recent recorded year. Measurement only; classification is M12.
+
+**M11 — Personal criteria.** Evaluate measured evidence against user-defined
 thresholds. Preserve Unknown through evaluation and never treat missing data as
 zero or passing.
 
-**M9 — Compare.** Present the same versioned metrics side by side for selected
-communes. Comparison is presentation and consistency checking, not a new
-scoring engine.
-
-**M10 — Wildfire exposure methodology.** Only after the classification method and
-authoritative inputs are explicitly resolved in `docs/methodology.md`.
+**M12 — Wildfire exposure methodology.** Only after the classification method
+and authoritative inputs are explicitly resolved in `docs/methodology.md`.
 Implementation must not invent Low/Moderate/Elevated formulas.
 
-**M11 — Listing partnerships and property location.** Import properties with
+**M13 — Compare.** Present the same versioned metrics side by side for selected
+communes. Comparison is presentation and consistency checking, not a new
+scoring engine. ADR-012 already decides which communes are comparable.
+
+**M14 — Listing partnerships and property location.** Import properties with
 disclosed locations from listing providers. This is what ends the reliance on a
 user placing a point by hand, and the first milestone at which property-level
 travel time for everyday services is honest rather than a commune centroid
 wearing a house's name.
 
-**M12 — Mobile quick check.** Reuse the HomeGround API and evidence contracts
+**M15 — Mobile quick check.** Reuse the HomeGround API and evidence contracts
 for the iOS and Android address-check flow: enter or speak, confirm, check,
 understand source and coverage.
 
-**M13 — AI intent and orchestration.** Natural-language or voice intent over an
+**M16 — AI intent and orchestration.** Natural-language or voice intent over an
 allow-listed capability registry. AI selects trusted operations and explains
 returned evidence. It does not create evidence.
+
+---
+
+## Asked For, And Not Owned
+
+Things people say they need to know that no milestone above delivers. Recorded
+so that the gap is visible rather than forgotten.
+
+**Community vitality, and integration with neighbours.** Two of the most-raised
+factors, and HomeGround has no honest source for either. The only candidates
+are proxies: the count of registered associations in a commune, and the census
+share of residents born outside France. Both are facts, and neither is what the
+person asking meant. Shipping a proxy under the name of the thing it proxies is
+the failure ADR-004 exists to prevent, so nothing is owned here until a source
+answers the question that was asked.
+
+**Administration and bureaucracy.** The single most-raised factor, and not
+commune research at all: visas, residence permits, healthcare registration, tax
+residency, licence exchange. The answers are national and identical in every
+commune. That is written guidance, not evidence attached to a place, and it
+does not belong in this sequence.
+
+**Professional services.** The largest unanswered gap in the same research —
+finding a notaire, an accountant or a doctor who works in English. No open
+dataset exists. It is a directory somebody maintains, which is a different kind
+of work from anything above and should be recognised as one before it is
+promised.
 
 ---
 
@@ -139,7 +183,7 @@ routing. Three things changed that.
 
 **A listing usually withholds the address.** It gives a commune, and that is
 enough to answer the question a buyer asks first — would I even want to look
-here? Property-level location arrives with listing partnerships, at M11.
+here? Property-level location arrives with listing partnerships, at M14.
 
 **At commune tier, most travel times are not honest.** There is no house to
 route from, and `specs/property.md` already says evidence derived at commune
@@ -153,9 +197,39 @@ time series. They need no routing provider, no candidate matching and no
 per-property computation. Wildfire history is a boundary intersection rather
 than a route, which is why it now precedes routing rather than following it.
 
-One consequence is deliberate: PostGIS arrives at M5 rather than being deferred
-further, and pays for the boundary storage and caching that the area lookup
-already needs. See the amendment to `ADR-005`.
+One consequence was deliberate: PostGIS arrived early, ahead of routing,
+because a boundary intersection is cheaper than a route. See the amendment to
+`ADR-005`. The second reorder moved it later again, for the reason below.
+
+### The second reorder, after M3
+
+M3 shipped a comparison of what a commune has against communes like it, and it
+was taken off the screen within the week. So was the health designation built
+to replace it. Neither was wrong; both answered questions people were not
+asking.
+
+What changed the order was a ranked list of what people say they need to know
+before they start looking at property, counted by how many separate people
+raised each thing. Set beside the roadmap, it said three things.
+
+**The order was upside down.** Administration, professional services and cost
+of living lead the list. Facility counts — what M3 built — appear nowhere on
+it. Climate, safety, transport and the cost of holding a house all outrank the
+things that were scheduled first.
+
+**Cheap to source and useful are not opposites.** Climate, recorded offences,
+tax rates and timetables are all commune-keyed, all keyless, and all near the
+top of what people ask. They now come first, and routing and PostGIS wait until
+something needs them.
+
+**Two of the most-raised things are not milestones at all.** Administration is
+national and identical everywhere; professional services is a directory nobody
+publishes. Both are recorded under *Asked for, and not owned* rather than
+dressed up as commune evidence.
+
+The rule this leaves behind: a milestone earns its place by the question it
+answers, not by the data that happens to be available. Available data is how
+HomeGround built two panels nobody wanted.
 
 ---
 
