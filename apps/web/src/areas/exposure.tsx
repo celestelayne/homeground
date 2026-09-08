@@ -32,8 +32,12 @@ const SHOWN = 3;
  */
 const RECENT_YEARS = 5;
 
+/** The authority's code for forest fire. */
+const FOREST_FIRE = "16";
+
 export function Exposure({ area, evidence }: { area: Area; evidence: Evidence[] }) {
   const radon = evidence.find((fact) => fact.metric === "exposure.radon");
+  const fire = (area.exposures ?? []).some((exposure) => exposure.riskCode === FOREST_FIRE);
 
   // Null is the archive not carrying this commune. An empty list is the
   // archive carrying it and recording nothing, which is a different sentence.
@@ -50,6 +54,7 @@ export function Exposure({ area, evidence }: { area: Area; evidence: Evidence[] 
   return (
     <div className="flex flex-col gap-4">
       <Declared area={area} />
+      {fire ? <Fire name={area.name} /> : null}
       <Designated area={area} />
       {radon?.state === "known" && radon.category ? <Radon fact={radon} /> : null}
       <p className="m-0 text-meta leading-[1.5] text-ink-3">
@@ -143,6 +148,27 @@ function Declared({ area }: { area: Area }) {
         and been recognised. Not a rate, and silent about what will happen.
       </p>
     </div>
+  );
+}
+
+/**
+ * The absence a reader would otherwise misread.
+ *
+ * Not one of the 247,140 declarations in the archive is a fire, and not
+ * because France does not burn: the natural disaster regime excludes fire,
+ * which is covered by ordinary insurance, so no prefectoral order is ever
+ * issued for one. A commune in the Corbières shows no fires above and is
+ * designated for forest fire below, and without this the reader draws exactly
+ * the wrong conclusion from the gap.
+ */
+function Fire({ name }: { name: string }) {
+  return (
+    <p className="m-0 rounded-card border border-line bg-surface-2 px-4 py-[10px] text-caption leading-[1.5] text-ink-2">
+      <span className="text-ink">{name} is designated for forest fire</span>, and no fire appears in
+      the declarations above. Fires never do: the natural disaster regime does not cover them, so
+      the state issues no order when one burns. What has actually burned here is not in this
+      archive.
+    </p>
   );
 }
 
