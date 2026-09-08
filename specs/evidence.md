@@ -1,6 +1,6 @@
 # Evidence
 
-**Status: Implementation-ready for M2**
+**Status: Implementation-ready for M2. Amended for M3, which adds comparison.**
 
 ## Purpose
 
@@ -190,14 +190,70 @@ evidence: an authority recorded it and HomeGround repeats it, with the source.
 Deciding that a commune is *high risk* is a judgment, and belongs to no
 milestone until `docs/methodology.md` resolves what the words mean.
 
-Evidence must not be compared in M2.
+Evidence was not compared in M2.
 
-A count is reported, never called high or low. "Two pharmacies" is evidence.
+A count was reported, never called high or low. "Two pharmacies" is evidence.
 "Unusually well served" requires a distribution to compare against, which is
 M3. Shipping the comparison early, informally, is how a number becomes a claim
-nobody can defend.
+nobody can defend. What M3 may and may not do with a distribution is defined
+below.
 
 HomeGround does not write prose about a place.
+
+---
+
+## Comparison
+
+A **comparison** is evidence whose value is the position of another figure
+within a named group of communes.
+
+It is evidence, not a layer above evidence: it carries a value, a unit, a
+state, a source, an observation date and a method version, exactly like a
+count. Everything in this document applies to it.
+
+### What makes a group
+
+A comparison must name the group it compares against, and the group must come
+from a published classification. HomeGround does not decide which communes
+resemble each other; a statistical authority does, and HomeGround cites it.
+
+A comparison therefore cites two sources: the source of the underlying figures,
+and the source of the classification. Both must be registered, and both appear
+in the Sources and methodology panel.
+
+The group's size travels with the comparison. "Among the 6,428 communes in its
+class" lets a reader weigh the claim; "compared to similar communes" does not.
+
+### What a comparison may say
+
+A position, and nothing else:
+
+- where the commune falls among its peers, as a share of them
+- what the middle of the group holds
+
+A comparison may not say that a commune is well served, poorly served, good,
+bad, better, worse, above average in a tone that implies approval, or
+recommended. Those are judgments, and `docs/methodology.md` governs them. The
+distribution is shown; the reader draws the conclusion.
+
+The threshold below which a group is too small to compare against is part of
+the method, is stated on screen, and changes only with a method version. It is
+a convention rather than a law, and saying so is the point.
+
+### When a comparison cannot be made
+
+Each of these is `unknown`, and each is distinguishable from the others by the
+metric it is recorded against, never by silence:
+
+- the commune is not covered by the source of the underlying figures
+- the classification does not place the commune in any class
+- the class holds too few communes to compare against
+
+A comparison that could not be computed because a source could not be read is
+`unavailable`, as everywhere else.
+
+An uncovered commune is never shown as average. Average is a value; absence is
+not.
 
 ---
 
@@ -215,6 +271,19 @@ M2 must support:
 
 ---
 
+## M3 Required Behavior
+
+M3 must additionally support:
+
+1. holding, for every commune, the figures a comparison is computed from
+2. computing a comparison from held figures rather than at request time
+3. naming, on screen, the group compared against and how many communes it holds
+4. citing both the source of the figures and the source of the classification
+5. distinguishing an uncovered commune, an unclassified commune and a group too
+   small — none of which is zero, and none of which is average
+
+---
+
 ## Invariants
 
 - evidence attaches to an Area, identified by INSEE code
@@ -226,7 +295,10 @@ M2 must support:
 - every registered source is cited by at least one kind of evidence
 - every piece of evidence carries the method version that produced it
 - `observedAt` describes the source, not the fetch
-- evidence contains no judgment, no score, and no comparison
+- evidence contains no judgment and no score
+- a comparison names its group, the group's size, and both sources it rests on
+- a comparison states a position, never an approval
+- a commune outside the comparison is `unknown`, never average and never zero
 - one source failing does not remove another source's evidence
 - evidence does not become a Property column
 
@@ -234,9 +306,8 @@ M2 must support:
 
 ## Out of Scope
 
-M2 does not define:
+Not defined here:
 
-- comparison against other communes
 - thresholds, criteria, or evaluation
 - detecting staleness or recomputing evidence
 - evidence attached to a Property
