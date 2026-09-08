@@ -4,6 +4,7 @@ import { Section } from "../ui/section.js";
 import type { Amenity, AmenityKind } from "./amenities.js";
 import { AmenityList } from "./amenity-list.js";
 import { CommuneImage } from "./commune-image.js";
+import { Exposure } from "./exposure.js";
 import type { AreaLookup } from "./use-area-lookup.js";
 
 interface AreaSidebarProps {
@@ -23,11 +24,15 @@ interface AreaSidebarProps {
 
 const number = new Intl.NumberFormat("en-GB");
 
+/** Shown in their own section, with their context. */
+const EXPOSURE = new Set(["exposure.designations", "exposure.radon", "disasters.declared"]);
+
 const SOURCE_NAMES: Record<string, string> = {
   "geo-api-gouv": "Découpage administratif",
   "insee-census": "INSEE census",
   finess: "FINESS",
   "insee-density-grid": "INSEE density grid",
+  georisques: "Géorisques",
   "wikimedia-commons": "Wikimedia Commons",
 };
 
@@ -151,6 +156,14 @@ function AreaDetail({
       </Section>
 
       <Section
+        title="What the state records"
+        note="Designations and declared disasters, from Géorisques. Reported, never rated."
+        defaultOpen
+      >
+        <Exposure area={area} evidence={area.evidence} />
+      </Section>
+
+      <Section
         title={`Research around ${area.name}`}
         note={`These figures describe the whole commune, not any single address.`}
       >
@@ -192,6 +205,10 @@ function Measurements({ evidence }: { evidence: Evidence[] }) {
     // Facility counts belong beside the list of facilities, not repeated as
     // rows here.
     .filter((fact) => !fact.metric.startsWith("health."))
+    // Exposure is read in "What the state records", with the context that
+    // makes it readable. A bare "13 designations" row here would be the alarm
+    // that section exists to avoid, and a category has no number to show.
+    .filter((fact) => !EXPOSURE.has(fact.metric))
     .sort((a, b) => (b.observedAt ?? "").localeCompare(a.observedAt ?? ""));
 
   return (
