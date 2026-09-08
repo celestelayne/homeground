@@ -1,0 +1,45 @@
+cod_commune;lib_commune;lib_risque;num_risque
+11132;Fabrezan;Inondation;11
+11132;Fabrezan;Par une crue torrentielle ou à montée rapide de cours d'eau;113
+11132;Fabrezan;Par ruissellement et coulée de boue;114
+11132;Fabrezan;Par remontées de nappes naturelles;116
+11132;Fabrezan;Mouvement de terrain;12
+11132;Fabrezan;Affaissements et effondrements d'origine anthropique (anciennes carrières souterraines, hors mines);121
+11132;Fabrezan;Eboulement ou chutes de pierres et de blocs;123
+11132;Fabrezan;Glissement de terrain;124
+11132;Fabrezan;Tassements différentiels;127
+11132;Fabrezan;Séisme;13
+11132;Fabrezan;Feu de forêt;16
+11132;Fabrezan;Radon;18
+11132;Fabrezan;Rupture de barrage;23
+11262;Narbonne;Inondation;11
+11262;Narbonne;Par une crue à débordement lent de cours d'eau;112
+11262;Narbonne;Par une crue torrentielle ou à montée rapide de cours d'eau;113
+11262;Narbonne;Par ruissellement et coulée de boue;114
+11262;Narbonne;Par remontées de nappes naturelles;116
+11262;Narbonne;Par submersion marine;117
+11262;Narbonne;Mouvement de terrain;12
+11262;Narbonne;Affaissements et effondrements d'origine anthropique (anciennes carrières souterraines, hors mines);121
+11262;Narbonne;Eboulement ou chutes de pierres et de blocs;123
+11262;Narbonne;Glissement de terrain;124
+11262;Narbonne;Recul du trait de côte et de falaises;126
+11262;Narbonne;Tassements différentiels;127
+11262;Narbonne;Séisme;13
+11262;Narbonne;Feu de forêt;16
+11262;Narbonne;Radon;18
+11262;Narbonne;Risque industriel;21
+11262;Narbonne;Effet de surpression;212
+11262;Narbonne;Effet toxique;213
+11262;Narbonne;Transport de marchandises dangereuses;24
+34170;Montouliers;Mouvement de terrain;12
+34170;Montouliers;Affaissements et effondrements d'origine anthropique (anciennes carrières souterraines, hors mines);121
+34170;Montouliers;Eboulement ou chutes de pierres et de blocs;123
+34170;Montouliers;Glissement de terrain;124
+34170;Montouliers;Tassements différentiels;127
+34170;Montouliers;Séisme;13
+34170;Montouliers;Feu de forêt;16
+34170;Montouliers;Radon;18
+34170;Montouliers;Transport de marchandises dangereuses;24
+40330;Villenave;Mouvement de terrain;12
+40330;Villenave;Tassements différentiels;127
+40330;Villenave;Feu de forêt;16

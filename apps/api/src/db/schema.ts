@@ -9,6 +9,7 @@ import {
   numeric,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -114,6 +115,82 @@ export const sources = pgTable(
   // of this let a source with no limitations straight through.
   (table) => [check("sources_state_a_limitation", sql`cardinality(${table.limitations}) >= 1`)],
 );
+
+/**
+ * What each commune is officially recorded as exposed to, nationally.
+ *
+ * A designation, not a measurement: the state recorded that this commune is
+ * exposed to flooding, and HomeGround repeats it. National because a
+ * designation is unreadable without knowing how common it is — thirteen of
+ * them is unremarkable in France, and shown alone would read as an alarm about
+ * one place while describing most of the country. See specs/evidence.md.
+ */
+export const communeRisks = pgTable(
+  "commune_risks",
+  {
+    code: text("code").notNull(),
+    /** The authority's own code — "127" is differential settlement. */
+    riskCode: text("risk_code").notNull(),
+    /** The authority's own words, never translated or softened. */
+    label: text("label").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.code, table.riskCode] }),
+    index("commune_risks_by_risk").on(table.riskCode),
+  ],
+);
+
+/**
+ * Natural disasters the state has declared in each commune.
+ *
+ * Not a designation but a record of events: a prefectoral order naming this
+ * commune, on a date. Fabrezan carries twenty since 1982, six of them
+ * droughts. More useful than a designation and more easily overstated — a
+ * count is a history, never a rate and never a forecast.
+ */
+export const communeDisasters = pgTable(
+  "commune_disasters",
+  {
+    /** The order's national identifier, so re-ingesting cannot duplicate it. */
+    id: text("id").notNull(),
+    code: text("code").notNull(),
+    /**
+     * The kind declared — "ICB" for flooding and mudflow, "PDN" for snow load.
+     * Part of the identity: one order can declare several kinds at once. The
+     * order of January 1992 covered Fabrezan for flooding and for snow load,
+     * and they are two declarations sharing a signature.
+     */
+    riskCode: text("risk_code").notNull(),
+    label: text("label").notNull(),
+    /**
+     * When the event began and ended, as the order records them. Part of the
+     * identity: one order can declare several separate episodes for the same
+     * commune and the same kind. The order of December 2000 declared drought
+     * in Aix-en-Provence for 1991, for 1992–93 and for 1998, all signed on one
+     * day. Keyed without the episode, two of the three would vanish.
+     */
+    beganAt: timestamp("began_at", { withTimezone: true }).notNull(),
+    endedAt: timestamp("ended_at", { withTimezone: true }).notNull(),
+    /** When the order was signed. A different fact from when it happened. */
+    signedAt: timestamp("signed_at", { withTimezone: true }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.id, table.code, table.riskCode, table.beganAt, table.endedAt] }),
+    index("commune_disasters_by_commune").on(table.code),
+  ],
+);
+
+/**
+ * Radon potential per commune, on the authority's scale of three.
+ *
+ * A graded designation: the scale carries its own context in a way a bare
+ * "designated for flooding" does not, which is why the class is shown as the
+ * authority writes it — 1 of 3 — rather than translated into words of ours.
+ */
+export const communeRadon = pgTable("commune_radon", {
+  code: text("code").primaryKey(),
+  potentialClass: integer("potential_class").notNull(),
+});
 
 /**
  * The class a commune belongs to, from INSEE's density grid.
