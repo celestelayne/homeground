@@ -78,7 +78,7 @@ function sharedStrings(files: Map<string, Buffer>): string[] {
   // habitat</t></r></si> — so every fragment inside one entry is joined.
   return [...xml.matchAll(/<si>(.*?)<\/si>/gs)].map(([, entry]) =>
     [...(entry ?? "").matchAll(/<t[^>]*>(.*?)<\/t>/gs)]
-      .map(([, text]) => unescape(text ?? ""))
+      .map(([, text]) => decodeEntities(text ?? ""))
       .join(""),
   );
 }
@@ -92,7 +92,7 @@ function cells(row: string, shared: string[]): string[] {
     const raw = /<v>(.*?)<\/v>/s.exec(body ?? "")?.[1];
 
     if (inline !== undefined) {
-      values.push(unescape(inline));
+      values.push(decodeEntities(inline));
     } else if (type === "s" && raw !== undefined) {
       const text = shared[Number(raw)];
 
@@ -102,7 +102,7 @@ function cells(row: string, shared: string[]): string[] {
 
       values.push(text);
     } else {
-      values.push(unescape(raw ?? ""));
+      values.push(decodeEntities(raw ?? ""));
     }
   }
 
@@ -119,7 +119,7 @@ function decode(files: Map<string, Buffer>, name: string): string {
   return file.toString("utf8");
 }
 
-function unescape(text: string): string {
+function decodeEntities(text: string): string {
   return text
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
