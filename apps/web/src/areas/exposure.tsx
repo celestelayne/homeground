@@ -1,19 +1,36 @@
+import { useState } from "react";
 import type { Area, Evidence } from "../api/types.js";
+import { DECLARED, familyOf, HAZARDS, inEnglish } from "./risk-labels.js";
 
 /**
  * What the state records about a commune's exposure.
  *
- * Two kinds of fact, deliberately shown in this order. What has actually been
- * declared here comes first: it is dated, specific, and the thing a buyer can
- * act on. What the commune is designated as exposed to comes second, and every
- * designation is shown with how many communes carry the same one — because
- * most of France carries several, and a bare list of thirteen reads as a
- * catastrophe rather than as the ordinary condition of living in France.
+ * An overview, not an archive. What has actually been declared here comes
+ * first — dated, specific, and the thing a buyer can act on — and only the
+ * three commonest kinds are shown until asked. Designations come second,
+ * folded into the families the authority itself defines: Narbonne is recorded
+ * for nineteen hazards, which is six families, and nineteen rows of French was
+ * a wall rather than an overview.
  *
- * Nothing here is scored, rated or ranked. The counts describe what has
- * happened; they are not a rate and not a forecast. See docs/methodology.md.
+ * Every designation carries how many communes carry the same one, because most
+ * of France carries several and a bare list reads as a catastrophe.
+ *
+ * Nothing here is scored or ranked. The counts describe what has happened;
+ * they are not a rate and not a forecast. See docs/methodology.md.
  */
 const number = new Intl.NumberFormat("en-GB");
+/** Enough to see the shape of it. The rest is a click away. */
+const SHOWN = 3;
+/**
+ * How far back the overview looks.
+ *
+ * The archive runs to 1982, and a count over forty years warns nobody: a
+ * commune declared eleven times since 1982 and one declared eleven times since
+ * 2020 are not the same place. Five years is recent enough to describe the
+ * commune as it is now. The full history is held and served; this is what the
+ * overview shows.
+ */
+const RECENT_YEARS = 5;
 
 export function Exposure({ area, evidence }: { area: Area; evidence: Evidence[] }) {
   const radon = evidence.find((fact) => fact.metric === "exposure.radon");
@@ -35,111 +52,192 @@ export function Exposure({ area, evidence }: { area: Area; evidence: Evidence[] 
       <Declared area={area} />
       <Designated area={area} />
       {radon?.state === "known" && radon.category ? <Radon fact={radon} /> : null}
+      <p className="m-0 text-meta leading-[1.5] text-ink-3">
+        Hazard names are translated from the French the state uses; the original is shown beside
+        each one. Nothing is renamed to sound milder.
+      </p>
     </div>
   );
 }
 
 /** Declared disasters: the specific, dated half. */
 function Declared({ area }: { area: Area }) {
-  const declarations = area.disasters ?? [];
+  const [all, setAll] = useState(false);
+  const since = new Date();
+  since.setUTCFullYear(since.getUTCFullYear() - RECENT_YEARS);
+
+  const held = area.disasters ?? [];
+  const declarations = held.filter((declaration) => new Date(declaration.beganAt) >= since);
 
   if (declarations.length === 0) {
     return (
-      <p className="m-0 text-caption leading-[1.5] text-ink-2">
-        No natural disaster has been declared in {area.name}.
+      <p className="m-0 text-body leading-[1.5] text-ink-2">
+        No natural disaster has been declared in {area.name} in the last{" "}
+        <span className="numeric">{RECENT_YEARS}</span> years.
+        {held.length > 0 ? (
+          <span className="text-ink-3">
+            {" "}
+            The archive holds <span className="numeric">{held.length}</span> older, the most recent
+            in <span className="numeric">{year(held[0]?.beganAt)}</span>.
+          </span>
+        ) : null}
       </p>
     );
   }
 
-  const byKind = new Map<string, { label: string; count: number; latest: string }>();
+  const byKind = new Map<string, { code: string; label: string; count: number; latest: string }>();
 
   for (const declaration of declarations) {
-    const held = byKind.get(declaration.label);
+    const held = byKind.get(declaration.riskCode);
 
-    byKind.set(declaration.label, {
+    byKind.set(declaration.riskCode, {
+      code: declaration.riskCode,
       label: declaration.label,
       count: (held?.count ?? 0) + 1,
-      // The list arrives most recent first, so the first is the latest.
+      // The list arrives most recent first, so the first seen is the latest.
       latest: held?.latest ?? declaration.beganAt,
     });
   }
 
-  const orders = new Set(declarations.map((d) => d.id)).size;
-  const earliest = declarations[declarations.length - 1]?.beganAt;
+  const kinds = [...byKind.values()].sort((a, b) => b.count - a.count);
+  const shown = all ? kinds : kinds.slice(0, SHOWN);
+  const older = held.length - declarations.length;
 
   return (
     <div>
       <p className="m-0 mb-2 text-body leading-[1.5] text-ink">
-        The state has declared a natural disaster here{" "}
-        <span className="numeric">{declarations.length}</span> times since{" "}
-        <span className="numeric">{year(earliest)}</span>, in{" "}
-        <span className="numeric">{number.format(orders)}</span> orders.
+        A natural disaster has been declared here{" "}
+        <span className="numeric">{declarations.length}</span>{" "}
+        {declarations.length === 1 ? "time" : "times"} in the last{" "}
+        <span className="numeric">{RECENT_YEARS}</span> years.
+        {older > 0 ? (
+          <span className="text-ink-3">
+            {" "}
+            The archive holds <span className="numeric">{older}</span> older.
+          </span>
+        ) : null}
       </p>
 
       <dl className="m-0 divide-y divide-line rounded-card border border-line">
-        {[...byKind.values()]
-          .sort((a, b) => b.count - a.count)
-          .map((kind) => (
-            <div
-              key={kind.label}
-              className="flex items-baseline justify-between gap-4 px-4 py-[9px]"
-            >
-              <dt className="text-body text-ink">{kind.label}</dt>
-              <dd className="numeric m-0 text-right text-body">
-                {kind.count}
-                <span className="ml-2 text-caption text-ink-3">latest {year(kind.latest)}</span>
-              </dd>
-            </div>
-          ))}
+        {shown.map((kind) => (
+          <div key={kind.code} className="flex items-baseline justify-between gap-4 px-4 py-[9px]">
+            <dt className="text-body text-ink">{inEnglish(DECLARED, kind.code, kind.label)}</dt>
+            <dd className="numeric m-0 flex-none text-right text-body">
+              {kind.count}
+              <span className="ml-2 text-caption text-ink-3">latest {year(kind.latest)}</span>
+            </dd>
+          </div>
+        ))}
       </dl>
 
+      {kinds.length > SHOWN ? (
+        <More
+          open={all}
+          onToggle={() => setAll((shownAll) => !shownAll)}
+          label={`${kinds.length - SHOWN} more kind${kinds.length - SHOWN === 1 ? "" : "s"}`}
+        />
+      ) : null}
+
       <p className="m-0 mt-2 text-meta leading-[1.5] text-ink-3">
-        {/*
-          The sentence that stops a count becoming a prediction. It is here
-          rather than in a tooltip because it is the whole caveat.
-        */}
-        A record of what has happened and been recognised. It is not a rate, and says nothing about
-        what will happen.
+        {/* The sentence that stops a count becoming a prediction. */}A record of what has happened
+        and been recognised. Not a rate, and silent about what will happen.
       </p>
     </div>
   );
 }
 
-/** Designations: the common, contextless half, shown with its context. */
+/** Designations, folded into the authority's own families. */
 function Designated({ area }: { area: Area }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
   const exposures = area.exposures ?? [];
 
   if (exposures.length === 0) {
     return (
-      <p className="m-0 text-caption leading-[1.5] text-ink-2">
+      <p className="m-0 text-body leading-[1.5] text-ink-2">
         {area.name} is not recorded as exposed to anything.
       </p>
     );
   }
 
+  // 113 and 114 are kinds of 11. The hierarchy is the state's, not ours.
+  const families = new Map<
+    string,
+    { code: string; label: string; prevalence: number | null; kinds: typeof exposures }
+  >();
+
+  for (const exposure of exposures) {
+    const code = familyOf(exposure.riskCode);
+    const held = families.get(code) ?? { code, label: "", prevalence: null, kinds: [] };
+
+    if (exposure.riskCode === code) {
+      held.label = exposure.label;
+      held.prevalence = exposure.prevalence;
+    } else {
+      held.kinds.push(exposure);
+    }
+
+    families.set(code, held);
+  }
+
   return (
     <div>
       <p className="m-0 mb-2 text-body leading-[1.5] text-ink">
-        Recorded as exposed to <span className="numeric">{exposures.length}</span> things. Most
-        communes in France carry several, so the figure beside each one says how many others carry
-        the same.
+        Recorded as exposed to <span className="numeric">{families.size}</span> kinds of hazard.
+        Most communes in France carry several, so each shows how many others carry the same.
       </p>
 
       <ul className="m-0 flex list-none flex-col gap-px p-0">
-        {exposures.map((exposure) => (
-          <li
-            key={exposure.riskCode}
-            className="flex items-baseline justify-between gap-4 px-1 py-[5px] text-body"
-          >
-            {/* The authority's own words, never softened. */}
-            <span className="text-ink-2">{exposure.label}</span>
-            {exposure.prevalence === null ? null : (
-              <span className="numeric flex-none text-caption text-ink-3">
-                {number.format(exposure.prevalence)} communes
-              </span>
-            )}
-          </li>
-        ))}
+        {[...families.values()].map((family) => {
+          const open = expanded === family.code;
+
+          return (
+            <li key={family.code}>
+              <button
+                type="button"
+                onClick={() => setExpanded(open ? null : family.code)}
+                aria-expanded={open}
+                disabled={family.kinds.length === 0}
+                className="flex w-full items-baseline justify-between gap-4 rounded-sharp px-1 py-[5px] text-left text-body hover:bg-row-hover disabled:hover:bg-transparent"
+              >
+                <span className="text-ink-2">
+                  {inEnglish(HAZARDS, family.code, family.label)}
+                  {family.kinds.length > 0 ? (
+                    <span className="ml-2 text-caption text-ink-3">
+                      {open ? "−" : "+"} {family.kinds.length}
+                    </span>
+                  ) : null}
+                </span>
+                {family.prevalence === null ? null : (
+                  <span className="numeric flex-none text-caption text-ink-3">
+                    {number.format(family.prevalence)} communes
+                  </span>
+                )}
+              </button>
+
+              {open ? (
+                <ul className="m-0 mb-1 flex list-none flex-col gap-px border-l border-line py-1 pl-3">
+                  {family.kinds.map((kind) => (
+                    <li
+                      key={kind.riskCode}
+                      className="flex items-baseline justify-between gap-4 px-1 text-caption"
+                    >
+                      <span className="text-ink-2">
+                        {inEnglish(HAZARDS, kind.riskCode, kind.label)}
+                        {/* The state's own words, so nobody has to trust ours. */}
+                        <span className="ml-2 text-meta text-ink-3 italic">{kind.label}</span>
+                      </span>
+                      {kind.prevalence === null ? null : (
+                        <span className="numeric flex-none text-meta text-ink-3">
+                          {number.format(kind.prevalence)}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -158,6 +256,19 @@ function Radon({ fact }: { fact: Evidence }) {
       ) : null}
       . It describes the ground, not the air inside any building.
     </p>
+  );
+}
+
+function More({ open, onToggle, label }: { open: boolean; onToggle: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={open}
+      className="mt-[6px] text-caption text-ink-3 underline underline-offset-2 hover:text-ink"
+    >
+      {open ? "Show fewer" : `Show ${label}`}
+    </button>
   );
 }
 
