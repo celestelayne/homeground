@@ -274,8 +274,30 @@ export const evidence = pgTable(
     retrievedAt: timestamp("retrieved_at", { withTimezone: true }).notNull().defaultNow(),
     method: text("method").notNull(),
     methodVersion: integer("method_version").notNull(),
+    /**
+     * What a comparison was made against, in words a reader sees:
+     * "Bourgs ruraux, INSEE density grid 2024". Null on a plain measurement.
+     *
+     * A comparison cites two sources — the figures in `sourceId`, and the
+     * classification that decided which communes it was compared to here. See
+     * specs/evidence.md and ADR-012.
+     */
+    basis: text("basis"),
+    basisSourceId: text("basis_source_id").references(() => sources.id),
+    /** How many communes were in the group. Travels with the comparison. */
+    peers: integer("peers"),
   },
   (table) => [
+    /**
+     * A comparison names its group, its group's size and its second source, or
+     * it is not a comparison. Holding one without the others would let a
+     * position be shown with nothing to say what it was a position among.
+     */
+    check(
+      "evidence_comparison_is_complete",
+      sql`(${table.basis} is null and ${table.basisSourceId} is null and ${table.peers} is null)
+          or (${table.basis} is not null and ${table.basisSourceId} is not null and ${table.peers} is not null)`,
+    ),
     /**
      * Absence is never a value. A commune with no data is not a commune of no
      * people with no shops, so a state that means "we have no figure" cannot
