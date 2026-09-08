@@ -4,7 +4,6 @@ import { Section } from "../ui/section.js";
 import type { Amenity, AmenityKind } from "./amenities.js";
 import { AmenityList } from "./amenity-list.js";
 import { CommuneImage } from "./commune-image.js";
-import { Everyday } from "./everyday.js";
 import type { AreaLookup } from "./use-area-lookup.js";
 
 interface AreaSidebarProps {
@@ -24,8 +23,17 @@ interface AreaSidebarProps {
 
 const number = new Intl.NumberFormat("en-GB");
 
-/** Everything shown with its distribution, and therefore not shown twice. */
-const EVERYDAY = new Set([
+/**
+ * BPE's counts, which the panel does not show.
+ *
+ * They are still served, and the comparison behind them still holds, but a
+ * count inside a boundary turned out not to answer the question a reader has.
+ * Five general practitioners in a village of 1,306 is a headcount that may
+ * mean one surgery, and one bakery says nothing about how far the nearest is
+ * when a commune has none. What replaces them measures access rather than
+ * tallying premises — see docs/milestones.md.
+ */
+const NOT_SHOWN = new Set([
   "shops.bakery",
   "shops.grocery",
   "education.school",
@@ -163,14 +171,6 @@ function AreaDetail({
       </Section>
 
       <Section
-        title="Everyday services"
-        note="Counted by INSEE, and placed beside communes of the same density class. A position, not a verdict."
-        defaultOpen
-      >
-        <Everyday evidence={area.evidence} />
-      </Section>
-
-      <Section
         title={`Research around ${area.name}`}
         note={`These figures describe the whole commune, not any single address.`}
       >
@@ -213,7 +213,7 @@ function Measurements({ evidence }: { evidence: Evidence[] }) {
     // BPE counts is read in Everyday services with its distribution. Repeating
     // either here would show one number twice, in two different framings.
     .filter((fact) => !fact.metric.startsWith("health."))
-    .filter((fact) => !EVERYDAY.has(baseMetricOf(fact.metric)))
+    .filter((fact) => !NOT_SHOWN.has(baseMetricOf(fact.metric)))
     .sort((a, b) => (b.observedAt ?? "").localeCompare(a.observedAt ?? ""));
 
   return (
