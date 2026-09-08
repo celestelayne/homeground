@@ -1,17 +1,10 @@
-import { and, count, eq, inArray, like } from "drizzle-orm";
-import { BPE_METHOD } from "../bpe/metrics.js";
+import { count, eq, like } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { areaBoundaries, areas, evidence, facilities, sources } from "../db/schema.js";
 import type { FetchLike } from "../geocoding/ign.js";
 import { SOURCES } from "../sources/registry.js";
 import { fetchCommuneImage } from "../wikidata/commune-image.js";
 import { CENSUS_METHOD, CENSUS_METHOD_VERSION, fetchCensus, toCensusFigures } from "./census.js";
-import { COMPARISON_METHODS, comparisonEvidence } from "./comparison.js";
-import {
-  designationEvidence,
-  ZONING_METHOD,
-  SHARE_METHOD as ZONING_SHARE_METHOD,
-} from "./designations.js";
 import { AreaLookupUnavailableError, fetchCommune, toCommune } from "./geo-api.js";
 import type { Area, Evidence, Facility } from "./schema.js";
 
@@ -164,11 +157,6 @@ async function store(db: Db, code: string, fetchImpl?: FetchLike): Promise<void>
     ...administrativeEvidence(code, commune),
     ...(await censusEvidence(code, fetchImpl)),
     ...(await facilityEvidence(db, code)),
-    // Read from HomeGround's own tables, so this costs no upstream request
-    // and cannot fail because a third party is down.
-    ...(await comparisonEvidence(db, code)),
-    // Read from HomeGround's own tables, like the comparison.
-    ...(await designationEvidence(db, code)),
   ];
 
   if (rows.length > 0) {
@@ -328,45 +316,4 @@ async function facilityEvidence(db: Db, code: string) {
     method: FINESS_METHOD,
     methodVersion: FINESS_METHOD_VERSION,
   }));
-}
-
-/**
- * Recomputes everything a held commune derives from HomeGround's own tables:
- * its comparisons against similar communes, and its health designations.
- *
- * A commune is fetched once and held, so an ingest that brings new figures
- * would otherwise leave the communes already looked up citing figures nobody
- * holds any more. Run at the end of an ingest.
- */
-export async function refreshComparisons(db: Db): Promise<number> {
-  const held = await db.select({ code: areas.code }).from(areas);
-
-  for (const { code } of held) {
-    const rows = [
-      ...(await comparisonEvidence(db, code)),
-      ...(await designationEvidence(db, code)),
-    ];
-
-    await db.transaction(async (tx) => {
-      await tx
-        .delete(evidence)
-        .where(
-          and(
-            eq(evidence.areaCode, code),
-            inArray(evidence.method, [
-              ...COMPARISON_METHODS,
-              BPE_METHOD,
-              ZONING_METHOD,
-              ZONING_SHARE_METHOD,
-            ]),
-          ),
-        );
-
-      if (rows.length > 0) {
-        await tx.insert(evidence).values(rows);
-      }
-    });
-  }
-
-  return held.length;
 }

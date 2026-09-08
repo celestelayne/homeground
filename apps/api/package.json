@@ -10,9 +10,7 @@
     "db:migrate": "drizzle-kit migrate",
     "dev": "tsc -p tsconfig.build.json && node --env-file-if-exists=../../.env dist/server.js",
     "ingest:finess": "tsc -p tsconfig.build.json && node --env-file-if-exists=../../.env dist/finess/run-ingest.js",
-    "ingest:bpe": "tsc -p tsconfig.build.json && node --env-file-if-exists=../../.env dist/bpe/run-ingest.js",
-    "ingest:density": "tsc -p tsconfig.build.json && node --env-file-if-exists=../../.env dist/density/run-ingest.js",
-    "ingest:zoning": "tsc -p tsconfig.build.json && node --env-file-if-exists=../../.env dist/zoning/run-ingest.js"
+    "ingest:density": "tsc -p tsconfig.build.json && node --env-file-if-exists=../../.env dist/density/run-ingest.js"
   },
   "dependencies": {
     "@fastify/type-provider-typebox": "^6.1.0",

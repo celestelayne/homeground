@@ -71,6 +71,13 @@
       "when": 1788842224731,
       "tag": "0009_mute_giant_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788871605345,
+      "tag": "0010_amusing_slapstick",
+      "breakpoints": true
     }
   ]
 }

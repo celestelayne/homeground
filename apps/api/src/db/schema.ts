@@ -117,85 +117,12 @@ export const sources = pgTable(
 );
 
 /**
- * A French commune: the subject evidence attaches to, identified by its INSEE
- * code. Held rather than proxied, so a commune is fetched once.
- *
- * Identity and location only. Population, surface and density are measurements
- * and live in `evidence` with their provenance — the same rule that keeps
- * derived evidence off `properties`. See ADR-003.
- */
-/**
- * How many facilities of each kind INSEE counts in each commune, nationally.
- *
- * National because that is the point: a comparison needs the distribution, not
- * one commune's row. Independent of `areas` for the same reason FINESS is —
- * 34,873 communes must not become 34,873 area rows, and a commune nobody has
- * looked up still belongs in the distribution its neighbours are measured
- * against.
- *
- * The file is sparse. A commune with no bakery has no bakery row, and a
- * commune with no facilities at all is absent entirely, so zero is carried by
- * absence. Reading absence as zero is only honest for a commune known to
- * exist, which is what `commune_density` establishes.
- */
-export const bpeCounts = pgTable(
-  "bpe_counts",
-  {
-    /** INSEE code. Not a foreign key: this table covers all of France. */
-    code: text("code").notNull(),
-    /** BPE's own type code, kept as published — "B207" is a bakery. */
-    facilityType: text("facility_type").notNull(),
-    /** Edition year, so two editions sit side by side rather than replace. */
-    edition: integer("edition").notNull(),
-    count: integer("count").notNull(),
-  },
-  (table) => [
-    primaryKey({ columns: [table.code, table.facilityType, table.edition] }),
-    index("bpe_by_type").on(table.facilityType, table.edition),
-    // A published count is never negative, and never zero: INSEE writes an
-    // absence by omitting the row, not by publishing a nought.
-    check("bpe_counts_positive", sql`${table.count} > 0`),
-  ],
-);
-
-/**
- * What the regional health authorities have designated each commune as, for
- * each profession they zone.
- *
- * A designation, not a measurement: an ARS looked at supply against need in a
- * health catchment and published a decree. National, because how common a
- * designation is decides how it should be read — 87% of communes are
- * designated under-served for general practitioners, so the designation alone
- * would read as an alarm about one place when it describes most of France.
- */
-export const healthZoning = pgTable(
-  "health_zoning",
-  {
-    code: text("code").notNull(),
-    /** "gp", "dentist", "nurse" — HomeGround's word for the profession. */
-    profession: text("profession").notNull(),
-    /** The authority's own value, kept as published: "2_ZAC". */
-    level: text("level").notNull(),
-    /** When the ARS decreed it. The observation date of the designation. */
-    decreedAt: timestamp("decreed_at", { withTimezone: true }),
-    /**
-     * The health catchment the designation was drawn for — "Lézignan-Corbières".
-     * The commune is inside it; the decision was made about the catchment.
-     */
-    catchment: text("catchment"),
-  },
-  (table) => [
-    primaryKey({ columns: [table.code, table.profession] }),
-    index("health_zoning_by_profession").on(table.profession, table.level),
-  ],
-);
-
-/**
  * The class a commune belongs to, from INSEE's density grid.
  *
- * This is the definition of a comparable commune — see ADR-012. It doubles as
- * the reference list of communes that exist, which is what makes a missing BPE
- * row readable as zero rather than as silence.
+ * HomeGround's definition of a comparable commune — see ADR-012 — and its
+ * reference list of communes that exist. Nothing compares against it today:
+ * the figures that did were removed with BPE. It stays because the decision
+ * it encodes outlives them, and the next thing worth comparing will want it.
  */
 export const communeDensity = pgTable("commune_density", {
   code: text("code").primaryKey(),
@@ -207,6 +134,14 @@ export const communeDensity = pgTable("commune_density", {
   edition: integer("edition").notNull(),
 });
 
+/**
+ * A French commune: the subject evidence attaches to, identified by its INSEE
+ * code. Held rather than proxied, so a commune is fetched once.
+ *
+ * Identity and location only. Population, surface and density are measurements
+ * and live in `evidence` with their provenance — the same rule that keeps
+ * derived evidence off `properties`. See ADR-003.
+ */
 export const areas = pgTable(
   "areas",
   {

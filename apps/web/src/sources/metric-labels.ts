@@ -14,18 +14,6 @@ export const METRIC_LABELS: Record<string, string> = {
   "dwellings.secondHomeShare": "Second homes, share of all",
   "health.pharmacies": "Pharmacies",
   "health.hospitals": "Hospitals",
-  "shops.bakery": "Bakeries",
-  "shops.grocery": "Food shops",
-  "education.school": "Schools for under-elevens",
-  "health.gp": "General practitioners",
-  "services.postOffice": "Post offices",
-  "services.restaurant": "Restaurants and takeaways",
-  "health.zoning.gp": "GP cover designation",
-  "health.zoning.dentist": "Dentist cover designation",
-  "health.zoning.nurse": "Nurse cover designation",
-  "health.zoning.physiotherapist": "Physiotherapist cover designation",
-  "health.zoning.midwife": "Midwife cover designation",
-  "health.zoning.speechTherapist": "Speech therapist cover designation",
 };
 
 /**
