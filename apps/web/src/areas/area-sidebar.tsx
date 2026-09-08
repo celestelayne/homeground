@@ -4,7 +4,6 @@ import { Section } from "../ui/section.js";
 import type { Amenity, AmenityKind } from "./amenities.js";
 import { AmenityList } from "./amenity-list.js";
 import { CommuneImage } from "./commune-image.js";
-import { HealthCover } from "./health-cover.js";
 import type { AreaLookup } from "./use-area-lookup.js";
 
 interface AreaSidebarProps {
@@ -175,14 +174,6 @@ function AreaDetail({
           selectedId={selectedAmenityId}
           onSelect={onSelectAmenity}
         />
-      </Section>
-
-      <Section
-        title="Health cover"
-        note="What the regional health authority has designated this area as, and when it decided."
-        defaultOpen
-      >
-        <HealthCover area={area} />
       </Section>
 
       <Section
