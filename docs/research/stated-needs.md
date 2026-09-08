@@ -29,7 +29,7 @@ This list is the reason the milestone sequence was reordered after M3. See
 | 9 | Integration and neighbours | 6 | 6 | 1 | Not owned — only proxies exist |
 | 10 | Safety and crime | 5 | 5 | 1 | M7 — recorded offences per commune |
 | 11 | Family and travel links | 5 | 5 | 0 | M9 — distance to airports and stations |
-| 12 | Natural risk | 4 | 5 | 2 | M4 — Géorisques designations |
+| 12 | Natural risk | 4 | 5 | 2 | **Answered** — M4: designations and declared disasters |
 | 13 | Noise and nuisance | 3 | 3 | 2 | Unowned — sources cover major roads and airports only |
 | 14 | Leisure and culture | 3 | 3 | 2 | Unowned |
 | 15 | Landscape and nature | 3 | 3 | 1 | Unowned — protected areas are published and mappable |
