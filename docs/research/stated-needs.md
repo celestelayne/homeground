@@ -19,16 +19,16 @@ This list is the reason the milestone sequence was reordered after M3. See
 | Rank | Factor | People | Mentions | Open | Where it stands |
 |---|---|---|---|---|---|
 | 1 | Admin and bureaucracy | 12 | 17 | 2 | Not owned — national, identical in every commune |
-| 2 | Professional services | 9 | 12 | 7 | Not owned — no open dataset exists |
-| 3 | Cost of living | 9 | 12 | 2 | M7, in part — purchase prices and the *taxe foncière* rate |
-| 4 | Healthcare access | 7 | 16 | 2 | M9 — travel time to an emergency department |
+| 2 | Professional services | 9 | 12 | 7 | M6 — the business register names them |
+| 3 | Cost of living | 9 | 12 | 2 | M8, in part — purchase prices and the *taxe foncière* rate |
+| 4 | Healthcare access | 7 | 16 | 2 | M10 — travel time to an emergency department |
 | 5 | Climate | 7 | 10 | 2 | M5 — Météo-France normals and DRIAS projections |
-| 6 | Employment and economy | 6 | 6 | 3 | M6 — INSEE, mostly by labour market rather than commune |
+| 6 | Employment and economy | 6 | 6 | 3 | **Out of scope** — a decision, not a gap |
 | 7 | Community vitality | 6 | 6 | 2 | Not owned — only proxies exist |
-| 8 | Transport and access | 6 | 8 | 1 | M8 — timetables, nearest station |
+| 8 | Transport and access | 6 | 8 | 1 | M9 — timetables, nearest station |
 | 9 | Integration and neighbours | 6 | 6 | 1 | Not owned — only proxies exist |
-| 10 | Safety and crime | 5 | 5 | 1 | M6 — recorded offences per commune |
-| 11 | Family and travel links | 5 | 5 | 0 | M8 — distance to airports and stations |
+| 10 | Safety and crime | 5 | 5 | 1 | M7 — recorded offences per commune |
+| 11 | Family and travel links | 5 | 5 | 0 | M9 — distance to airports and stations |
 | 12 | Natural risk | 4 | 5 | 2 | M4 — Géorisques designations |
 | 13 | Noise and nuisance | 3 | 3 | 2 | Unowned — sources cover major roads and airports only |
 | 14 | Leisure and culture | 3 | 3 | 2 | Unowned |
@@ -43,13 +43,36 @@ This list is the reason the milestone sequence was reordered after M3. See
 | 23 | Water access | 2 | 2 | 1 | Unowned — drought restriction orders are published per commune |
 | 24 | Other | 1 | 1 | 0 | — |
 
+## Two factors, read closely
+
+**Professional services** carries two readings, and they are different products.
+One is *can I run a self-employed or international life from here* — which is
+mostly administration (rank 1) and connectivity (rank 17) wearing another name.
+The other is *can I find a plumber, a notaire, a builder, a landscaper*, and
+that is the one HomeGround takes.
+
+Read that way it is answerable, which the first pass of this research concluded
+it was not. The national business register lists every registered business with
+its trade, its address, and whether it is still trading. Asked for plumbers in
+Fabrezan it names PASTRE PLOMBERIE on rue de la Serre, MB PLOMBERIE in the next
+commune, and a third that has ceased trading. Named, located, current — not a
+count of premises inside a boundary.
+
+What it cannot say is the part people are really asking: whether any of them
+answers the phone, quotes fairly, or works in English. That is the seven
+unanswered mentions, and no register holds it.
+
+**Employment and economy is out of scope.** Not a gap and not deferred — a
+decision. HomeGround is for people arriving with an income, and a commune's
+unemployment rate says nothing about whether they can earn one. It stays in the
+table because the research recorded it, with its status stated.
+
 ## What the table says
 
-**The two most-raised factors are not commune research.** Administration is the
-same in Fabrezan as in Paris. Professional services is a directory nobody
-publishes, and with seven unanswered mentions it is the largest unmet need on
-the list. Both are recorded under *Asked for, and not owned* in
-`docs/milestones.md` rather than dressed up as evidence about a place.
+**The most-raised factor is not commune research.** Administration is the same
+in Fabrezan as in Paris: national rules, identical everywhere. It is recorded
+under *Asked for, and not owned* in `docs/milestones.md` rather than dressed up
+as evidence about a place.
 
 **Mentions and people disagree, and people wins.** Healthcare access has more
 mentions than any factor except admin, from seven people. Admin has twelve
@@ -60,6 +83,11 @@ drought restrictions are all published per commune, keyless, and none is
 owned by a milestone. They rank low because few people thought to ask, which
 is not the same as their not mattering — a factor nobody raises may be one
 nobody knows to raise.
+
+**Seven unanswered mentions is the finding.** Professional services goes
+unanswered more often than every other factor combined at the top of the list.
+Naming the businesses closes part of that gap. Knowing which of them is any
+good closes the rest, and nothing published can do it.
 
 **A count is not what was being asked for.** "Shops and services" is here, and
 HomeGround built facility counts against it and removed them. What people
