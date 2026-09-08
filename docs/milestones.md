@@ -75,6 +75,20 @@ Fabrezan, through four keyless Géorisques endpoints:
 * The national GASPAR base is published as a whole, so national prevalence is
   obtainable rather than inferred.
 
+#### The range, not one commune
+
+Fabrezan is the heavy end. Across the fifty-one communes HomeGround holds, the
+designations run from three to nineteen and the disaster orders from five to
+forty-nine, and the two do not move together — Toulouse carries six
+designations and forty-nine orders, Cuxac-Cabardès seventeen and nine.
+
+Designing against Fabrezan alone would produce an alarm generator. Four
+communes make the working set: **Villenave (40330)**, three designations and
+five orders; **Montouliers (34170)**, nine and seven; **Narbonne (11262)**,
+nineteen and thirty-five; and **Porte des Pierres Dorées (69114)**, which
+answers with nothing at all and is almost certainly a commune the base does not
+carry rather than a commune with nothing recorded.
+
 #### The distinction this milestone rests on
 
 A **designation** says the commune is recorded as exposed to something. It
@@ -111,6 +125,9 @@ M4 is complete when:
 * the national base is ingested by an explicit command, as FINESS and the
   density grid are
 * the invariants for designations in `specs/evidence.md` are covered by tests
+* the interface has been read against a light commune, a heavy one and one the
+  base does not carry — not against Fabrezan alone. A panel that only ever
+  faces the worst case is a panel designed to alarm
 
 #### Out of Scope
 
