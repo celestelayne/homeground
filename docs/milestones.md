@@ -132,6 +132,25 @@ authoritative fire geometries and calculate measurable historical evidence —
 distance to the nearest recorded burned area, hectares burned within the
 commune, most recent recorded year. Measurement only; classification is M13.
 
+The source was established during M4, because M4 could not answer a question
+it kept being asked. BDIFF, the national forest fire database, records every
+fire since 2006 with a commune code, a date and the area burned, split between
+forest, scrub and agricultural land. Keyless, open licence, and 21,141 fires in
+2025 alone.
+
+Two things it already shows. Fire is invisible in M4's data by construction:
+the natural disaster regime does not cover it, so not one of the 247,140
+declarations in GASPAR is a fire. And a commune's own record can be the
+opposite of what matters — Fabrezan recorded two fires in 2025 burning
+essentially nothing, while Ribaute, eight kilometres away, burned 11,133
+hectares on 5 August. Distance to what burned is the measure, not what burned
+inside the boundary, which is the same lesson the removed facility counts
+taught.
+
+One practical note for whoever builds it: the export follows a filter held in
+the session and set by a form, so query parameters are ignored and multi-year
+data needs the form driven rather than a URL fetched.
+
 **M12 — Personal criteria.** Evaluate measured evidence against user-defined
 thresholds. Preserve Unknown through evaluation and never treat missing data as
 zero or passing.
