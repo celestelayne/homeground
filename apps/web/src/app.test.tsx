@@ -14,36 +14,6 @@ vi.mock("./map/area-map", () => ({
   REGION_VIEW: { latitude: 43.7, longitude: 3.6, zoom: 8 },
 }));
 
-function property(overrides: Partial<Property> = {}): Property {
-  return {
-    id: crypto.randomUUID(),
-    name: "Mas above the village",
-    address: "Montouliers",
-    latitude: 43.351,
-    longitude: 2.889,
-    locationTier: "zone",
-    askingPrice: 415000,
-    listingUrl: null,
-    status: "saved",
-    notes: null,
-    createdAt: "2026-09-01T00:00:00.000Z",
-    updatedAt: "2026-09-01T00:00:00.000Z",
-    ...overrides,
-  };
-}
-
-/**
- * The root route is the landing hero, so the saved list sits behind it. Every
- * test that works with the list dismisses the hero first, the way a user would.
- */
-async function renderWithList() {
-  render(<App />);
-  const user = userEvent.setup();
-  await user.click(await screen.findByRole("button", { name: "Close and return to the map" }));
-
-  return user;
-}
-
 let stored: Property[] = [];
 const patches: Array<{ id: string; body: unknown }> = [];
 /** Every query the app actually sent to the geocoder, in order. */
@@ -94,6 +64,28 @@ beforeEach(() => {
           intercommunality: { code: "200035863", name: "CC Corbières et Minervois" },
           centre: { latitude: 43.1282, longitude: 2.7139 },
           boundary: null,
+          facilities: [
+            {
+              id: "110790433",
+              kind: "pharmacy",
+              name: "Pharmacie du Marché",
+              address: "2 BD Jean Jaurès",
+              latitude: 43.1301,
+              longitude: 2.716,
+              precision: "exact",
+              sourceId: "finess",
+            },
+            {
+              id: "110790999",
+              kind: "pharmacy",
+              name: "Pharmacie located only to the commune",
+              address: null,
+              latitude: 43.1282,
+              longitude: 2.7139,
+              precision: "commune",
+              sourceId: "finess",
+            },
+          ],
           evidence: [
             {
               metric: "population",
@@ -106,13 +98,13 @@ beforeEach(() => {
               methodVersion: 1,
             },
             {
-              metric: "health.pharmacies",
+              metric: "population.density",
               value: null,
               unit: null,
               state: "unknown",
-              sourceId: "finess",
+              sourceId: "geo-api-gouv",
               observedAt: null,
-              method: "finess-facility-count",
+              method: "geo-api-commune",
               methodVersion: 1,
             },
             {
@@ -152,6 +144,9 @@ beforeEach(() => {
         longitude: 2.889,
         precision: "commune",
         communeCode,
+        commune: label,
+        context: "11, Aude, Occitanie",
+        postcode: "11200",
       });
 
       // A postcode names several communes; a commune name usually names one.
@@ -178,224 +173,124 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("the saved properties list", () => {
-  it("groups properties by status, with a count for each", async () => {
-    stored = [
-      property({ name: "Shortlisted one", status: "shortlist" }),
-      property({ name: "Shortlisted two", status: "shortlist" }),
-      property({ name: "To visit one", status: "visit" }),
-    ];
+/**
+ * Types into the hero's search and picks the commune, the way a reader does.
+ * Nothing is looked up until one is chosen — typing is only a question.
+ */
+async function lookUp(name = "Fabrezan") {
+  render(<App />);
+  const user = userEvent.setup();
+  await user.type(await screen.findByRole("searchbox", { name: "Search communes" }), name);
 
-    await renderWithList();
+  const results = within(await screen.findByRole("status", { name: "Search results" }));
+  await user.click(await results.findByRole("button", { name: new RegExp(name) }));
 
-    const shortlist = await screen.findByRole("heading", { name: /Shortlist/ });
-    expect(within(shortlist).getByText("2")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /To visit/ })).toBeInTheDocument();
-  });
+  return user;
+}
 
-  it("keeps rejected properties in the list rather than removing them", async () => {
-    stored = [property({ name: "Ruin near Le Caylar", status: "rejected" })];
+/** The research figures sit in a section that starts closed. */
+async function openResearch(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByRole("button", { name: /Research around/ }));
+}
 
-    await renderWithList();
-
-    expect(screen.getByRole("button", { name: /Ruin near Le Caylar/ })).toBeInTheDocument();
-  });
-
-  it("can hide and show rejected properties", async () => {
-    stored = [
-      property({ name: "Kept", status: "saved" }),
-      property({ name: "Ruin near Le Caylar", status: "rejected" }),
-    ];
-
-    const user = await renderWithList();
-
-    await user.click(screen.getByRole("button", { name: "Hide rejected properties" }));
-    expect(screen.queryByRole("button", { name: /Ruin near Le Caylar/ })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Kept/ })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Show rejected properties" }));
-    expect(screen.getByRole("button", { name: /Ruin near Le Caylar/ })).toBeInTheDocument();
-  });
-
-  it("shows no price for a property that has none", async () => {
-    stored = [property({ name: "No price", askingPrice: null })];
-
-    await renderWithList();
-
-    const row = screen.getByRole("button", { name: /No price/ });
-    expect(row.textContent).toBe("No price");
-  });
-});
-
-describe("selecting a property", () => {
-  it("opens the detail panel", async () => {
-    stored = [property({ name: "Mas above the village" })];
-
-    const user = await renderWithList();
-
-    await user.click(screen.getByRole("button", { name: /Mas above the village/ }));
-
-    expect(
-      screen.getByRole("heading", { name: "Mas above the village", level: 2 }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/43\.3510, 2\.8890/)).toBeInTheDocument();
-  });
-
-  it("says how precisely the property is located", async () => {
-    stored = [property({ locationTier: "commune" })];
-
-    const user = await renderWithList();
-
-    await user.click(screen.getByRole("button", { name: /Mas above/ }));
-
-    // The estimate stays visible rather than being dressed up as precision.
-    expect(screen.getByText("Located to the commune only")).toBeInTheDocument();
-  });
-
-  it("closes the panel again", async () => {
-    stored = [property()];
-
-    const user = await renderWithList();
-
-    await user.click(screen.getByRole("button", { name: /Mas above/ }));
-    await user.click(screen.getByRole("button", { name: "Close property" }));
-
-    expect(screen.queryByRole("button", { name: "Close property" })).not.toBeInTheDocument();
-  });
-});
-
-describe("changing a property", () => {
-  it("saves a new status", async () => {
-    stored = [property({ status: "saved" })];
-
-    const user = await renderWithList();
-
-    await user.click(screen.getByRole("button", { name: /Mas above/ }));
-    await user.click(screen.getByRole("button", { name: /Shortlist/ }));
-
-    await waitFor(() => expect(patches).toHaveLength(1));
-    expect(patches[0]?.body).toEqual({ status: "shortlist" });
-  });
-
-  it("saves notes when the field loses focus", async () => {
-    stored = [property()];
-
-    const user = await renderWithList();
-
-    await user.click(screen.getByRole("button", { name: /Mas above/ }));
-    const notes = screen.getByRole("textbox", { name: /Your notes/ });
-
-    await user.type(notes, "Loved this village");
-    // Typing must not drop focus: a field component declared inside a render
-    // body remounts on every keystroke.
-    expect(notes).toHaveFocus();
-    expect(notes).toHaveValue("Loved this village");
-
-    await user.tab();
-    await waitFor(() => expect(patches).toHaveLength(1));
-    expect(patches[0]?.body).toEqual({ notes: "Loved this village" });
-  });
-
-  it("does not save notes that did not change", async () => {
-    stored = [property({ notes: "Unchanged" })];
-
-    const user = await renderWithList();
-
-    await user.click(screen.getByRole("button", { name: /Mas above/ }));
-    await user.click(screen.getByRole("textbox", { name: /Your notes/ }));
-    await user.tab();
-
-    expect(patches).toHaveLength(0);
-  });
-});
-
-describe("before anything is saved", () => {
+describe("the landing hero", () => {
   it("introduces the product over the map", async () => {
-    stored = [];
-
     render(<App />);
 
     expect(
-      await screen.findByRole("heading", { name: "Find somewhere worth living." }),
+      await screen.findByRole("heading", {
+        name: "Understand the community, not just the property.",
+      }),
     ).toBeInTheDocument();
   });
 
-  it("hides the saved properties column, which has nothing to list", async () => {
-    stored = [];
-
+  it("has no overview panel, because nothing has been looked up", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "Find somewhere worth living." });
+    await screen.findByRole("heading", {
+      name: "Understand the community, not just the property.",
+    });
 
-    expect(
-      screen.queryByRole("complementary", { name: "Saved properties" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Commune overview" })).not.toBeInTheDocument();
   });
 
-  it("looks a commune up from the hero, and the sidebar describes it", async () => {
-    stored = [];
+  it("steps aside once something has been looked up", async () => {
+    await lookUp();
 
-    render(<App />);
-    const user = userEvent.setup();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "Understand the community, not just the property." }),
+      ).not.toBeInTheDocument(),
+    );
+  });
 
-    const hero = within(await screen.findByRole("form", { name: "Look up a place" }));
-    await user.type(hero.getByRole("textbox"), "Fabrezan");
-    await user.click(hero.getByRole("button", { name: "Look up" }));
+  it("comes back from the logo", async () => {
+    const user = await lookUp();
+    await screen.findByRole("heading", { name: /Fabrezan/ });
 
-    // Geocoded to a commune, then that commune's facts fetched by INSEE code.
-    expect(geocoded).toEqual(["Fabrezan"]);
-    await waitFor(() => expect(areasFetched).toEqual(["11132"]));
+    await user.click(screen.getByRole("button", { name: "HomeGround" }));
+
+    expect(
+      screen.getByRole("heading", { name: "Understand the community, not just the property." }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("the commune overview", () => {
+  it("names the commune and where it sits", async () => {
+    await lookUp();
 
     expect(await screen.findByRole("heading", { name: /Fabrezan/ })).toBeInTheDocument();
-    expect(screen.getByText(/1,306 residents/)).toBeInTheDocument();
-    // Every figure says where it came from.
-    expect(screen.getAllByText(/INSEE census|Découpage administratif/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Aude · Occitanie/)).toBeInTheDocument();
+  });
+
+  it("writes no description of the commune, because no source publishes one", async () => {
+    await lookUp();
+
+    expect(await screen.findByText(/HomeGround does not write its own/)).toBeInTheDocument();
+  });
+
+  it("scopes the figures to the whole commune", async () => {
+    const user = await lookUp();
+    await openResearch(user);
+
+    expect(
+      screen.getByText(/describe the whole commune, not any single address/),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the research figures closed until asked for", async () => {
+    // Supporting context, not the reason somebody opened the screen.
+    const user = await lookUp();
+    expect(screen.queryByText(/1,306 residents/)).not.toBeInTheDocument();
+
+    await openResearch(user);
+    expect(await screen.findByText(/1,306 residents/)).toBeInTheDocument();
   });
 
   it("shows the latest census edition, not every one it holds", async () => {
-    stored = [];
+    const user = await lookUp();
+    await openResearch(user);
 
-    render(<App />);
-    const user = userEvent.setup();
-
-    const hero = within(await screen.findByRole("form", { name: "Look up a place" }));
-    await user.type(hero.getByRole("textbox"), "Fabrezan");
-    await user.click(hero.getByRole("button", { name: "Look up" }));
-
-    // Three editions are held, because a commune's direction of travel is the
-    // point and M3 compares against it. A brief answers the question once.
+    // Three editions are held, because M3 compares against the trend. A brief
+    // answers the question once.
     expect(await screen.findByText(/23\.5%/)).toBeInTheDocument();
     expect(screen.queryByText(/25\.4%/)).not.toBeInTheDocument();
   });
 
   it("says Unknown where a source had nothing, rather than nothing at all", async () => {
-    stored = [];
+    const user = await lookUp();
+    await openResearch(user);
 
-    render(<App />);
-    const user = userEvent.setup();
-
-    const hero = within(await screen.findByRole("form", { name: "Look up a place" }));
-    await user.type(hero.getByRole("textbox"), "Fabrezan");
-    await user.click(hero.getByRole("button", { name: "Look up" }));
-
-    // A metric the source could not answer is named and marked, not omitted.
-    // Omitting it would be indistinguishable from never having asked.
-    expect(await screen.findByText("Pharmacies")).toBeInTheDocument();
-    expect(screen.getByText("Unknown")).toBeInTheDocument();
+    const research = within(await screen.findByRole("region", { name: /Research around/ }));
+    expect(research.getByText("Density")).toBeInTheDocument();
+    expect(research.getByText("Unknown")).toBeInTheDocument();
   });
 
   it("hides the commune outline without abandoning the research", async () => {
-    stored = [];
-
-    render(<App />);
-    const user = userEvent.setup();
-
-    const hero = within(await screen.findByRole("form", { name: "Look up a place" }));
-    await user.type(hero.getByRole("textbox"), "Fabrezan");
-    await user.click(hero.getByRole("button", { name: "Look up" }));
+    const user = await lookUp();
 
     await user.click(await screen.findByRole("button", { name: /Hide the commune outline/ }));
 
-    // The brief stays, and the outline can come back without searching again.
     expect(screen.getByRole("heading", { name: /Fabrezan/ })).toBeInTheDocument();
     const back = screen.getByRole("button", { name: /Show the commune outline/ });
     expect(back).toHaveAttribute("aria-pressed", "false");
@@ -406,178 +301,143 @@ describe("before anything is saved", () => {
       "true",
     );
   });
+});
 
-  it("says the results are area-level, not about a house", async () => {
-    stored = [];
+describe("area amenities", () => {
+  it("numbers the list, and leaves out what the source could not place", async () => {
+    await lookUp();
 
-    render(<App />);
-    const user = userEvent.setup();
-
-    const hero = within(await screen.findByRole("form", { name: "Look up a place" }));
-    await user.type(hero.getByRole("textbox"), "Fabrezan");
-    await user.click(hero.getByRole("button", { name: "Look up" }));
-
-    // The caveat is not optional decoration. Commune-derived results describe
-    // the commune, per specs/property.md.
-    expect(await screen.findByText(/not this specific house/)).toBeInTheDocument();
+    // Two pharmacies in the fixture; one is located only to its commune, so
+    // its coordinate is the commune centre and it gets no number and no pin.
+    expect(await screen.findByText("1 shown")).toBeInTheDocument();
+    expect(screen.getByText("Pharmacie du Marché")).toBeInTheDocument();
+    expect(screen.queryByText("Pharmacie located only to the commune")).not.toBeInTheDocument();
   });
 
-  it("steps the hero aside once something has been looked up", async () => {
-    stored = [];
+  it("shows a street address and a distance, not a travel time", async () => {
+    // Minutes need a routing provider and somewhere to travel from.
+    await lookUp();
 
-    render(<App />);
-    const user = userEvent.setup();
-
-    const hero = within(await screen.findByRole("form", { name: "Look up a place" }));
-    await user.type(hero.getByRole("textbox"), "Fabrezan");
-    await user.click(hero.getByRole("button", { name: "Look up" }));
-
-    await waitFor(() =>
-      expect(
-        screen.queryByRole("heading", { name: "Find somewhere worth living." }),
-      ).not.toBeInTheDocument(),
-    );
+    expect(await screen.findByText(/2 BD Jean Jaurès/)).toBeInTheDocument();
+    expect(screen.getByText(/from the centre/)).toBeInTheDocument();
   });
 
-  it("will not choose between communes when a postcode names several", async () => {
-    stored = [];
+  it("renumbers when a category is switched off", async () => {
+    const user = await lookUp();
+    await screen.findByText("1 shown");
 
+    await user.click(screen.getByRole("button", { name: /Pharmacies/ }));
+
+    expect(await screen.findByText("0 shown")).toBeInTheDocument();
+    expect(screen.queryByText("Pharmacie du Marché")).not.toBeInTheDocument();
+  });
+
+  it("counts every facility beside its category, drawable or not", async () => {
+    // Two pharmacies in the fixture; only one can be placed. The category
+    // count is what the register holds, which is the figure that left the
+    // research table.
+    await lookUp();
+
+    const toggle = await screen.findByRole("button", { name: /Pharmacies/ });
+    expect(within(toggle).getByText("2")).toBeInTheDocument();
+    expect(screen.getByText("1 shown")).toBeInTheDocument();
+  });
+
+  it("says why a commune can show nothing while its category counts something", async () => {
+    const user = await lookUp();
+    await user.click(screen.getByRole("button", { name: /Pharmacies/ }));
+
+    expect(
+      await screen.findByText(/located only to its commune is counted beside its category/),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("looking a commune up", () => {
+  it("offers what the query could mean, and chooses nothing on its own", async () => {
     render(<App />);
     const user = userEvent.setup();
 
-    const hero = within(await screen.findByRole("form", { name: "Look up a place" }));
-    await user.type(hero.getByRole("textbox"), "11200");
-    await user.click(hero.getByRole("button", { name: "Look up" }));
+    await user.type(await screen.findByRole("searchbox", { name: "Search communes" }), "11200");
 
     // 11200 covers five real communes. Picking the top one would silently
     // research somewhere the user did not ask about.
-    expect(await screen.findByText(/matches 2 communes/)).toBeInTheDocument();
+    const results = within(await screen.findByRole("status", { name: "Search results" }));
+    expect(await results.findByText(/2 communes/)).toBeInTheDocument();
     expect(areasFetched).toEqual([]);
 
-    await user.click(screen.getByRole("button", { name: /Fabrezan/ }));
+    await user.click(results.getByRole("button", { name: /Fabrezan/ }));
 
     await waitFor(() => expect(areasFetched).toEqual(["11132"]));
   });
 
-  it("clears the header field once the lookup has been made", async () => {
-    stored = [];
-
+  it("shows where each match is, so two of a name can be told apart", async () => {
     render(<App />);
     const user = userEvent.setup();
 
-    // The hero carries its own Look up button, so scope to the header's form.
-    const header = within(screen.getByRole("form", { name: "Look up a commune" }));
-    const search = header.getByRole("textbox");
-    await user.type(search, "Fabrezan");
-    await user.click(header.getByRole("button", { name: "Look up" }));
+    await user.type(await screen.findByRole("searchbox", { name: "Search communes" }), "11200");
 
-    // The commune is named in the sidebar from here on. Leaving it in the
-    // field only makes the next lookup a deletion first.
-    await waitFor(() => expect(search).toHaveValue(""));
+    const results = within(await screen.findByRole("status", { name: "Search results" }));
+    // Both matches carry it, which is the point: it is what tells them apart.
+    expect((await results.findAllByText(/11200 · Aude · Occitanie/)).length).toBe(2);
   });
 
-  it("will not look up a query too short to mean anything", async () => {
-    stored = [];
-
+  it("keeps the results with the search, not in the overview", async () => {
+    // These states used to render in the panel, which meant a half-typed query
+    // took over the place a commune's figures belong.
     render(<App />);
     const user = userEvent.setup();
 
-    const hero = within(await screen.findByRole("form", { name: "Look up a place" }));
-    await user.type(hero.getByRole("textbox"), "Mo");
+    await user.type(await screen.findByRole("searchbox", { name: "Search communes" }), "11200");
 
-    expect(hero.getByRole("button", { name: "Look up" })).toBeDisabled();
+    await screen.findByRole("status", { name: "Search results" });
+    expect(screen.queryByRole("region", { name: "Commune overview" })).not.toBeInTheDocument();
   });
 
-  it("opens the add panel without a lookup, for a place with no address", async () => {
-    stored = [];
-
-    const user = await renderWithList();
-
-    await user.click(screen.getByRole("button", { name: "place the point yourself" }));
-
-    expect(screen.getByRole("heading", { name: "Add property" })).toBeInTheDocument();
-    expect(geocoded).toEqual([]);
-  });
-
-  it("goes home from the logo, closing what was open", async () => {
-    stored = [property({ name: "Mas above the village" })];
-
-    const user = await renderWithList();
-
-    await user.click(screen.getByRole("button", { name: /Mas above the village/ }));
-    expect(screen.getByRole("heading", { name: "Mas above the village" })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "HomeGround" }));
-
-    expect(
-      screen.queryByRole("heading", { name: "Mas above the village" }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("goes home from the logo while adding, abandoning the draft", async () => {
-    stored = [property()];
-
-    const user = await renderWithList();
-
-    await user.click(screen.getByRole("button", { name: "HomeGround" }));
-    await user.click(screen.getByRole("button", { name: "place the point yourself" }));
-    expect(screen.getByRole("heading", { name: "Add property" })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "HomeGround" }));
-
-    expect(screen.queryByRole("heading", { name: "Add property" })).not.toBeInTheDocument();
-  });
-
-  it("shows the landing hero on the root route, even with properties saved", async () => {
-    // Looking a commune up is what a user arrives wanting to do, so it is what
-    // they are shown — whether or not anything has been saved.
-    stored = [property()];
-
+  it("keeps the hero up while the query is being answered", async () => {
+    // Standing down at the first keystroke left the reading half blank for as
+    // long as the network took.
     render(<App />);
+    const user = userEvent.setup();
+
+    await user.type(await screen.findByRole("searchbox", { name: "Search communes" }), "11200");
+    await screen.findByRole("status", { name: "Search results" });
 
     expect(
-      await screen.findByRole("heading", { name: "Find somewhere worth living." }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: "Address, village or place name" })).toBeVisible();
-    // The list is behind it, not gone.
-    expect(screen.queryByRole("button", { name: /Mas above the village/ })).not.toBeInTheDocument();
-  });
-
-  it("reveals the saved list once the hero is dismissed", async () => {
-    stored = [property()];
-
-    const user = await renderWithList();
-
-    expect(screen.getByRole("button", { name: /Mas above the village/ })).toBeInTheDocument();
-    expect(
-      screen.queryByRole("heading", { name: "Find somewhere worth living." }),
-    ).not.toBeInTheDocument();
-
-    // And the logo brings it back.
-    await user.click(screen.getByRole("button", { name: "HomeGround" }));
-
-    expect(
-      screen.getByRole("heading", { name: "Find somewhere worth living." }),
+      screen.getByRole("heading", { name: "Understand the community, not just the property." }),
     ).toBeInTheDocument();
   });
 
-  it("offers no way out when there is nothing behind it", async () => {
-    stored = [];
-
+  it("asks nothing of the geocoder until the query could mean something", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "Find somewhere worth living." });
+    const user = userEvent.setup();
 
-    expect(
-      screen.queryByRole("button", { name: "Close and return to the map" }),
-    ).not.toBeInTheDocument();
+    await user.type(await screen.findByRole("searchbox", { name: "Search communes" }), "Mo");
+
+    await waitFor(() => expect(geocoded).toEqual([]));
   });
 
-  it("keeps the saved list reachable behind it", async () => {
-    stored = [property()];
+  it("opens the header search from a circle, covering the bar", async () => {
+    render(<App />);
+    const user = userEvent.setup();
 
-    await renderWithList();
+    // Collapsed, it is one button and no field.
+    const circle = screen.getByRole("button", { name: "Search communes" });
+    expect(circle).toHaveAttribute("aria-expanded", "false");
 
-    expect(screen.getByRole("complementary", { name: "Saved properties" })).toBeInTheDocument();
+    await user.click(circle);
+
+    expect(screen.getAllByRole("searchbox", { name: "Search communes" }).length).toBe(2);
+  });
+
+  it("closes the header search again", async () => {
+    render(<App />);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "Search communes" }));
+    await user.click(screen.getByRole("button", { name: "Close search" }));
+
+    expect(screen.getAllByRole("searchbox", { name: "Search communes" }).length).toBe(1);
   });
 });
 

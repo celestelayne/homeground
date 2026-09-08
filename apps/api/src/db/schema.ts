@@ -252,6 +252,8 @@ export const facilities = pgTable(
     areaCode: text("area_code").notNull(),
     kind: facilityKind("kind").notNull(),
     name: text("name").notNull(),
+    /** Street line as the register writes it. Absent for some establishments. */
+    address: text("address"),
     latitude: doublePrecision("latitude").notNull(),
     longitude: doublePrecision("longitude").notNull(),
     /** Never inferred: the source states it. */

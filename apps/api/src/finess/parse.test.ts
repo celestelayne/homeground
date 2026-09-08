@@ -10,6 +10,9 @@ function establishment(id: string, category: string, name: string, dept = "11", 
   fields[0] = "structureet";
   fields[1] = id;
   fields[4] = name;
+  fields[7] = "17";
+  fields[8] = "R";
+  fields[9] = "MADELEINE BRES";
   fields[12] = com;
   fields[13] = dept;
   fields[18] = category;
@@ -42,6 +45,33 @@ describe("parseFiness", () => {
 
     expect(facility?.name).toBe("SELARL ABCHIR");
     expect(facility?.kind).toBe("pharmacy");
+  });
+
+  it("keeps the street line the register writes", () => {
+    const [facility] = parseFiness(
+      [establishment("1", "620", "P"), position("1", FABREZAN_X, FABREZAN_Y, "1")].join("\n"),
+    );
+
+    // Abbreviated as the register writes it — R for rue — because that is what
+    // appears on the building, and expanding it means a lookup table to keep
+    // correct.
+    expect(facility?.address).toBe("17 R MADELEINE BRES");
+  });
+
+  it("leaves the address absent when the register gives no street", () => {
+    const fields = new Array(32).fill("");
+    fields[0] = "structureet";
+    fields[1] = "1";
+    fields[4] = "No street";
+    fields[12] = "132";
+    fields[13] = "11";
+    fields[18] = "620";
+
+    const [facility] = parseFiness(
+      [fields.join(";"), position("1", FABREZAN_X, FABREZAN_Y, "1")].join("\n"),
+    );
+
+    expect(facility?.address).toBeNull();
   });
 
   it("converts Lambert-93 to latitude and longitude", () => {

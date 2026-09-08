@@ -60,6 +60,8 @@ export const FacilitySchema = Type.Object({
   id: Type.String(),
   kind: Type.Union([Type.Literal("pharmacy"), Type.Literal("hospital")]),
   name: Type.String(),
+  /** Street line as the register writes it. Null when it gives none. */
+  address: Type.Union([Type.String(), Type.Null()]),
   latitude: Type.Number({ minimum: -90, maximum: 90 }),
   longitude: Type.Number({ minimum: -180, maximum: 180 }),
   precision: Type.Union([Type.Literal("exact"), Type.Literal("zone"), Type.Literal("commune")]),

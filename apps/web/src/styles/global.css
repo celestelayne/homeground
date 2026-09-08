@@ -39,6 +39,8 @@
 
   /* The handoff's type scale, named as it names them. */
   --text-hero: 42px;
+  /* The commune's name at the head of its overview. */
+  --text-hero-sm: 26px;
   --text-panel-title: 19px;
   --text-section: 17px;
   --text-subhead: 15px;

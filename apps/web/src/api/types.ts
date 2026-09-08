@@ -36,6 +36,11 @@ export interface GeocodeCandidate {
    * commune; a postcode does not. Null when the source did not give one.
    */
   communeCode: string | null;
+  /** The commune's own name, without the street that matched. */
+  commune: string | null;
+  /** "34, Hérault, Occitanie" — département and region. */
+  context: string | null;
+  postcode: string | null;
 }
 
 /**
@@ -71,6 +76,8 @@ export interface Facility {
   id: string;
   kind: "pharmacy" | "hospital";
   name: string;
+  /** Street line as the register writes it. Null when it gives none. */
+  address: string | null;
   latitude: number;
   longitude: number;
   precision: "exact" | "zone" | "commune";
