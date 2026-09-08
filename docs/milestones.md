@@ -99,11 +99,15 @@ M3 is complete when:
   explicit command, so no national distribution is computed at request time
 * M2's rule still holds under the new load: the same commune requested twice
   does not hit an upstream service twice
-* a metric whose earlier edition HomeGround holds shows both observations with
-  their dates; a metric with only one edition says so rather than implying
-  nothing has changed. Dropped from this milestone if step 0 establishes that
-  no second commune-level edition is obtainable, and recorded as an open
-  decision if it is dropped
+* ~~a metric whose earlier edition HomeGround holds shows both observations
+  with their dates~~ — **dropped, and recorded below.** Three things were
+  checked. INSEE's API carries only the current edition, and asking it for
+  2024, 2023 or 2022 returns 400. The type codes were renumbered between
+  editions: a bakery was B203 and is now B207, and B203 is absent from the
+  2025 nomenclature entirely, so comparing editions by code would compare
+  different definitions. And no official mapping between the old codes and the
+  new was published alongside the file. A third party mirrors an earlier
+  edition, which would mean citing a copy rather than the publisher
 * the comparison invariants added to `specs/evidence.md` are covered by tests:
   Unknown survives comparison, an uncovered commune is not average, an empty
   peer group is not zero
@@ -150,6 +154,33 @@ Explicitly **not** authorized:
   dependency
 * **PostGIS** — M5 introduces it
 * **A scheduler** — ingestion stays a command run by hand
+
+#### Outcome
+
+Complete, in five steps. A commune's everyday counts are shown beside the
+distribution of the same count across the communes INSEE places in its class:
+Fabrezan has five GPs where the median bourg rural has one, and one school,
+which 96% of its class also have. The second figure is the one that matters —
+it stops a count reading as a finding.
+
+802,594 commune counts and 34,935 classified communes are held locally, so no
+distribution is computed from a third party at request time, and none is
+computed at request time at all.
+
+Three absences stayed three facts, each found by checking real communes rather
+than reasoning about them. Porte des Pierres Dorées is in BPE and not in the
+2024 grid, so it keeps its counts and has no position. A commune in neither
+source is Unknown rather than zero, because BPE publishes no zeroes and a
+missing row is only readable as none for a commune known to exist. A class
+below thirty communes says nothing, and says so.
+
+Two things the data taught that no amount of planning would have: `Number("")`
+is 0, so an empty cell arrived as a commune with none of something until a
+test caught it; and all 69 grid communes with no BPE rows turn out to have been
+abolished since 2024, so the peer classes carry a few places that no longer
+exist — stated as a limitation rather than quietly filtered.
+
+The time-series criterion was dropped on evidence, not on effort. See above.
 
 #### Governing Specs
 
@@ -546,6 +577,13 @@ Each is either resolved into an ADR or deferred to the milestone that requires i
 * **Wildfire classification method** — M10, and explicitly gated on resolution in `docs/methodology.md` first.
 * **Mobile repository** — M12. The mobile application currently lives outside this repository. Whether it moves into the monorepo, and what that would require, is undecided.
 * **Hosting and deployed environments** — no owning milestone yet. Required by the first milestone that needs an environment beyond local development and CI.
+* **What a commune had ten years ago** — no owning milestone. M3 dropped this
+  after establishing that INSEE serves only the current BPE edition and
+  renumbered its facility codes between editions, with no published mapping
+  between them. A time series needs either an archived edition from the
+  publisher or that mapping; neither exists today. HomeGround holds an
+  `edition` column against every count so a second edition can sit beside the
+  first the day one is obtainable.
 * **Re-asking a source that could not be reached** — no owning milestone. A
   commune is fetched once and held, so a lookup made while a source was down
   keeps its `unavailable` answer permanently. Visible today in the commune
