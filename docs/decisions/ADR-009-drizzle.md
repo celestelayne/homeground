@@ -10,7 +10,7 @@ M1 is the first milestone that persists application data, which `docs/architectu
 
 The choice had to support PostgreSQL cleanly and must not make future PostGIS usage unnecessarily difficult.
 
-Drizzle is SQL-first. Its schema is TypeScript, its queries stay close to SQL, and it provides a raw SQL escape hatch. PostGIS geometry columns and spatial queries in M5 therefore do not require working around the library.
+Drizzle is SQL-first. Its schema is TypeScript, its queries stay close to SQL, and it provides a raw SQL escape hatch. PostGIS geometry columns and spatial queries, when the wildfire milestone introduces them, therefore do not require working around the library.
 
 Migrations are generated as SQL files, reviewed and committed, so the schema history is readable and replayable rather than derived at runtime.
 

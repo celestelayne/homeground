@@ -34,6 +34,12 @@ export const EvidenceSchema = Type.Object({
   /** Null exactly when the state carries absence. */
   value: Nullable(Type.Number()),
   unit: Type.Union([Type.String(), Type.Null()]),
+  /**
+   * What an authority designated, where a measurement carries a number:
+   * "2_ZAC". In the authority's own words, never softened. Null on a
+   * measurement, and a fact never carries both. See specs/evidence.md.
+   */
+  category: Type.Union([Type.String(), Type.Null()]),
   state: Type.Union([
     Type.Literal("known"),
     Type.Literal("estimated"),

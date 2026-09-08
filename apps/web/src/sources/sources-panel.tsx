@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getSources } from "../api/client.js";
 import type { Source } from "../api/types.js";
-import { labelFor } from "./metric-labels.js";
+import { baseMetricOf, labelFor } from "./metric-labels.js";
 
 interface SourcesPanelProps {
   onClose: () => void;
@@ -118,7 +118,12 @@ function SourceEntry({ source }: { source: Source }) {
 
       <p className="m-0 mt-3 text-caption leading-[1.55] text-ink-2">
         <span className="font-medium">Provides.</span>{" "}
-        {[...source.metrics.map(labelFor), ...source.provides].join(" · ")}
+        {[
+          // A metric and its comparisons are one thing to a reader, so the
+          // derived forms fold back into the metric they come from.
+          ...new Set(source.metrics.map((metric) => labelFor(baseMetricOf(metric)))),
+          ...source.provides,
+        ].join(" · ")}
       </p>
 
       {source.limitations.map((limitation) => (

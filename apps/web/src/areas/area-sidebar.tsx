@@ -1,10 +1,9 @@
 import type { Area, Evidence } from "../api/types.js";
-import { baseMetricOf, labelFor } from "../sources/metric-labels.js";
+import { labelFor } from "../sources/metric-labels.js";
 import { Section } from "../ui/section.js";
 import type { Amenity, AmenityKind } from "./amenities.js";
 import { AmenityList } from "./amenity-list.js";
 import { CommuneImage } from "./commune-image.js";
-import { Everyday } from "./everyday.js";
 import type { AreaLookup } from "./use-area-lookup.js";
 
 interface AreaSidebarProps {
@@ -24,21 +23,10 @@ interface AreaSidebarProps {
 
 const number = new Intl.NumberFormat("en-GB");
 
-/** Everything shown with its distribution, and therefore not shown twice. */
-const EVERYDAY = new Set([
-  "shops.bakery",
-  "shops.grocery",
-  "education.school",
-  "health.gp",
-  "services.postOffice",
-  "services.restaurant",
-]);
-
 const SOURCE_NAMES: Record<string, string> = {
   "geo-api-gouv": "Découpage administratif",
   "insee-census": "INSEE census",
   finess: "FINESS",
-  "insee-bpe": "INSEE BPE",
   "insee-density-grid": "INSEE density grid",
   "wikimedia-commons": "Wikimedia Commons",
 };
@@ -163,14 +151,6 @@ function AreaDetail({
       </Section>
 
       <Section
-        title="Everyday services"
-        note="Counted by INSEE, and placed beside communes of the same density class. A position, not a verdict."
-        defaultOpen
-      >
-        <Everyday evidence={area.evidence} />
-      </Section>
-
-      <Section
         title={`Research around ${area.name}`}
         note={`These figures describe the whole commune, not any single address.`}
       >
@@ -209,11 +189,9 @@ function Measurements({ evidence }: { evidence: Evidence[] }) {
   }
 
   const ordered = [...latestPerMetric(evidence)]
-    // Facility counts belong beside the list of facilities, and everything
-    // BPE counts is read in Everyday services with its distribution. Repeating
-    // either here would show one number twice, in two different framings.
+    // Facility counts belong beside the list of facilities, not repeated as
+    // rows here.
     .filter((fact) => !fact.metric.startsWith("health."))
-    .filter((fact) => !EVERYDAY.has(baseMetricOf(fact.metric)))
     .sort((a, b) => (b.observedAt ?? "").localeCompare(a.observedAt ?? ""));
 
   return (

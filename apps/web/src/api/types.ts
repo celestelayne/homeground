@@ -57,6 +57,11 @@ export interface Evidence {
   /** Null exactly when the state carries absence. */
   value: number | null;
   unit: string | null;
+  /**
+   * What an authority designated, where a measurement carries a number.
+   * In the authority's own words. A fact never carries both.
+   */
+  category: string | null;
   state: "known" | "estimated" | "unknown" | "unavailable" | "stale";
   sourceId: string;
   /** When the source observed it. Not when HomeGround fetched it. */
