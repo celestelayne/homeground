@@ -1,83 +1,56 @@
 import "./styles/global.css";
 import { useEffect, useState } from "react";
+import { type AmenityKind, visibleAmenities } from "./areas/amenities.js";
 import { AreaSidebar } from "./areas/area-sidebar.js";
-import { SourcesPanel } from "./sources/sources-panel.js";
 import { useAreaLookup } from "./areas/use-area-lookup.js";
-import { AddPropertyPanel } from "./properties/add-property-panel.js";
-import { PropertyDetailPanel } from "./properties/property-detail-panel.js";
 import { AreaMap, REGION_VIEW } from "./map/area-map.js";
-import { PropertySidebar } from "./properties/property-sidebar.js";
-import { useProperties } from "./properties/use-properties.js";
+import { SourcesPanel } from "./sources/sources-panel.js";
 import { AppHeader } from "./ui/app-header.js";
 import { AppShell } from "./ui/app-shell.js";
 import { FirstUseOverlay } from "./ui/first-use-overlay.js";
 
 type Point = { latitude: number; longitude: number };
 
+/**
+ * The commune is the subject.
+ *
+ * Saved properties are not wired into this screen. `PropertySidebar`,
+ * `PropertyDetailPanel`, `AddPropertyPanel` and `useProperties` are left in the
+ * repository, dormant and unimported: properties return at M11 with listing
+ * partnerships, and working components are a better starting point than ones
+ * recovered from history.
+ */
 export function App() {
-  const { properties, state, selectedId, selected, setSelectedId, update, reload } =
-    useProperties();
-  const [showRejected, setShowRejected] = useState(true);
-  /**
-   * Adding a property has no entry point. The header button went when the
-   * search moved in, and the hero's "place the point yourself" line has gone
-   * too, so nothing sets this true.
-   *
-   * The panel, its reducer and the map's placing mode are left wired and
-   * dormant rather than deleted: properties return at M11 with listing
-   * partnerships, and a flow that still compiles is a better starting point
-   * than one recovered from history.
-   */
-  const [adding, setAdding] = useState(false);
-  const [placing, setPlacing] = useState(false);
-  const [placedPoint, setPlacedPoint] = useState<Point | null>(null);
-  const [initialQuery, setInitialQuery] = useState("");
-  // Where a lookup landed. Not a selection and not a property — just somewhere
-  // the map has been pointed.
+  // Where a lookup landed, when there is no boundary to fit to instead.
   const [focus, setFocus] = useState<Point | null>(null);
   // True on arrival: the root route is the landing hero. Looking a commune up
-  // is the thing a user comes to do, so it is what they are shown first,
-  // whether or not anything has been saved.
+  // is the thing a user comes to do, so it is what they are shown first.
   const [showLanding, setShowLanding] = useState(true);
   const [showSources, setShowSources] = useState(false);
   // The outline says what the brief covers, but it also sits over the terrain.
   const [showBoundary, setShowBoundary] = useState(true);
-  const { lookup, search, choose, clear } = useAreaLookup();
-
-  function closeAdd() {
-    setAdding(false);
-    setPlacing(false);
-    setPlacedPoint(null);
-    setInitialQuery("");
-  }
-
-  function select(id: string) {
-    closeAdd();
-    setShowLanding(false);
-    setSelectedId(id);
-  }
+  // Categories the reader has switched off. Empty means everything shows.
+  const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set());
+  const [selectedAmenityId, setSelectedAmenityId] = useState<string | null>(null);
+  const { lookup, suggest, choose, clear } = useAreaLookup();
 
   // The logo goes home. There is no router, so home is the state the
-  // application opens in: the region, nothing selected, nothing half-written,
-  // and the search bar in front of you.
-  // A fresh focus object every time, so clicking it twice works twice.
+  // application opens in: the region, nothing looked up, and the search bar in
+  // front of you. A fresh focus object every time, so clicking twice works twice.
   function goHome() {
-    closeAdd();
-    setSelectedId(null);
     setShowLanding(true);
+    setSelectedAmenityId(null);
     clear();
     setFocus({ ...REGION_VIEW });
   }
 
-  // Looking a commune up takes over the sidebar and moves the map. It creates
-  // nothing: researching a place is not the same as tracking a house.
-  async function lookUpArea(query: string) {
-    closeAdd();
-    setSelectedId(null);
-    setShowLanding(false);
+  // Choosing a commune is the commitment; typing was only a question.
+  async function openCommune(choice: Parameters<typeof choose>[0]) {
     // A new commune brings its outline back; hiding one was about that one.
     setShowBoundary(true);
-    await search(query);
+    setSelectedAmenityId(null);
+    setShowLanding(false);
+    await choose(choice);
   }
 
   // A commune that loads moves the map to it. When it has a boundary the map
@@ -89,45 +62,64 @@ export function App() {
     }
   }, [lookup]);
 
-  // Nothing saved yet: the sidebar has nothing to list, and the overlay
-  // introduces the product over a legible map.
-  const firstUse = state === "ready" && properties.length === 0 && !adding;
+  // Numbered here, so a row and its pin always carry the same integer.
+  const {
+    shown: amenities,
+    totals,
+    placeable,
+  } = lookup.kind === "loaded"
+    ? visibleAmenities(lookup.area.facilities, lookup.area.centre, hidden)
+    : { shown: [], totals: {}, placeable: 0 };
 
-  // The landing hero is what you see before you have looked anything up. It
-  // cannot be reachable only while the database happens to be empty — saving a
-  // property must not take away the search bar — and it steps aside the moment
-  // a lookup gives the sidebar something to say.
-  const landing = (firstUse || showLanding) && !adding && lookup.kind === "idle";
+  function toggleCategory(kind: AmenityKind) {
+    setHidden((current) => {
+      const next = new Set(current);
+
+      if (next.has(kind)) {
+        next.delete(kind);
+      } else {
+        next.add(kind);
+      }
+
+      return next;
+    });
+    // Numbers move when a category is toggled, so a selection made under the
+    // old numbering would point at a different row.
+    setSelectedAmenityId(null);
+  }
+
+  // The hero stays while a query is being typed and answered, and steps aside
+  // only when a commune actually loads. Standing down at the first keystroke
+  // left the reading half blank for as long as the network took.
+  const landing = showLanding && lookup.kind !== "loaded";
 
   return (
     <AppShell
       header={
         <AppHeader
           onGoHome={goHome}
-          onSearch={(query) => void lookUpArea(query)}
           onShowSources={() => setShowSources(true)}
+          onSuggest={(query) => void suggest(query)}
+          onChoose={(choice) => void openCommune(choice)}
+          lookup={lookup}
         />
       }
-      // The landing hero has no sidebar: nothing has been looked up, so there
-      // is nothing for it to say. A lookup then takes it over — the commune is
-      // the subject, and the property list steps aside while it is.
-      sidebar={
-        landing ? undefined : lookup.kind !== "idle" ? (
+      // The overview takes half the frame once a commune is looked up. The
+      // landing hero has no panel: nothing has been looked up, so there is
+      // nothing for it to say.
+      panel={
+        lookup.kind !== "loaded" ? undefined : (
           <AreaSidebar
             lookup={lookup}
-            onChoose={(choice) => void choose(choice)}
             onToggleBoundary={() => setShowBoundary((shown) => !shown)}
             boundaryShown={showBoundary}
-          />
-        ) : state === "error" ? (
-          <p className="px-4 py-4 text-body text-ink-3">Could not load your properties.</p>
-        ) : (
-          <PropertySidebar
-            properties={properties}
-            selectedId={selectedId}
-            onSelect={select}
-            showRejected={showRejected}
-            onToggleRejected={() => setShowRejected((shown) => !shown)}
+            amenities={amenities}
+            totals={totals}
+            placeable={placeable}
+            hidden={hidden}
+            onToggleCategory={toggleCategory}
+            selectedAmenityId={selectedAmenityId}
+            onSelectAmenity={setSelectedAmenityId}
           />
         )
       }
@@ -136,43 +128,20 @@ export function App() {
           {showSources ? <SourcesPanel onClose={() => setShowSources(false)} /> : null}
           {landing ? (
             <FirstUseOverlay
-              onLookup={(query) => void lookUpArea(query)}
-              onDismiss={firstUse ? undefined : () => setShowLanding(false)}
+              onSuggest={(query) => void suggest(query)}
+              onChoose={(choice) => void openCommune(choice)}
+              lookup={lookup}
+              onDismiss={() => setShowLanding(false)}
             />
           ) : null}
           <AreaMap
-            placing={placing}
-            onPlace={setPlacedPoint}
             focus={focus}
             boundary={showBoundary && lookup.kind === "loaded" ? lookup.area.boundary : null}
-            facilities={lookup.kind === "loaded" ? lookup.area.facilities : []}
+            amenities={amenities}
+            selectedAmenityId={selectedAmenityId}
+            onSelectAmenity={setSelectedAmenityId}
           />
         </>
-      }
-      // Adding takes the panel: you cannot be reading one property and
-      // creating another at the same time.
-      panel={
-        adding ? (
-          <AddPropertyPanel
-            placedPoint={placedPoint}
-            initialQuery={initialQuery}
-            onPlacingChange={setPlacing}
-            onLocated={setFocus}
-            onClose={closeAdd}
-            onSaved={async (id) => {
-              closeAdd();
-              await reload();
-              setSelectedId(id);
-            }}
-          />
-        ) : selected ? (
-          <PropertyDetailPanel
-            property={selected}
-            onClose={() => setSelectedId(null)}
-            onChangeStatus={(status) => void update(selected.id, { status })}
-            onSaveNotes={(notes) => void update(selected.id, { notes })}
-          />
-        ) : null
       }
     />
   );

@@ -1,0 +1,53 @@
+/*
+ * Numbered pins. The number is the one on its row in the list, and both are
+ * renumbered together whenever a category is toggled — it is a lookup between
+ * two panels rather than an identity, so gaps would be nothing but noise.
+ *
+ * Facilities the register located only to their commune never appear here.
+ * Their coordinate is the commune's centre, and a numbered pin would claim an
+ * address the source never gave.
+ */
+.hg-amenity {
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.hg-amenity-shape {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  background: var(--color-ink);
+  color: var(--color-surface);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+  transition: scale 0.15s;
+}
+
+.hg-amenity[data-kind="hospital"] .hg-amenity-shape {
+  background: var(--color-ink-2);
+}
+
+.hg-amenity:hover .hg-amenity-shape {
+  scale: 1.14;
+}
+
+.hg-amenity[data-selected="true"] .hg-amenity-shape {
+  width: 30px;
+  height: 30px;
+  scale: 1.22;
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 0.35),
+    0 0 0 5px rgb(27 26 23 / 0.14);
+}
+
+.leaflet-container.hg-placing {
+  cursor: crosshair;
+}

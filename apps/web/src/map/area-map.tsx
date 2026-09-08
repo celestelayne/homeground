@@ -1,9 +1,8 @@
 import "leaflet/dist/leaflet.css";
-import "./map.css";
-import "./facility-markers.css";
+import "./amenity-pins.css";
 import * as L from "leaflet";
 import { useEffect, useRef, useState } from "react";
-import type { Facility } from "../api/types.js";
+import type { Amenity } from "../areas/amenities.js";
 import { BaseMapPicker } from "./base-map-picker.js";
 import {
   AERIAL_ATTRIBUTION,
@@ -42,13 +41,16 @@ interface AreaMapProps {
    */
   boundary?: AreaBoundary | null;
   /**
-   * Hospitals and pharmacies inside the commune.
+   * Hospitals and pharmacies inside the commune, already numbered.
    *
-   * Drawn as points only where the source says it knows the address. One
-   * located to its commune is drawn as an area, because that is what the
-   * source actually told us.
+   * Every one here carries a number matching its row in the list, and both are
+   * renumbered together when a category is toggled. Facilities the source
+   * located only to their commune never reach this list: their coordinate is
+   * the commune's centre, so a numbered pin would point at a field.
    */
-  facilities?: Facility[];
+  amenities?: Amenity[];
+  selectedAmenityId?: string | null;
+  onSelectAmenity?: (id: string | null) => void;
 }
 
 export type AreaBoundary =
@@ -88,7 +90,9 @@ export function AreaMap({
   onPlace,
   focus = null,
   boundary = null,
-  facilities = [],
+  amenities = [],
+  selectedAmenityId = null,
+  onSelectAmenity,
 }: AreaMapProps) {
   const container = useRef<HTMLDivElement>(null);
   // TEMPORARY: for comparing basemaps.
@@ -108,9 +112,12 @@ export function AreaMap({
     const instance = L.map(container.current, {
       center: REGION_CENTRE,
       zoom: REGION_ZOOM,
-      zoomControl: true,
+      // Bottom right: the top left is where the commune's own controls sit.
+      zoomControl: false,
       attributionControl: true,
     });
+
+    L.control.zoom({ position: "bottomright" }).addTo(instance);
 
     base.current = baseLayer(DEFAULT_BASE_MAP).addTo(instance);
 
@@ -214,21 +221,33 @@ export function AreaMap({
     }
   }, [focus]);
 
-  // Hospitals and pharmacies, each drawn to the precision the source claims.
+  // Held in a ref so re-rendering pins does not depend on callback identity.
+  const onSelectAmenityRef = useRef(onSelectAmenity);
+  onSelectAmenityRef.current = onSelectAmenity;
+
+  // Numbered pins. The integer is the list row's, so they are rebuilt whenever
+  // the visible set changes rather than kept and patched.
   useEffect(() => {
     const instance = map.current;
 
-    if (!instance || facilities.length === 0) {
+    if (!instance || amenities.length === 0) {
       return;
     }
 
-    const drawn = facilities.map((facility) =>
-      L.marker([facility.latitude, facility.longitude], {
-        icon: facilityIcon(facility),
+    const drawn = amenities.map((amenity) =>
+      L.marker([amenity.latitude, amenity.longitude], {
+        icon: amenityIcon(amenity, amenity.id === selectedAmenityId),
         keyboard: false,
+        zIndexOffset: amenity.id === selectedAmenityId ? 1000 : 0,
       })
         .addTo(instance)
-        .bindTooltip(tooltipFor(facility), { direction: "top", offset: [0, -8] }),
+        .on("click", () =>
+          onSelectAmenityRef.current?.(amenity.id === selectedAmenityId ? null : amenity.id),
+        )
+        .bindTooltip(`${amenity.number}. ${amenity.name}`, {
+          direction: "top",
+          offset: [0, -10],
+        }),
     );
 
     return () => {
@@ -236,7 +255,7 @@ export function AreaMap({
         marker.remove();
       }
     };
-  }, [facilities]);
+  }, [amenities, selectedAmenityId]);
 
   // Placing shows aerial imagery and turns the next click into a coordinate.
   useEffect(() => {
@@ -285,35 +304,18 @@ function baseLayer(basemap: BaseMap): L.TileLayer {
   });
 }
 
-const FACILITY_SIZE: Record<Facility["precision"], number> = {
-  exact: 15,
-  zone: 15,
-  commune: 34,
-};
-
-function facilityIcon(facility: Facility): L.DivIcon {
-  const size = FACILITY_SIZE[facility.precision];
+function amenityIcon(amenity: Amenity, selected: boolean): L.DivIcon {
+  const size = selected ? 30 : 25;
 
   return L.divIcon({
     className: "",
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
     html:
-      `<button type="button" class="hg-facility" data-kind="${facility.kind}"` +
-      ` data-precision="${facility.precision}" aria-label="${escapeHtml(tooltipFor(facility))}">` +
-      `<span class="hg-facility-shape" aria-hidden="true"></span></button>`,
+      `<button type="button" class="hg-amenity" data-kind="${amenity.kind}"` +
+      ` data-selected="${selected}" aria-label="${escapeHtml(`${amenity.number}. ${amenity.name}`)}">` +
+      `<span class="hg-amenity-shape" aria-hidden="true">${amenity.number}</span></button>`,
   });
-}
-
-/** What the source said, including how well it located it. */
-function tooltipFor(facility: Facility): string {
-  const kind = facility.kind === "pharmacy" ? "Pharmacy" : "Hospital";
-
-  if (facility.precision === "commune") {
-    return `${kind}: ${facility.name} — located to the commune only`;
-  }
-
-  return `${kind}: ${facility.name}`;
 }
 
 function escapeHtml(value: string): string {

@@ -1,8 +1,10 @@
-import { useId, useState } from "react";
+import type { AreaLookup, CommuneChoice } from "../areas/use-area-lookup.js";
+import { CommuneSearch } from "./commune-search.js";
 
 interface FirstUseOverlayProps {
-  /** Look a place up: move the map there and begin a property from it. */
-  onLookup: (query: string) => void;
+  onSuggest: (query: string) => void;
+  onChoose: (choice: CommuneChoice) => void;
+  lookup: AreaLookup;
   /**
    * Close it and go back to the map. Absent on genuine first use, where there
    * is nothing behind this to go back to.
@@ -10,24 +12,12 @@ interface FirstUseOverlayProps {
   onDismiss?: (() => void) | undefined;
 }
 
-const MIN_QUERY = 3;
-
 /**
  * Shown over the map on first use, and whenever the user goes home. The
  * gradient thins to the right so the map stays legible: geography is the
  * mental model, and it should be established before anything has been saved.
  */
-export function FirstUseOverlay({ onLookup, onDismiss }: FirstUseOverlayProps) {
-  const [query, setQuery] = useState("");
-  const inputId = useId();
-  const ready = query.trim().length >= MIN_QUERY;
-
-  function submit() {
-    if (ready) {
-      onLookup(query.trim());
-    }
-  }
-
+export function FirstUseOverlay({ onSuggest, onChoose, lookup, onDismiss }: FirstUseOverlayProps) {
   return (
     <div
       className="absolute inset-0 z-[800] flex items-center"
@@ -52,55 +42,28 @@ export function FirstUseOverlay({ onLookup, onDismiss }: FirstUseOverlayProps) {
         </span>
 
         <h2 className="m-0 text-hero leading-[1.08] font-semibold tracking-[-0.03em]">
-          Find somewhere worth living.
+          Understand the community, not just the property.
         </h2>
 
         <p className="m-0 max-w-[440px] text-[15.5px] leading-[1.6] text-ink-2">
-          Save a property and HomeGround will help you understand its wildfire context, healthcare
-          access and everyday remoteness.
+          Look up any commune and let’s explore it together. Let HomeGround show you where to find
+          your daily essentials, local healthcare, and how the surrounding natural environment
+          shapes daily life.
         </p>
 
-        <form
-          aria-label="Look up a place"
-          className="flex flex-col gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            submit();
-          }}
-        >
-          <label htmlFor={inputId} className="sr-only">
-            Address, village or place name
-          </label>
-
-          <div className="flex gap-2">
-            <input
-              id={inputId}
-              className="h-[38px] flex-1 rounded-sharp border border-line-2 bg-surface px-3 text-body focus:border-ink focus:shadow-[0_0_0_3px_rgba(27,26,23,.07)] focus:outline-none"
-              placeholder="A village, hamlet or address — Montouliers"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              // A form whose only submit button is disabled does not submit on
-              // Enter, so Enter is handled here rather than left to the browser.
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  submit();
-                }
-              }}
-            />
-            <button
-              type="submit"
-              disabled={!ready}
-              className="h-[38px] rounded-sharp bg-ink px-4 text-caption text-surface disabled:opacity-40"
-            >
-              Look up
-            </button>
-          </div>
-        </form>
+        <div className="flex max-w-[440px]">
+          <CommuneSearch
+            label="Search communes"
+            placeholder="A commune — Fabrezan, or 11200"
+            onSuggest={onSuggest}
+            onChoose={onChoose}
+            lookup={lookup}
+          />
+        </div>
 
         <p className="m-0 max-w-[420px] text-body text-ink-3">
-          You find houses wherever you like. This is where you work out whether their locations suit
-          the life you want — evidence and trade-offs, never a verdict on safety.
+          Traditional agencies show you the four walls; HomeGround wants to help you find where you
+          belong.
         </p>
       </div>
     </div>
