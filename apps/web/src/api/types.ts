@@ -63,6 +63,14 @@ export interface Evidence {
   observedAt: string | null;
   method: string;
   methodVersion: number;
+  /**
+   * What a comparison was made against, in the words shown to a reader, and
+   * how many communes were in that group. Null on a plain measurement, and
+   * present together or not at all.
+   */
+  basis: string | null;
+  basisSourceId: string | null;
+  peers: number | null;
 }
 
 /**
