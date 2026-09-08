@@ -39,7 +39,7 @@ This list is the reason the milestone sequence was reordered after M3. See
 | 19 | Seasonality | 3 | 3 | 0 | Partly answered today — second-home share is already served |
 | 20 | Schools | 3 | 5 | 0 | Unowned — the national directory names each school and its canteen |
 | 21 | Pollution and cleanliness | 2 | 5 | 1 | Unowned — air quality and registered industrial sites are published |
-| 22 | Utilities | 2 | 3 | 1 | Unowned — power resilience is published no finer than département |
+| 22 | Utilities | 2 | 3 | 1 | Unowned — outage figures exist only nationally and by département |
 | 23 | Water access | 2 | 2 | 1 | Unowned — drought restriction orders are published per commune |
 | 24 | Other | 1 | 1 | 0 | — |
 
@@ -83,11 +83,22 @@ as evidence about a place.
 mentions than any factor except admin, from seven people. Admin has twelve
 people behind it. Counting mentions would have promoted the loudest thread.
 
-**Some of the cheapest sources sit low.** Internet coverage, schools and
-drought restrictions are all published per commune, keyless, and none is
-owned by a milestone. They rank low because few people thought to ask, which
-is not the same as their not mattering — a factor nobody raises may be one
-nobody knows to raise.
+**Some of the cheapest sources sit low.** Schools and drought restrictions are
+published per commune, keyless, and owned by no milestone. They rank low
+because few people thought to ask, which is not the same as their not
+mattering — a factor nobody raises may be one nobody knows to raise. Internet
+coverage was in that group until the working-from-here reading promoted it; it
+is now in M9.
+
+**Working from here is three questions, and two have answers.** Internet
+deployment is published per commune and quarterly. Reaching clients is distance
+to a station and an airport, which M9 covers. Power resilience fails: the
+network operator publishes average outage duration for the whole of France, one
+row a year with no geography, and a regulatory continuity indicator per
+département — the Aude has run between 1.35 and 3.57 on it since 2017. Neither
+can tell a village at the end of a rural line from a town centre. Recorded as
+unowned rather than approximated, with the question of whether a
+département-level figure is worth showing left open.
 
 **Seven unanswered mentions is the finding.** Professional services goes
 unanswered more often than every other factor combined at the top of the list.
