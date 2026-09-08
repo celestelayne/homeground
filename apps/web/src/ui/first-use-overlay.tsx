@@ -3,8 +3,6 @@ import { useId, useState } from "react";
 interface FirstUseOverlayProps {
   /** Look a place up: move the map there and begin a property from it. */
   onLookup: (query: string) => void;
-  /** Skip the lookup, for somewhere the user can already find on the map. */
-  onPlaceOnMap: () => void;
   /**
    * Close it and go back to the map. Absent on genuine first use, where there
    * is nothing behind this to go back to.
@@ -19,7 +17,7 @@ const MIN_QUERY = 3;
  * gradient thins to the right so the map stays legible: geography is the
  * mental model, and it should be established before anything has been saved.
  */
-export function FirstUseOverlay({ onLookup, onPlaceOnMap, onDismiss }: FirstUseOverlayProps) {
+export function FirstUseOverlay({ onLookup, onDismiss }: FirstUseOverlayProps) {
   const [query, setQuery] = useState("");
   const inputId = useId();
   const ready = query.trim().length >= MIN_QUERY;
@@ -98,18 +96,6 @@ export function FirstUseOverlay({ onLookup, onPlaceOnMap, onDismiss }: FirstUseO
               Look up
             </button>
           </div>
-
-          <p className="m-0 text-caption text-ink-3">
-            Somewhere with no address? Look up the nearest village, then{" "}
-            <button
-              type="button"
-              onClick={onPlaceOnMap}
-              className="underline underline-offset-2 hover:text-ink"
-            >
-              place the point yourself
-            </button>
-            .
-          </p>
         </form>
 
         <p className="m-0 max-w-[420px] text-body text-ink-3">

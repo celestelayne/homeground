@@ -18,6 +18,16 @@ export function App() {
   const { properties, state, selectedId, selected, setSelectedId, update, reload } =
     useProperties();
   const [showRejected, setShowRejected] = useState(true);
+  /**
+   * Adding a property has no entry point. The header button went when the
+   * search moved in, and the hero's "place the point yourself" line has gone
+   * too, so nothing sets this true.
+   *
+   * The panel, its reducer and the map's placing mode are left wired and
+   * dormant rather than deleted: properties return at M11 with listing
+   * partnerships, and a flow that still compiles is a better starting point
+   * than one recovered from history.
+   */
   const [adding, setAdding] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [placedPoint, setPlacedPoint] = useState<Point | null>(null);
@@ -39,13 +49,6 @@ export function App() {
     setPlacing(false);
     setPlacedPoint(null);
     setInitialQuery("");
-  }
-
-  function startAdding(query: string) {
-    setInitialQuery(query);
-    setAdding(true);
-    setShowLanding(false);
-    setSelectedId(null);
   }
 
   function select(id: string) {
@@ -134,7 +137,6 @@ export function App() {
           {landing ? (
             <FirstUseOverlay
               onLookup={(query) => void lookUpArea(query)}
-              onPlaceOnMap={() => startAdding("")}
               onDismiss={firstUse ? undefined : () => setShowLanding(false)}
             />
           ) : null}

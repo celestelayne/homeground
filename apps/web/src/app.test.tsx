@@ -488,17 +488,6 @@ describe("before anything is saved", () => {
     expect(hero.getByRole("button", { name: "Look up" })).toBeDisabled();
   });
 
-  it("opens the add panel without a lookup, for a place with no address", async () => {
-    stored = [];
-
-    const user = await renderWithList();
-
-    await user.click(screen.getByRole("button", { name: "place the point yourself" }));
-
-    expect(screen.getByRole("heading", { name: "Add property" })).toBeInTheDocument();
-    expect(geocoded).toEqual([]);
-  });
-
   it("goes home from the logo, closing what was open", async () => {
     stored = [property({ name: "Mas above the village" })];
 
@@ -512,20 +501,6 @@ describe("before anything is saved", () => {
     expect(
       screen.queryByRole("heading", { name: "Mas above the village" }),
     ).not.toBeInTheDocument();
-  });
-
-  it("goes home from the logo while adding, abandoning the draft", async () => {
-    stored = [property()];
-
-    const user = await renderWithList();
-
-    await user.click(screen.getByRole("button", { name: "HomeGround" }));
-    await user.click(screen.getByRole("button", { name: "place the point yourself" }));
-    expect(screen.getByRole("heading", { name: "Add property" })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "HomeGround" }));
-
-    expect(screen.queryByRole("heading", { name: "Add property" })).not.toBeInTheDocument();
   });
 
   it("shows the landing hero on the root route, even with properties saved", async () => {
