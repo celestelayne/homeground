@@ -8,6 +8,7 @@ import { CENSUS_METHOD, CENSUS_METHOD_VERSION, fetchCensus, toCensusFigures } fr
 import { declarationsOf, EXPOSURE_METHODS, exposureEvidence, exposuresOf } from "./exposure.js";
 import { AreaLookupUnavailableError, fetchCommune, toCommune } from "./geo-api.js";
 import type { Area, Evidence, Facility } from "./schema.js";
+import { WEATHER_METHOD, weatherEvidence } from "./weather.js";
 
 const GEO_METHOD = "geo-api-commune";
 const GEO_METHOD_VERSION = 1;
@@ -164,6 +165,7 @@ async function store(db: Db, code: string, fetchImpl?: FetchLike): Promise<void>
     ...(await censusEvidence(code, fetchImpl)),
     ...(await facilityEvidence(db, code)),
     ...(await exposureEvidence(db, code)),
+    ...(await weatherEvidence(db, code)),
   ];
 
   if (rows.length > 0) {
@@ -343,6 +345,32 @@ export async function refreshExposure(db: Db): Promise<number> {
       await tx
         .delete(evidence)
         .where(and(eq(evidence.areaCode, code), inArray(evidence.method, EXPOSURE_METHODS)));
+
+      if (rows.length > 0) {
+        await tx.insert(evidence).values(rows);
+      }
+    });
+  }
+
+  return held.length;
+}
+
+/**
+ * Recomputes the weather of every commune already held.
+ *
+ * The five-year window moves each January, and a commune fetched in 2025 would
+ * otherwise keep quoting 2020 for ever. Run at the end of an ingest.
+ */
+export async function refreshWeather(db: Db): Promise<number> {
+  const held = await db.select({ code: areas.code }).from(areas);
+
+  for (const { code } of held) {
+    const rows = await weatherEvidence(db, code);
+
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(evidence)
+        .where(and(eq(evidence.areaCode, code), eq(evidence.method, WEATHER_METHOD)));
 
       if (rows.length > 0) {
         await tx.insert(evidence).values(rows);
