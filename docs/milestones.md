@@ -48,6 +48,12 @@ Promoting M6 means specifying it: goal, acceptance criteria, out-of-scope list
 and authorized dependencies. Until that is written, no milestone is current and
 nothing is authorized to be built.
 
+`specs/brief.md` now defines what HomeGround sells: a document about one
+commune, bought before a visit, rendered once and kept. It is not a milestone
+and owns no place in the sequence yet, but it settles a question every panel
+built so far was guessing at — what the free surface is *for*. The panel earns
+the click; the brief earns the nine euros.
+
 ---
 
 ## Planned Milestones
