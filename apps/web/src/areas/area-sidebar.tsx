@@ -6,6 +6,7 @@ import { AmenityList } from "./amenity-list.js";
 import { CommuneImage } from "./commune-image.js";
 import { Exposure } from "./exposure.js";
 import type { AreaLookup } from "./use-area-lookup.js";
+import { Weather } from "./weather.js";
 
 interface AreaSidebarProps {
   lookup: AreaLookup;
@@ -27,12 +28,16 @@ const number = new Intl.NumberFormat("en-GB");
 /** Shown in their own section, with their context. */
 const EXPOSURE = new Set(["exposure.designations", "exposure.radon", "disasters.declared"]);
 
+/** Read in "What the weather is here", where each carries its station. */
+const WEATHER = /^weather\./;
+
 const SOURCE_NAMES: Record<string, string> = {
   "geo-api-gouv": "Découpage administratif",
   "insee-census": "INSEE census",
   finess: "FINESS",
   "insee-density-grid": "INSEE density grid",
   georisques: "Géorisques",
+  "meteo-france": "Météo-France",
   "wikimedia-commons": "Wikimedia Commons",
 };
 
@@ -156,6 +161,14 @@ function AreaDetail({
       </Section>
 
       <Section
+        title="What the weather is here"
+        note="The last five complete years, from the nearest station that measures each thing."
+        defaultOpen
+      >
+        <Weather area={area} />
+      </Section>
+
+      <Section
         title="What the state records"
         note="Designations and declared disasters, from Géorisques. Reported, never rated."
         defaultOpen
@@ -209,6 +222,7 @@ function Measurements({ evidence }: { evidence: Evidence[] }) {
     // makes it readable. A bare "13 designations" row here would be the alarm
     // that section exists to avoid, and a category has no number to show.
     .filter((fact) => !EXPOSURE.has(fact.metric))
+    .filter((fact) => !WEATHER.test(fact.metric))
     .sort((a, b) => (b.observedAt ?? "").localeCompare(a.observedAt ?? ""));
 
   return (

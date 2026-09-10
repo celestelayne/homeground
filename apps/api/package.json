@@ -11,7 +11,8 @@
     "dev": "tsc -p tsconfig.build.json && node --env-file-if-exists=../../.env dist/server.js",
     "ingest:finess": "tsc -p tsconfig.build.json && node --env-file-if-exists=../../.env dist/finess/run-ingest.js",
     "ingest:density": "tsc -p tsconfig.build.json && node --env-file-if-exists=../../.env dist/density/run-ingest.js",
-    "ingest:georisques": "tsc -p tsconfig.build.json && node --env-file-if-exists=../../.env dist/georisques/run-ingest.js"
+    "ingest:georisques": "tsc -p tsconfig.build.json && node --env-file-if-exists=../../.env dist/georisques/run-ingest.js",
+    "ingest:weather": "tsc -p tsconfig.build.json && node --env-file-if-exists=../../.env dist/weather/run-ingest.js"
   },
   "dependencies": {
     "@fastify/type-provider-typebox": "^6.1.0",

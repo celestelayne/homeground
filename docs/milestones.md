@@ -76,13 +76,20 @@ climate. One hot summer moves it, and the panel must never call it a normal.
 Framed as a person experiences a place rather than as a station reports it:
 winter light, rain days, mild mornings, summer heat, frost.
 
-Each figure comes from a different station, and that is the milestone's whole
-difficulty. For Fabrezan:
+Each figure may come from a different station, and that is the milestone's
+whole difficulty. For Fabrezan, as built:
 
-* **rain** — Ferrals-les-Corbières, **2.6 km**, which measures rainfall only
-* **temperature** — Lézignan-Corbières, **5.1 km**, the nearest that measures it
+* **rain and temperature** — Lézignan-Corbières, **5.1 km**, reporting all 60
+  months of the window
 * **sunshine** — Carcassonne, **35 km**, the only station in the entire Aude
   that measures it at all
+
+The nearest station of any kind is Ferrals-les-Corbières at 2.6 km, and it
+answers for nothing: it measures rainfall only, and reported 28 of the 60
+months. Both rules — the nearest station *that measures the thing*, and enough
+complete years to average — pass over it. An earlier draft of this spec used
+Ferrals as the rain example, which was true of the thirty-year window and is
+not true of the five-year one.
 
 So a commune does not inherit a station. It inherits a different one for each
 thing measured, at a different distance, and the reader is told which and how

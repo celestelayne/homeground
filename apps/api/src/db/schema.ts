@@ -193,6 +193,64 @@ export const communeRadon = pgTable("commune_radon", {
 });
 
 /**
+ * Weather stations, nationally.
+ *
+ * Identified by their number and never by their name: "LEZIGNAN" matches two
+ * stations, one running to 1999 and one from 1990, and matching by name
+ * double-counts the decade they overlap. That mistake inflated this
+ * milestone's first rainfall figure by half.
+ */
+export const weatherStations = pgTable("weather_stations", {
+  /** Météo-France's eight-digit station number. */
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  latitude: doublePrecision("latitude").notNull(),
+  longitude: doublePrecision("longitude").notNull(),
+  /**
+   * Metres. A station 300 m below a village describes a different place, and
+   * the reader can only weigh that if it is carried.
+   */
+  altitude: integer("altitude"),
+});
+
+/**
+ * What each station recorded, month by month.
+ *
+ * Held monthly rather than pre-aggregated, so a figure can be traced to the
+ * months behind it and so a later milestone can show a month without a second
+ * ingest. Values are stored as the source publishes them — sunshine in
+ * minutes, temperatures in degrees — and converted where they are read.
+ */
+export const weatherMonthly = pgTable(
+  "weather_monthly",
+  {
+    stationId: text("station_id").notNull(),
+    /** "202507". The month the station reported. */
+    yearMonth: text("year_month").notNull(),
+    /** Monthly rainfall total, millimetres. */
+    rainfall: doublePrecision("rainfall"),
+    /** Days with at least 1 mm of rain. */
+    rainDays: integer("rain_days"),
+    /** Days with at least 30 mm — the Mediterranean autumn, when it matters. */
+    heavyRainDays: integer("heavy_rain_days"),
+    /** Mean daily maximum and minimum, degrees. */
+    meanMax: doublePrecision("mean_max"),
+    meanMin: doublePrecision("mean_min"),
+    daysAbove30: integer("days_above_30"),
+    daysAbove35: integer("days_above_35"),
+    /** Nights that never drop below 20°. Whether you sleep in August. */
+    nightsAbove20: integer("nights_above_20"),
+    frostDays: integer("frost_days"),
+    /** Sunshine, in minutes, as published. Divided only where it is shown. */
+    sunshineMinutes: integer("sunshine_minutes"),
+  },
+  (table) => [
+    primaryKey({ columns: [table.stationId, table.yearMonth] }),
+    index("weather_monthly_by_station").on(table.stationId),
+  ],
+);
+
+/**
  * The class a commune belongs to, from INSEE's density grid.
  *
  * HomeGround's definition of a comparable commune — see ADR-012 — and its

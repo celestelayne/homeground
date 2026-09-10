@@ -125,6 +125,41 @@ export const SOURCES: SourceDefinition[] = [
     ],
   },
   {
+    id: "meteo-france",
+    name: "Données climatologiques de base",
+    publisher: "Météo-France",
+    description:
+      "What every weather station in France recorded, month by month: rainfall, " +
+      "temperature, days of heat and frost, and sunshine.",
+    url: "https://www.data.gouv.fr/datasets/donnees-climatologiques-de-base-mensuelles",
+    cadence: "Monthly, with the current year republished as it goes",
+    coverage:
+      "France entière, but thinly: the Aude holds 126 stations opened since 1950, of which 39 " +
+      "still report, 26 measure temperature and one measures sunshine",
+    licence: "Licence Ouverte 2.0",
+    limitations: [
+      "A commune has no station of its own. Every figure is borrowed from the nearest station that measures that thing, which is a different station for different measurements and is named with its distance.",
+      "Sunshine is measured at roughly one station per département, so a sunshine figure is typically borrowed from much further away than a rainfall one.",
+      "Five years is weather rather than climate. One hot summer moves these figures, and they are not a normal.",
+      "Distance is not similarity. The nearest station measuring sunshine to Fontanès-de-Sault is 30 km away and 1,600 m up, over a mountain range, and its December is nothing like the village's. Each figure carries its station's distance and altitude so a reader can discount it.",
+      "A commune's own altitude is not held, so HomeGround can state the station's and no more.",
+      "Stations open, close and are renumbered, so the station answering for a commune can change between editions.",
+    ],
+    metrics: [
+      "weather.sunshine",
+      "weather.winterSun",
+      "weather.rainDays",
+      "weather.rainfall",
+      "weather.daysAbove30",
+      "weather.daysAbove35",
+      "weather.nightsAbove20",
+      "weather.frostDays",
+      "weather.winterMornings",
+      "weather.summerAfternoons",
+    ],
+    provides: [],
+  },
+  {
     id: "insee-density-grid",
     name: "Grille communale de densité",
     publisher: "INSEE",
