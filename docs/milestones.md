@@ -41,138 +41,12 @@ Only the current milestone below is specified.
 
 ## Current Milestone
 
-### M5 — What the weather is here
+None. M5 is complete — its specification and outcome are under *Completed
+Milestones* below.
 
-#### Goal
-
-What living here is actually like, weather-wise, in the years a buyer would
-recognise: winter light, rain days, mild mornings, summer heat.
-
-Fifth on the stated-needs list, seven people, and the cheapest of the top five
-to answer. It is also the thing a buyer most often decides on from a fortnight's
-holiday in June.
-
-#### Recent, not normal
-
-The last five complete years, not a thirty-year average. Fabrezan's nearest
-thermometer says why:
-
-| | 1991–2020 | 2021–2025 |
-|---|---|---|
-| days ≥30°C | 42 | 55 |
-| days ≥35°C | 6 | 14 |
-| nights ≥20°C | 21 | 39 |
-| frost days | 16 | 11 |
-| rain | 676 mm | 455 mm |
-
-Days above 35° have doubled and nights above 20° nearly so. A reader shown the
-thirty-year normal is shown a climate that no longer exists.
-
-The cost is stated plainly rather than hidden: five years is weather, not
-climate. One hot summer moves it, and the panel must never call it a normal.
-
-#### What is measured, and from how far
-
-Framed as a person experiences a place rather than as a station reports it:
-winter light, rain days, mild mornings, summer heat, frost.
-
-Each figure may come from a different station, and that is the milestone's
-whole difficulty. For Fabrezan, as built:
-
-* **rain and temperature** — Lézignan-Corbières, **5.1 km**, reporting all 60
-  months of the window
-* **sunshine** — Carcassonne, **35 km**, the only station in the entire Aude
-  that measures it at all
-
-The nearest station of any kind is Ferrals-les-Corbières at 2.6 km, and it
-answers for nothing: it measures rainfall only, and reported 28 of the 60
-months. Both rules — the nearest station *that measures the thing*, and enough
-complete years to average — pass over it. An earlier draft of this spec used
-Ferrals as the rain example, which was true of the thirty-year window and is
-not true of the five-year one.
-
-So a commune does not inherit a station. It inherits a different one for each
-thing measured, at a different distance, and the reader is told which and how
-far. Whether sunshine from 35 km is worth showing is the reader's judgment to
-make, and they can only make it if the distance is on the page.
-
-What that buys, for Fabrezan: about **100 hours of sun in December** — three and
-a quarter hours a day — mornings around 4–6°C, and seven rain days.
-
-#### Established by looking, before this was written
-
-* Météo-France publishes monthly station records per département, gzipped CSV,
-  Licence Ouverte, keyless, each station carrying coordinates and altitude.
-* The Aude holds 126 stations since 1950. Only 39 still reported after 2020,
-  26 of those measure temperature, and **one** measures sunshine.
-* **Stations must be keyed on their number, not their name.** "LEZIGNAN"
-  matches two stations — one running 1960–1999 at 56 m, another 1990–2024 at
-  60 m — and matching by name double-counts the overlapping decade. It inflated
-  this milestone's first rainfall figure by half before a plausibility check
-  caught it.
-* **Units come from the published descriptor.** Sunshine is recorded in
-  minutes, not hours: December at Carcassonne reads 6,015. Taken as hours it
-  would have been printed as eight times the hours December contains.
-
-#### Acceptance Criteria
-
-M5 is complete when:
-
-* every figure names the station it came from and how far that station is from
-  the commune
-* a commune whose rain, temperature and sunshine come from three different
-  stations says so, rather than implying one station answered everything
-* figures cover the last five complete years, are labelled as that, and are
-  never called a normal or an average year
-* each figure carries how many of the five years actually reported it. Three
-  years of days above 35° is not the same claim as five, and is not silently
-  presented as one
-* stations are identified by number. A test covers the two-station case that
-  produced this rule
-* every unit is taken from the published field descriptor, and a figure that
-  fails a plausibility check fails the ingest rather than reaching the screen
-* where no station within a stated distance measures a thing, the figure is
-  Unknown — not the nearest station at any distance, and not a départemental
-  average
-* everything is served from HomeGround's own store, ingested by an explicit
-  command
-* the invariants are covered by tests, including the case that shaped this
-  milestone: a commune whose nearest station measures only rain
-
-#### Out of Scope
-
-M5 does not include:
-
-* **projections.** Dropped deliberately: a buyer asked for what it is like now,
-  and the five-year window already shows where things have moved. It removes
-  the scenario question, the horizon question and an ADR with it. Recorded
-  under *Asked for, and not owned* so the reasoning survives
-* any judgment of climate. No "pleasant", no "ideal", no comfort score, no
-  ranking of communes by weather
-* comparison against other communes, which is M14
-* wildfire history (M11) and the drought declarations M4 already shows
-* water restrictions, air quality and pollen, each its own source
-* daily or hourly data, and anything resembling a forecast
-* property-level microclimate — aspect, shelter, valley cold air. Real, and not
-  a commune-level fact
-
-#### Authorized Dependencies
-
-In addition to those carried from earlier milestones:
-
-* **Météo-France monthly climate records**, per département, gzipped CSV,
-  Licence Ouverte, keyless, with the published field descriptor as the
-  authority on units
-* No new libraries. Node decompresses gzip itself
-
-#### Governing Specs
-
-`specs/evidence.md`. A borrowed figure is still evidence and carries its
-method: which station, how far, over which years, and how many of them
-reported.
-
-`docs/methodology.md` governs the wording. Reporting what a station recorded is
-evidence; calling a climate good is a judgment this application does not make.
+Promoting M6 means specifying it: goal, acceptance criteria, out-of-scope list
+and authorized dependencies. Until that is written, no milestone is current and
+nothing is authorized to be built.
 
 ---
 
@@ -420,6 +294,172 @@ HomeGround built two panels nobody wanted.
 
 ## Completed Milestones
 
+
+### M5 — What the weather is here
+
+#### Goal
+
+What living here is actually like, weather-wise, in the years a buyer would
+recognise: winter light, rain days, mild mornings, summer heat.
+
+Fifth on the stated-needs list, seven people, and the cheapest of the top five
+to answer. It is also the thing a buyer most often decides on from a fortnight's
+holiday in June.
+
+#### Recent, not normal
+
+The last five complete years, not a thirty-year average. Fabrezan's nearest
+thermometer says why:
+
+| | 1991–2020 | 2021–2025 |
+|---|---|---|
+| days ≥30°C | 42 | 55 |
+| days ≥35°C | 6 | 14 |
+| nights ≥20°C | 21 | 39 |
+| frost days | 16 | 11 |
+| rain | 676 mm | 455 mm |
+
+Days above 35° have doubled and nights above 20° nearly so. A reader shown the
+thirty-year normal is shown a climate that no longer exists.
+
+The cost is stated plainly rather than hidden: five years is weather, not
+climate. One hot summer moves it, and the panel must never call it a normal.
+
+#### What is measured, and from how far
+
+Framed as a person experiences a place rather than as a station reports it:
+winter light, rain days, mild mornings, summer heat, frost.
+
+Each figure may come from a different station, and that is the milestone's
+whole difficulty. For Fabrezan, as built:
+
+* **rain and temperature** — Lézignan-Corbières, **5.1 km**, reporting all 60
+  months of the window
+* **sunshine** — Carcassonne, **35 km**, the only station in the entire Aude
+  that measures it at all
+
+The nearest station of any kind is Ferrals-les-Corbières at 2.6 km, and it
+answers for nothing: it measures rainfall only, and reported 28 of the 60
+months. Both rules — the nearest station *that measures the thing*, and enough
+complete years to average — pass over it. An earlier draft of this spec used
+Ferrals as the rain example, which was true of the thirty-year window and is
+not true of the five-year one.
+
+So a commune does not inherit a station. It inherits a different one for each
+thing measured, at a different distance, and the reader is told which and how
+far. Whether sunshine from 35 km is worth showing is the reader's judgment to
+make, and they can only make it if the distance is on the page.
+
+What that buys, for Fabrezan: about **100 hours of sun in December** — three and
+a quarter hours a day — mornings around 4–6°C, and seven rain days.
+
+#### Established by looking, before this was written
+
+* Météo-France publishes monthly station records per département, gzipped CSV,
+  Licence Ouverte, keyless, each station carrying coordinates and altitude.
+* The Aude holds 126 stations since 1950. Only 39 still reported after 2020,
+  26 of those measure temperature, and **one** measures sunshine.
+* **Stations must be keyed on their number, not their name.** "LEZIGNAN"
+  matches two stations — one running 1960–1999 at 56 m, another 1990–2024 at
+  60 m — and matching by name double-counts the overlapping decade. It inflated
+  this milestone's first rainfall figure by half before a plausibility check
+  caught it.
+* **Units come from the published descriptor.** Sunshine is recorded in
+  minutes, not hours: December at Carcassonne reads 6,015. Taken as hours it
+  would have been printed as eight times the hours December contains.
+
+#### Acceptance Criteria
+
+M5 is complete when:
+
+* every figure names the station it came from and how far that station is from
+  the commune
+* a commune whose rain, temperature and sunshine come from three different
+  stations says so, rather than implying one station answered everything
+* figures cover the last five complete years, are labelled as that, and are
+  never called a normal or an average year
+* each figure carries how many of the five years actually reported it. Three
+  years of days above 35° is not the same claim as five, and is not silently
+  presented as one
+* stations are identified by number. A test covers the two-station case that
+  produced this rule
+* every unit is taken from the published field descriptor, and a figure that
+  fails a plausibility check fails the ingest rather than reaching the screen
+* where no station within a stated distance measures a thing, the figure is
+  Unknown — not the nearest station at any distance, and not a départemental
+  average
+* everything is served from HomeGround's own store, ingested by an explicit
+  command
+* the invariants are covered by tests, including the case that shaped this
+  milestone: a commune whose nearest station measures only rain
+
+#### Out of Scope
+
+M5 does not include:
+
+* **projections.** Dropped deliberately: a buyer asked for what it is like now,
+  and the five-year window already shows where things have moved. It removes
+  the scenario question, the horizon question and an ADR with it. Recorded
+  under *Asked for, and not owned* so the reasoning survives
+* any judgment of climate. No "pleasant", no "ideal", no comfort score, no
+  ranking of communes by weather
+* comparison against other communes, which is M14
+* wildfire history (M11) and the drought declarations M4 already shows
+* water restrictions, air quality and pollen, each its own source
+* daily or hourly data, and anything resembling a forecast
+* property-level microclimate — aspect, shelter, valley cold air. Real, and not
+  a commune-level fact
+
+#### Authorized Dependencies
+
+In addition to those carried from earlier milestones:
+
+* **Météo-France monthly climate records**, per département, gzipped CSV,
+  Licence Ouverte, keyless, with the published field descriptor as the
+  authority on units
+* No new libraries. Node decompresses gzip itself
+
+#### Outcome
+
+Complete. 145,963 monthly records from 2,956 stations, the last five complete
+years, national.
+
+Fabrezan reads: a hundred hours of sun in December, mornings averaging 5.2°C,
+eleven days of frost; summer afternoons at 31.4°C, fifty-five days above 30°
+and fourteen above 35°, thirty-nine nights that never drop below 20°;
+455 mm of rain on sixty-one days. Grouped as a person asks — winter, summer,
+rain and light — with the station behind each group named.
+
+The rule the milestone was built on held, and one more had to be added.
+
+The nearest station that measures the thing, not the nearest station.
+Ferrals-les-Corbières is 2.6 km from Fabrezan and answers for nothing: rainfall
+only, and 28 of the window's 60 months, so both the measurement rule and the
+completeness rule pass over it. An earlier draft of this spec used it as the
+rain example, which was true of a thirty-year window and false of a five-year
+one.
+
+**Distance is not similarity.** Fontanès-de-Sault's nearest station measuring
+sunshine is Targasonne — thirty kilometres away, 1,600 m up, over a mountain
+range — and its December has nothing to do with the village's. Nothing in the
+data can fix that, so every figure now carries its station's altitude as well
+as its distance, and a reader who sees "30.4 km away at 1600 m" can discount
+it. Whether such a figure should be shown at all is left open below.
+
+Sunshine is published in minutes, and a plausibility guard refuses any month
+claiming more of anything than a month can hold — which is what would have
+caught it had the check on the way in not.
+
+#### Governing Specs
+
+`specs/evidence.md`. A borrowed figure is still evidence and carries its
+method: which station, how far, over which years, and how many of them
+reported.
+
+`docs/methodology.md` governs the wording. Reporting what a station recorded is
+evidence; calling a climate good is a judgment this application does not make.
+
+---
 
 ### M4 — Designated exposure, and declared disasters
 
@@ -1002,6 +1042,12 @@ Each is either resolved into an ADR or deferred to the milestone that requires i
   only after 2070, so the scenario choice matters far less than it appears; and
   the published file never states which years its baseline covers, so no change
   from it can be stated until that is pinned down.
+* **A figure borrowed from across a mountain** — no owning milestone. M5 shows
+  each figure's station with its distance and its altitude, which lets a reader
+  discount Fontanès-de-Sault's sunshine coming from 1,600 m up in the Cerdagne.
+  It does not decide whether such a figure should be shown at all. Suppressing
+  it needs a rule about terrain that HomeGround has no data for; showing it
+  needs the reader to notice the altitude.
 * **Seismic zoning** — no owning milestone. M4 dropped it: the Géorisques API
   answers only for a single commune, returning 500 for any national or
   départemental query, and no national file was found. A designation must be
