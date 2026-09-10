@@ -22,7 +22,7 @@ This list is the reason the milestone sequence was reordered after M3. See
 | 2 | Professional services | 9 | 12 | 7 | M6 — the business register names them |
 | 3 | Cost of living | 9 | 12 | 2 | M8, in part — purchase prices and the *taxe foncière* rate |
 | 4 | Healthcare access | 7 | 16 | 2 | M10 — travel time to an emergency department |
-| 5 | Climate | 7 | 10 | 2 | **M5, current** — station records and DRIAS projections |
+| 5 | Climate | 7 | 10 | 2 | **M5, current** — the last five years, from the nearest station |
 | 6 | Employment and economy | 6 | 6 | 3 | **Out of scope** — a decision, not a gap |
 | 7 | Community vitality | 6 | 6 | 2 | Not owned — only proxies exist |
 | 8 | Transport and access | 6 | 8 | 1 | M9 — timetables, nearest station |

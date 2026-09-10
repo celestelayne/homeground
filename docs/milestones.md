@@ -41,121 +41,128 @@ Only the current milestone below is specified.
 
 ## Current Milestone
 
-### M5 — Climate
+### M5 — What the weather is here
 
 #### Goal
 
-What the weather here actually is, and what it is becoming.
+What living here is actually like, weather-wise, in the years a buyer would
+recognise: winter light, rain days, mild mornings, summer heat.
 
 Fifth on the stated-needs list, seven people, and the cheapest of the top five
-to answer: commune-keyed, keyless, no routing, no PostGIS. It is also the one a
-buyer most often decides on from a fortnight's holiday in June.
+to answer. It is also the thing a buyer most often decides on from a fortnight's
+holiday in June.
+
+#### Recent, not normal
+
+The last five complete years, not a thirty-year average. Fabrezan's nearest
+thermometer says why:
+
+| | 1991–2020 | 2021–2025 |
+|---|---|---|
+| days ≥30°C | 42 | 55 |
+| days ≥35°C | 6 | 14 |
+| nights ≥20°C | 21 | 39 |
+| frost days | 16 | 11 |
+| rain | 676 mm | 455 mm |
+
+Days above 35° have doubled and nights above 20° nearly so. A reader shown the
+thirty-year normal is shown a climate that no longer exists.
+
+The cost is stated plainly rather than hidden: five years is weather, not
+climate. One hot summer moves it, and the panel must never call it a normal.
+
+#### What is measured, and from how far
+
+Framed as a person experiences a place rather than as a station reports it:
+winter light, rain days, mild mornings, summer heat, frost.
+
+Each figure comes from a different station, and that is the milestone's whole
+difficulty. For Fabrezan:
+
+* **rain** — Ferrals-les-Corbières, **2.6 km**, which measures rainfall only
+* **temperature** — Lézignan-Corbières, **5.1 km**, the nearest that measures it
+* **sunshine** — Carcassonne, **35 km**, the only station in the entire Aude
+  that measures it at all
+
+So a commune does not inherit a station. It inherits a different one for each
+thing measured, at a different distance, and the reader is told which and how
+far. Whether sunshine from 35 km is worth showing is the reader's judgment to
+make, and they can only make it if the distance is on the page.
+
+What that buys, for Fabrezan: about **100 hours of sun in December** — three and
+a quarter hours a day — mornings around 4–6°C, and seven rain days.
 
 #### Established by looking, before this was written
 
-**Observations.** Météo-France publishes monthly station records per
-département — 1950 to 2024 plus the current years, gzipped CSV, Licence
-Ouverte, each station carrying its coordinates and altitude. The Aude holds 126
-stations since 1950. Only 39 still reported after 2020, and only 26 of those
-measure temperature.
-
-**The finding this milestone turns on.** Fabrezan's nearest station is
-Ferrals-les-Corbières, 2.6 km away, and it measures rainfall only. The nearest
-station that measures temperature is Lézignan-Corbières, 5.1 km away. A commune
-does not inherit *a* station: it inherits a different one for each thing
-measured, and both distances are facts the reader needs.
-
-**Projections.** The DRIAS indices are published as text files on a grid of
-8,602 land points, for three scenarios and three horizons — near (2021–2050),
-middle (2041–2070) and far (2071–2100) — with a reference period alongside.
-They carry mean, minimum and maximum temperature, summer days, tropical nights,
-frost days, and heating and cooling degree days. The file currently published
-was extracted in 2015 from the CNRM2014 experiment, and a later DRIAS
-generation exists.
-
-#### The distinction this milestone rests on
-
-**A commune has no weather of its own.** Every figure here is borrowed from a
-station or a grid point somewhere else, and the borrowing is the thing most
-easily hidden. HomeGround shows what was borrowed, from where, and how far
-away — the same rule that draws a commune-precision facility as an area rather
-than a point.
-
-**An observation and a projection are different claims.** "August averages 30.4°
-here" is a record. "It reaches 33° by 2050 under RCP4.5" is a model output under
-a named assumption, and it may not appear without the scenario and the horizon
-attached.
+* Météo-France publishes monthly station records per département, gzipped CSV,
+  Licence Ouverte, keyless, each station carrying coordinates and altitude.
+* The Aude holds 126 stations since 1950. Only 39 still reported after 2020,
+  26 of those measure temperature, and **one** measures sunshine.
+* **Stations must be keyed on their number, not their name.** "LEZIGNAN"
+  matches two stations — one running 1960–1999 at 56 m, another 1990–2024 at
+  60 m — and matching by name double-counts the overlapping decade. It inflated
+  this milestone's first rainfall figure by half before a plausibility check
+  caught it.
+* **Units come from the published descriptor.** Sunshine is recorded in
+  minutes, not hours: December at Carcassonne reads 6,015. Taken as hours it
+  would have been printed as eight times the hours December contains.
 
 #### Acceptance Criteria
 
 M5 is complete when:
 
-* every climate figure names the station or grid point it came from, how far
-  that is from the commune, and at what altitude
-* a commune whose rainfall and temperature come from different stations says
-  so, rather than implying one station answered both
-* normals are computed over a stated period, and the number of months actually
-  observed is carried with them. A station that reported for half the period is
-  not silently averaged into one that reported throughout
-* a projection never appears without its scenario and its horizon, in words a
-  reader can weigh — not "RCP4.5" alone
-* HomeGround shows more than one scenario, or states which single one it shows
-  and why, recorded in an ADR. Showing the worst alone is alarmism and showing
-  the mildest alone is comfort; either, chosen silently, is HomeGround deciding
-  what the reader should conclude
+* every figure names the station it came from and how far that station is from
+  the commune
+* a commune whose rain, temperature and sunshine come from three different
+  stations says so, rather than implying one station answered everything
+* figures cover the last five complete years, are labelled as that, and are
+  never called a normal or an average year
+* each figure carries how many of the five years actually reported it. Three
+  years of days above 35° is not the same claim as five, and is not silently
+  presented as one
+* stations are identified by number. A test covers the two-station case that
+  produced this rule
+* every unit is taken from the published field descriptor, and a figure that
+  fails a plausibility check fails the ingest rather than reaching the screen
 * where no station within a stated distance measures a thing, the figure is
-  Unknown — not the nearest station at any distance, and not the départemental
+  Unknown — not the nearest station at any distance, and not a départemental
   average
 * everything is served from HomeGround's own store, ingested by an explicit
-  command, as FINESS and Géorisques are
-* the invariants are covered by tests, including the case that made this
+  command
+* the invariants are covered by tests, including the case that shaped this
   milestone: a commune whose nearest station measures only rain
 
 #### Out of Scope
 
 M5 does not include:
 
-* any judgment of climate. No "pleasant", no "ideal", no comfort index, no
-  ranking of communes by weather. The figures are shown; the reader decides
-  whether they want to live in it
-* comparison against other communes, which is M14 and which ADR-012 already
-  defines the basis for
-* wildfire history, which is M11, and the drought declarations M4 already shows
-* water restrictions, air quality and pollen, each of which is its own source
-* daily or hourly data. A buyer choosing a region is not reading a forecast
+* **projections.** Dropped deliberately: a buyer asked for what it is like now,
+  and the five-year window already shows where things have moved. It removes
+  the scenario question, the horizon question and an ADR with it. Recorded
+  under *Asked for, and not owned* so the reasoning survives
+* any judgment of climate. No "pleasant", no "ideal", no comfort score, no
+  ranking of communes by weather
+* comparison against other communes, which is M14
+* wildfire history (M11) and the drought declarations M4 already shows
+* water restrictions, air quality and pollen, each its own source
+* daily or hourly data, and anything resembling a forecast
 * property-level microclimate — aspect, shelter, valley cold air. Real, and not
   a commune-level fact
-* geometry and PostGIS, which M11 introduces
 
 #### Authorized Dependencies
 
 In addition to those carried from earlier milestones:
 
 * **Météo-France monthly climate records**, per département, gzipped CSV,
-  Licence Ouverte, keyless
-* **The DRIAS projection indices**, published as point files per scenario,
-  Licence Ouverte, keyless
-* No new libraries. Node decompresses gzip itself, and the zip reader written
-  for M3 already covers the archives
-
-#### Open Questions This Milestone Must Answer
-
-Recorded here rather than decided during implementation:
-
-* **Which scenario, or how many.** The decision that shapes what a reader
-  concludes, and it belongs in an ADR before any of it reaches the screen
-* **Which DRIAS generation.** The file on the portal was extracted in 2015; a
-  later generation exists and step 0 establishes whether it is obtainable in
-  the same shape
-* **Whether a commune's own altitude is obtainable.** A station 300 m below a
-  village is describing a different place, and without the commune's altitude
-  HomeGround can state the station's and no more
+  Licence Ouverte, keyless, with the published field descriptor as the
+  authority on units
+* No new libraries. Node decompresses gzip itself
 
 #### Governing Specs
 
 `specs/evidence.md`. A borrowed figure is still evidence and carries its
-method: which station, chosen how, over which period. The station and its
-distance belong in the basis a comparison already uses.
+method: which station, how far, over which years, and how many of them
+reported.
 
 `docs/methodology.md` governs the wording. Reporting what a station recorded is
 evidence; calling a climate good is a judgment this application does not make.
@@ -978,6 +985,16 @@ Each is either resolved into an ADR or deferred to the milestone that requires i
   In clay soil that pairing is what cracks a stone house, and joining the two
   facts is analysis rather than reporting. `docs/methodology.md` must say what
   may be concluded from a run of declarations before anything concludes it.
+* **Climate projections** — no owning milestone. M5 dropped them on purpose.
+  What a buyer asked for is what it is like now, and the five-year window shows
+  the movement already: at Fabrezan's station, days above 35° doubled between
+  1991–2020 and 2021–2025. The projections are published and usable — DRIAS
+  indices on a grid of 8,602 points, three scenarios, three horizons — and
+  reachable if a milestone ever wants them. Two things were established before
+  dropping them: the three scenarios agree almost exactly to 2050 and diverge
+  only after 2070, so the scenario choice matters far less than it appears; and
+  the published file never states which years its baseline covers, so no change
+  from it can be stated until that is pinned down.
 * **Seismic zoning** — no owning milestone. M4 dropped it: the Géorisques API
   answers only for a single commune, returning 500 for any national or
   départemental query, and no national file was found. A designation must be
